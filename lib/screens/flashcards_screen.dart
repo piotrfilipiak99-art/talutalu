@@ -122,6 +122,15 @@ String _fmtDate(DateTime d) {
 String _ttsLocaleFor(String code) =>
     alphabetFor(code)?.ttsLocale ?? '$code-${code.toUpperCase()}';
 
+/// Review badge for where a card came from; manual cards show nothing.
+({String label, IconData icon})? _sourceBadge(Flashcard card) =>
+    switch (card.source) {
+      Flashcard.sourceText => (label: 'text', icon: Icons.article_rounded),
+      Flashcard.sourceConverse => (label: 'chat', icon: Icons.forum_rounded),
+      Flashcard.sourceAi => (label: 'AI', icon: Icons.auto_fix_high_rounded),
+      _ => null,
+    };
+
 const _activities = [
   _Activity(
     key: 'review',
@@ -993,6 +1002,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
           translation: (item['translation'] as String? ?? '').trim(),
           wordType: item['wordType'] as String?,
           courseId: deck.courseId,
+          source: Flashcard.sourceAi,
           deckIds: {deck.id},
         ));
         added++;
@@ -3205,6 +3215,30 @@ class _CardListItem extends StatelessWidget {
                           fontWeight: FontWeight.w500)),
                 ),
               ],
+              if (_sourceBadge(card) case final badge?) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(badge.icon, size: 11, color: AppColors.text3),
+                      const SizedBox(width: 3),
+                      Text(badge.label,
+                          style: GoogleFonts.dmSans(
+                              color: AppColors.text3,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
               Text('${card.masteryLevel}/10',
                   style: GoogleFonts.dmSans(
@@ -3742,14 +3776,36 @@ class _FlashcardDetailSheet extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (card.wordType != null) ...[
+                    if (card.wordType != null ||
+                        _sourceBadge(card) != null) ...[
                       const SizedBox(height: 6),
-                      Text(card.wordType!,
-                          style: GoogleFonts.dmSans(
-                              color: AppColors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.5)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (card.wordType != null)
+                            Text(card.wordType!,
+                                style: GoogleFonts.dmSans(
+                                    color: AppColors.primary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.5)),
+                          if (card.wordType != null &&
+                              _sourceBadge(card) != null)
+                            Text('  ·  ',
+                                style: GoogleFonts.dmSans(
+                                    color: AppColors.text3, fontSize: 12)),
+                          if (_sourceBadge(card) case final badge?) ...[
+                            Icon(badge.icon,
+                                size: 12, color: AppColors.text3),
+                            const SizedBox(width: 3),
+                            Text('from ${badge.label}',
+                                style: GoogleFonts.dmSans(
+                                    color: AppColors.text3,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500)),
+                          ],
+                        ],
+                      ),
                     ],
                     if (hasMorph) ...[
                       const SizedBox(height: 12),

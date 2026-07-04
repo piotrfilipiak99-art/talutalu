@@ -12,6 +12,16 @@ class Flashcard {
   /// Immutable — cannot be changed through the edit UI.
   final bool fromTexts;
 
+  /// Where the card came from: 'manual', 'text' (Read), 'converse' (chat)
+  /// or 'ai' (deck generation). Cards saved before this field existed
+  /// migrate from [fromTexts]. Shown as a badge in Review.
+  final String source;
+
+  static const sourceManual = 'manual';
+  static const sourceText = 'text';
+  static const sourceConverse = 'converse';
+  static const sourceAi = 'ai';
+
   /// User-deck IDs this card belongs to (multi-deck).
   /// General and From Texts are virtual — never stored here.
   Set<String> deckIds;
@@ -79,6 +89,7 @@ class Flashcard {
     this.wordType,
     required this.courseId,
     this.fromTexts = false,
+    String? source,
     Set<String>? deckIds,
     this.morph,
     this.root,
@@ -93,7 +104,8 @@ class Flashcard {
     this.easeFactor = 2.5,
     DateTime? nextReview,
     DateTime? createdAt,
-  })  : deckIds = deckIds ?? {},
+  })  : source = source ?? (fromTexts ? sourceText : sourceManual),
+        deckIds = deckIds ?? {},
         recentResults = recentResults ?? [],
         nextReview = nextReview ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
@@ -169,6 +181,7 @@ class Flashcard {
         'wordType': wordType,
         'courseId': courseId,
         'fromTexts': fromTexts,
+        'source': source,
         'deckIds': deckIds.toList(),
         'morph': morph,
         'root': root,
@@ -206,6 +219,9 @@ class Flashcard {
       wordType: j['wordType'] as String?,
       courseId: j['courseId'] as String,
       fromTexts: fromTexts,
+      // Legacy cards carry no source — infer it from fromTexts.
+      source: (j['source'] as String?) ??
+          (fromTexts ? sourceText : sourceManual),
       deckIds: deckIds,
       morph: j['morph'] == null
           ? null

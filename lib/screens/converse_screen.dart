@@ -909,6 +909,7 @@ class _ChatViewState extends State<_ChatView> {
       translation: token.lemmaTranslation ?? token.translation ?? '',
       wordType: _posLabel(token.pos),
       courseId: courseId,
+      source: Flashcard.sourceConverse,
       morph: (token.pos == 'NOUN' || token.pos == 'PROPN') &&
               token.morph.containsKey('Gender')
           ? {'Gender': token.morph['Gender']!}
