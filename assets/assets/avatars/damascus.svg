@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A2A"/>
+  <!-- Umayyad Mosque, Damascus -->
+  <!-- Three-nave prayer hall body -->
+  <rect x="12" y="56" width="76" height="22" fill="white"/>
+  <!-- Large central dome -->
+  <ellipse cx="50" cy="48" rx="16" ry="18" fill="white"/>
+  <!-- Crescent on dome -->
+  <circle cx="50" cy="30" r="4" fill="#2A5A2A"/>
+  <circle cx="53" cy="28" r="3" fill="white"/>
+  <rect x="49" y="25" width="2" height="5" fill="white"/>
+  <!-- Transept dome on left -->
+  <ellipse cx="26" cy="54" rx="10" ry="11" fill="white"/>
+  <!-- Transept dome on right -->
+  <ellipse cx="74" cy="54" rx="10" ry="11" fill="white"/>
+  <!-- Three minarets -->
+  <!-- North (right) minaret - tallest -->
+  <rect x="72" y="18" width="8" height="40" fill="white"/>
+  <polygon points="72,18 80,18 76,6" fill="white"/>
+  <rect x="70" y="34" width="12" height="3" fill="white"/>
+  <!-- East minaret -->
+  <rect x="56" y="22" width="6" height="36" fill="white"/>
+  <polygon points="56,22 62,22 59,10" fill="white"/>
+  <rect x="54" y="36" width="10" height="2" fill="white"/>
+  <!-- South minaret (Jesus Minaret) -->
+  <rect x="18" y="20" width="6" height="38" fill="white"/>
+  <polygon points="18,20 24,20 21,8" fill="white"/>
+  <!-- Arcade courtyard windows -->
+  <rect x="16" y="62" width="6" height="10" fill="#2A5A2A"/>
+  <ellipse cx="19" cy="62" rx="3" ry="3" fill="#2A5A2A"/>
+  <rect x="78" y="62" width="6" height="10" fill="#2A5A2A"/>
+  <ellipse cx="81" cy="62" rx="3" ry="3" fill="#2A5A2A"/>
+  <!-- Base -->
+  <rect x="10" y="78" width="80" height="4" fill="white"/>
+</svg>

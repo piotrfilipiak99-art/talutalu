@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A6A"/>
+  <!-- El Salvador del Mundo Monument, San Salvador -->
+  <!-- Globe (world) at top -->
+  <circle cx="50" cy="28" r="16" fill="white"/>
+  <!-- Globe meridians -->
+  <ellipse cx="50" cy="28" rx="16" ry="5" fill="none" stroke="#1A5A6A" stroke-width="1.5" opacity="0.4"/>
+  <rect x="49" y="12" width="2" height="32" fill="#1A5A6A" opacity="0.4"/>
+  <!-- Christ figure standing on globe -->
+  <polygon points="44,28 56,28 53,12 47,12" fill="white"/>
+  <!-- Arms spread (blessing) -->
+  <rect x="32" y="18" width="36" height="5" fill="white"/>
+  <!-- Head -->
+  <circle cx="50" cy="10" r="5" fill="white"/>
+  <!-- Crown/halo -->
+  <circle cx="50" cy="10" r="7" fill="white" opacity="0.3"/>
+  <!-- Tall column/pedestal -->
+  <polygon points="44,44 56,44 54,74 46,74" fill="white"/>
+  <!-- Pedestal base -->
+  <rect x="36" y="74" width="28" height="6" fill="white"/>
+  <rect x="28" y="80" width="44" height="4" fill="white"/>
+  <!-- Wide base platform -->
+  <rect x="18" y="84" width="64" height="4" fill="white"/>
+</svg>

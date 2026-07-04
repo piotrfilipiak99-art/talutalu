@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A1A5A"/>
+  <!-- Government Palace (Palacio de los López), Asunción - Italian baroque -->
+  <!-- Main building -->
+  <rect x="14" y="50" width="72" height="30" fill="white"/>
+  <!-- Ornate upper balustrade -->
+  <rect x="12" y="46" width="76" height="6" fill="white"/>
+  <!-- Urns/finials on top -->
+  <ellipse cx="20" cy="44" rx="4" ry="5" fill="white"/>
+  <ellipse cx="36" cy="44" rx="4" ry="5" fill="white"/>
+  <ellipse cx="50" cy="44" rx="4" ry="5" fill="white"/>
+  <ellipse cx="64" cy="44" rx="4" ry="5" fill="white"/>
+  <ellipse cx="80" cy="44" rx="4" ry="5" fill="white"/>
+  <!-- Center risalit (raised central section) -->
+  <rect x="30" y="40" width="40" height="12" fill="white"/>
+  <polygon points="28,40 72,40 50,26" fill="white"/>
+  <!-- Large arched windows on ground floor -->
+  <rect x="18" y="58" width="12" height="16" fill="#5A1A5A"/>
+  <ellipse cx="24" cy="58" rx="6" ry="5" fill="#5A1A5A"/>
+  <rect x="44" y="58" width="12" height="16" fill="#5A1A5A"/>
+  <ellipse cx="50" cy="58" rx="6" ry="5" fill="#5A1A5A"/>
+  <rect x="70" y="58" width="12" height="16" fill="#5A1A5A"/>
+  <ellipse cx="76" cy="58" rx="6" ry="5" fill="#5A1A5A"/>
+  <!-- Riverside (Bahía de Asunción) -->
+  <rect x="10" y="80" width="80" height="5" fill="white" opacity="0.3"/>
+  <rect x="10" y="80" width="80" height="2" fill="white"/>
+</svg>

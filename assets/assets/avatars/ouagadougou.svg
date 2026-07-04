@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A4A00"/>
+  <!-- Grand Mosque of Ouagadougou — Sudano-Sahelian mud-brick style -->
+  <!-- Main mosque building -->
+  <rect x="16" y="48" width="68" height="32" fill="white"/>
+  <!-- Flat mud-brick parapet with protruding wooden beams (toron) -->
+  <rect x="14" y="44" width="72" height="8" fill="white"/>
+  <!-- Toron (wooden beam stubs) protruding from facade -->
+  <rect x="18" y="40" width="3" height="14" fill="white"/>
+  <rect x="26" y="40" width="3" height="14" fill="white"/>
+  <rect x="34" y="40" width="3" height="14" fill="white"/>
+  <rect x="42" y="40" width="3" height="14" fill="white"/>
+  <rect x="58" y="40" width="3" height="14" fill="white"/>
+  <rect x="66" y="40" width="3" height="14" fill="white"/>
+  <rect x="74" y="40" width="3" height="14" fill="white"/>
+  <!-- Central stepped minaret -->
+  <rect x="38" y="18" width="24" height="34" fill="white"/>
+  <rect x="40" y="10" width="20" height="16" fill="white"/>
+  <rect x="43" y="4" width="14" height="12" fill="white"/>
+  <!-- Toron on minaret too -->
+  <rect x="36" y="22" width="4" height="8" fill="white"/>
+  <rect x="60" y="22" width="4" height="8" fill="white"/>
+  <!-- Crescent on top -->
+  <circle cx="50" cy="4" r="3" fill="#8A4A00"/>
+  <circle cx="52" cy="3" r="2.5" fill="white"/>
+  <!-- Arched doorway -->
+  <rect x="42" y="62" width="16" height="18" fill="#8A4A00"/>
+  <ellipse cx="50" cy="62" rx="8" ry="7" fill="#8A4A00"/>
+  <!-- Base -->
+  <rect x="12" y="80" width="76" height="4" fill="white"/>
+</svg>

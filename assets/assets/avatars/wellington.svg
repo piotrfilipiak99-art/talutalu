@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#003A6A"/>
+  <!-- Beehive (Executive Wing), Wellington — New Zealand's iconic circular parliament annex -->
+  <!-- The famous beehive shape: stepped circular tiers narrowing upward -->
+  <!-- Wide base -->
+  <ellipse cx="50" cy="76" rx="36" ry="8" fill="white"/>
+  <rect x="14" y="70" width="72" height="8" fill="white"/>
+  <!-- Tier 2 -->
+  <ellipse cx="50" cy="66" rx="30" ry="7" fill="white"/>
+  <rect x="20" y="60" width="60" height="8" fill="white"/>
+  <!-- Tier 3 -->
+  <ellipse cx="50" cy="56" rx="24" ry="6" fill="white"/>
+  <rect x="26" y="50" width="48" height="8" fill="white"/>
+  <!-- Tier 4 -->
+  <ellipse cx="50" cy="46" rx="18" ry="5" fill="white"/>
+  <rect x="32" y="40" width="36" height="8" fill="white"/>
+  <!-- Tier 5 -->
+  <ellipse cx="50" cy="36" rx="13" ry="4" fill="white"/>
+  <rect x="37" y="30" width="26" height="8" fill="white"/>
+  <!-- Top tier -->
+  <ellipse cx="50" cy="26" rx="9" ry="4" fill="white"/>
+  <rect x="41" y="22" width="18" height="6" fill="white"/>
+  <!-- Conical copper top (green) -->
+  <polygon points="38,22 50,8 62,22" fill="white"/>
+  <ellipse cx="50" cy="22" rx="12" ry="4" fill="white"/>
+  <!-- Horizontal window band hint on each tier -->
+  <ellipse cx="50" cy="68" rx="28" ry="3" fill="#003A6A" opacity="0.2"/>
+  <ellipse cx="50" cy="58" rx="22" ry="2.5" fill="#003A6A" opacity="0.2"/>
+  <ellipse cx="50" cy="48" rx="16" ry="2" fill="#003A6A" opacity="0.2"/>
+  <!-- Steps at base -->
+  <rect x="8" y="78" width="84" height="4" fill="white"/>
+  <rect x="4" y="82" width="92" height="4" fill="white" opacity="0.5"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A2A3A"/>
+  <!-- Temple of the Tooth (Sri Dalada Maligawa), Kandy / Sri Lanka -->
+  <!-- Multi-roofed Kandyan architecture -->
+  <!-- Octagonal tower (Paththirippuwa) -->
+  <rect x="40" y="28" width="20" height="18" fill="white"/>
+  <polygon points="36,28 64,28 50,14" fill="white"/>
+  <!-- Octagonal roof detail -->
+  <polygon points="38,22 62,22 56,14 44,14" fill="white" opacity="0.5"/>
+  <!-- Main shrine room body -->
+  <rect x="22" y="46" width="56" height="24" fill="white"/>
+  <!-- Curved roof over main shrine -->
+  <polygon points="16,46 84,46 78,32 22,32" fill="white"/>
+  <!-- Red lacquered roof hint - darker line -->
+  <rect x="16" y="44" width="68" height="4" fill="white"/>
+  <!-- Moat (surrounds temple) -->
+  <ellipse cx="50" cy="80" rx="40" ry="8" fill="white" opacity="0.25"/>
+  <!-- Entrance gate with roof -->
+  <rect x="38" y="68" width="24" height="14" fill="#8A2A3A"/>
+  <polygon points="34,68 66,68 60,58 40,58" fill="white"/>
+  <!-- Decorative windows -->
+  <rect x="28" y="54" width="8" height="10" fill="#8A2A3A"/>
+  <rect x="64" y="54" width="8" height="10" fill="#8A2A3A"/>
+  <!-- Base steps -->
+  <rect x="14" y="82" width="72" height="4" fill="white"/>
+</svg>

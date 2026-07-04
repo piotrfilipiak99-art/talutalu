@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A8A"/>
+  <!-- Intramuros / Fort Santiago, Manila - with Rizal monument hint -->
+  <!-- Fort walls -->
+  <rect x="14" y="54" width="72" height="22" fill="white"/>
+  <!-- Wall battlements -->
+  <rect x="14" y="48" width="5" height="6" fill="white"/>
+  <rect x="22" y="48" width="5" height="6" fill="white"/>
+  <rect x="30" y="48" width="5" height="6" fill="white"/>
+  <rect x="38" y="48" width="5" height="6" fill="white"/>
+  <rect x="46" y="48" width="5" height="6" fill="white"/>
+  <rect x="54" y="48" width="5" height="6" fill="white"/>
+  <rect x="62" y="48" width="5" height="6" fill="white"/>
+  <rect x="70" y="48" width="5" height="6" fill="white"/>
+  <rect x="78" y="48" width="5" height="6" fill="white"/>
+  <!-- Corner bastion (circular) -->
+  <circle cx="18" cy="56" r="10" fill="white"/>
+  <circle cx="82" cy="56" r="10" fill="white"/>
+  <!-- Santiago gate arch in center wall -->
+  <rect x="40" y="56" width="20" height="20" fill="#2A5A8A"/>
+  <ellipse cx="50" cy="56" rx="10" ry="8" fill="#2A5A8A"/>
+  <!-- Church towers above walls -->
+  <rect x="22" y="34" width="12" height="20" fill="white"/>
+  <polygon points="22,34 34,34 28,20" fill="white"/>
+  <!-- Bay of Manila / water -->
+  <rect x="10" y="76" width="80" height="8" fill="white" opacity="0.25"/>
+  <rect x="10" y="76" width="80" height="2" fill="white"/>
+</svg>

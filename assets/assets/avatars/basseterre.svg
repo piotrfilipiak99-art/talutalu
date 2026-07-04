@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A3A6A"/>
+  <!-- Brimstone Hill Fortress, Saint Kitts -->
+  <!-- Volcanic hill / Brimstone Hill -->
+  <polygon points="10,80 50,26 90,80" fill="white" opacity="0.3"/>
+  <!-- Fortress walls on hilltop (star fort) -->
+  <rect x="26" y="38" width="48" height="32" fill="white"/>
+  <!-- Fort bastions (star points) -->
+  <polygon points="26,38 18,30 34,38" fill="white"/>
+  <polygon points="74,38 82,30 66,38" fill="white"/>
+  <polygon points="26,70 18,78 34,70" fill="white"/>
+  <polygon points="74,70 82,78 66,70" fill="white"/>
+  <!-- Circular keep/fort magazine in center -->
+  <circle cx="50" cy="54" r="10" fill="#2A3A6A" opacity="0.4"/>
+  <!-- Cannon ports on walls -->
+  <rect x="28" y="50" width="4" height="3" fill="#2A3A6A"/>
+  <rect x="34" y="50" width="4" height="3" fill="#2A3A6A"/>
+  <rect x="64" y="50" width="4" height="3" fill="#2A3A6A"/>
+  <rect x="70" y="50" width="4" height="3" fill="#2A3A6A"/>
+  <!-- Wall battlements at top -->
+  <rect x="26" y="34" width="4" height="4" fill="white"/>
+  <rect x="32" y="34" width="4" height="4" fill="white"/>
+  <rect x="64" y="34" width="4" height="4" fill="white"/>
+  <rect x="70" y="34" width="4" height="4" fill="white"/>
+  <!-- Caribbean sea below -->
+  <rect x="10" y="80" width="80" height="10" fill="white" opacity="0.2"/>
+  <rect x="10" y="80" width="80" height="2" fill="white"/>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A4A2A"/>
+  <!-- Reunification Monument, Yaoundé — two hands clasping above a map -->
+  <!-- Two large clasped hands reaching from below -->
+  <!-- Left arm -->
+  <rect x="12" y="52" width="20" height="36" fill="white" rx="8"/>
+  <!-- Left hand fingers -->
+  <rect x="14" y="40" width="5" height="18" fill="white" rx="2.5"/>
+  <rect x="20" y="36" width="5" height="22" fill="white" rx="2.5"/>
+  <rect x="26" y="38" width="5" height="20" fill="white" rx="2.5"/>
+  <!-- Right arm -->
+  <rect x="68" y="52" width="20" height="36" fill="white" rx="8"/>
+  <!-- Right hand fingers -->
+  <rect x="69" y="40" width="5" height="18" fill="white" rx="2.5"/>
+  <rect x="75" y="36" width="5" height="22" fill="white" rx="2.5"/>
+  <rect x="81" y="38" width="5" height="20" fill="white" rx="2.5"/>
+  <!-- Joined/clasped centre -->
+  <rect x="30" y="50" width="40" height="20" fill="white" rx="10"/>
+  <!-- Map of Cameroon above the hands (stylized) -->
+  <path d="M 36,18 Q 40,10 50,14 Q 60,10 64,18 Q 70,30 62,40 Q 56,48 50,46 Q 44,48 38,40 Q 30,30 36,18 Z" fill="white" opacity="0.7"/>
+  <!-- Star on map (capital marker) -->
+  <polygon points="50,24 52,30 58,30 53,34 55,40 50,36 45,40 47,34 42,30 48,30" fill="#1A4A2A" opacity="0.5"/>
+</svg>

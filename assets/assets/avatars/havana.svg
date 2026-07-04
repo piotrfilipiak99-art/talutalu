@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A3A00"/>
+  <!-- El Capitolio Nacional, Havana -->
+  <!-- Dome (modeled after US/Paris Pantheon) -->
+  <ellipse cx="50" cy="38" rx="18" ry="20" fill="white"/>
+  <!-- Drum -->
+  <rect x="34" y="48" width="32" height="6" fill="white"/>
+  <!-- Statue of the Republic on lantern -->
+  <rect x="46" y="16" width="8" height="12" fill="white"/>
+  <circle cx="50" cy="14" r="5" fill="white"/>
+  <polygon points="46,8 54,8 50,2" fill="white"/>
+  <!-- Main building with colonnaded wings -->
+  <rect x="14" y="54" width="72" height="24" fill="white"/>
+  <!-- Front portico with 10 columns -->
+  <rect x="18" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <rect x="26" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <rect x="34" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <rect x="42" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <rect x="54" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <rect x="62" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <rect x="70" y="54" width="4" height="20" fill="#8A3A00" opacity="0.35"/>
+  <!-- Wide steps -->
+  <rect x="18" y="78" width="64" height="3" fill="white"/>
+  <rect x="12" y="81" width="76" height="3" fill="white"/>
+  <!-- Paseo del Prado -->
+  <rect x="10" y="84" width="80" height="3" fill="white" opacity="0.3"/>
+</svg>

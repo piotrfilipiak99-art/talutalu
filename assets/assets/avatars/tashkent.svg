@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A5A1A"/>
+  <!-- Khast Imam / Hazrati Imam mosque, Tashkent - timurid architecture -->
+  <!-- Central dome with Timurid ribbed style -->
+  <ellipse cx="50" cy="40" rx="18" ry="20" fill="white"/>
+  <!-- Melon dome ribs (vertical lines) -->
+  <rect x="42" y="22" width="2" height="36" fill="#3A5A1A" opacity="0.3"/>
+  <rect x="48" y="20" width="2" height="38" fill="#3A5A1A" opacity="0.3"/>
+  <rect x="54" y="20" width="2" height="38" fill="#3A5A1A" opacity="0.3"/>
+  <rect x="60" y="22" width="2" height="36" fill="#3A5A1A" opacity="0.3"/>
+  <!-- Crescent on drum -->
+  <rect x="48" y="18" width="4" height="4" fill="white"/>
+  <circle cx="50" cy="16" r="3" fill="#3A5A1A"/>
+  <circle cx="52" cy="14" r="2" fill="white"/>
+  <!-- Main building / iwan facade -->
+  <rect x="16" y="56" width="68" height="22" fill="white"/>
+  <!-- Central iwan arch (tall arched portal) -->
+  <rect x="38" y="44" width="24" height="34" fill="white"/>
+  <ellipse cx="50" cy="44" rx="12" ry="16" fill="white"/>
+  <ellipse cx="50" cy="48" rx="8" ry="12" fill="#3A5A1A"/>
+  <!-- Tall minarets flanking iwan -->
+  <rect x="14" y="26" width="8" height="54" fill="white"/>
+  <polygon points="14,26 22,26 18,12" fill="white"/>
+  <rect x="78" y="26" width="8" height="54" fill="white"/>
+  <polygon points="78,26 86,26 82,12" fill="white"/>
+  <!-- Minaret balconies -->
+  <rect x="12" y="46" width="12" height="3" fill="white"/>
+  <rect x="76" y="46" width="12" height="3" fill="white"/>
+  <!-- Base steps -->
+  <rect x="12" y="78" width="76" height="4" fill="white"/>
+</svg>

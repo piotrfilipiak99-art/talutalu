@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A00"/>
+  <!-- FSM Congress Building, Palikir, Micronesia — capitol complex in jungle hills -->
+  <!-- Traditional Micronesian meeting house style with modern government building -->
+  <!-- Lush green hills in background -->
+  <ellipse cx="25" cy="72" rx="28" ry="20" fill="white" opacity="0.2"/>
+  <ellipse cx="75" cy="72" rx="28" ry="20" fill="white" opacity="0.2"/>
+  <!-- Main capitol building -->
+  <rect x="16" y="50" width="68" height="30" fill="white"/>
+  <!-- Hipped roof (tropical style) -->
+  <polygon points="10,50 50,28 90,50" fill="white"/>
+  <!-- Ridge -->
+  <rect x="10" y="46" width="80" height="6" fill="white"/>
+  <!-- Columned portico -->
+  <rect x="20" y="50" width="5" height="28" fill="#1A5A00" opacity="0.3"/>
+  <rect x="30" y="50" width="5" height="28" fill="#1A5A00" opacity="0.3"/>
+  <rect x="40" y="50" width="5" height="28" fill="#1A5A00" opacity="0.3"/>
+  <rect x="55" y="50" width="5" height="28" fill="#1A5A00" opacity="0.3"/>
+  <rect x="65" y="50" width="5" height="28" fill="#1A5A00" opacity="0.3"/>
+  <rect x="75" y="50" width="5" height="28" fill="#1A5A00" opacity="0.3"/>
+  <!-- FSM flag stars on pediment -->
+  <circle cx="38" cy="38" r="2" fill="#1A5A00" opacity="0.4"/>
+  <circle cx="50" cy="34" r="2" fill="#1A5A00" opacity="0.4"/>
+  <circle cx="62" cy="38" r="2" fill="#1A5A00" opacity="0.4"/>
+  <circle cx="44" cy="44" r="2" fill="#1A5A00" opacity="0.4"/>
+  <!-- Main door -->
+  <rect x="42" y="62" width="16" height="18" fill="#1A5A00"/>
+  <!-- Steps -->
+  <rect x="24" y="80" width="52" height="3" fill="white"/>
+  <rect x="18" y="83" width="64" height="3" fill="white"/>
+</svg>

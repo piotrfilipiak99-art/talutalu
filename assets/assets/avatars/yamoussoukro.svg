@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A2A"/>
+  <!-- Basilica of Our Lady of Peace, Yamoussoukro (larger than St. Peter's) -->
+  <!-- Enormous dome (largest church dome in world) -->
+  <ellipse cx="50" cy="38" rx="22" ry="24" fill="white"/>
+  <!-- Drum -->
+  <rect x="30" y="50" width="40" height="8" fill="white"/>
+  <!-- Lantern -->
+  <rect x="44" y="12" width="12" height="12" fill="white"/>
+  <ellipse cx="50" cy="12" rx="6" ry="4" fill="white"/>
+  <!-- Cross on top -->
+  <rect x="48" y="4" width="4" height="8" fill="white"/>
+  <rect x="44" y="8" width="12" height="3" fill="white"/>
+  <!-- Main body (nave) -->
+  <rect x="16" y="58" width="68" height="20" fill="white"/>
+  <!-- 4 tall corner minarets (unusual for Catholic church) -->
+  <rect x="8" y="28" width="8" height="52" fill="white"/>
+  <polygon points="8,28 16,28 12,14" fill="white"/>
+  <rect x="84" y="28" width="8" height="52" fill="white"/>
+  <polygon points="84,28 92,28 88,14" fill="white"/>
+  <!-- Colonnaded portico -->
+  <rect x="22" y="58" width="4" height="16" fill="#1A5A2A" opacity="0.3"/>
+  <rect x="30" y="58" width="4" height="16" fill="#1A5A2A" opacity="0.3"/>
+  <rect x="62" y="58" width="4" height="16" fill="#1A5A2A" opacity="0.3"/>
+  <rect x="70" y="58" width="4" height="16" fill="#1A5A2A" opacity="0.3"/>
+  <!-- Reflecting pool base -->
+  <rect x="10" y="78" width="80" height="4" fill="white"/>
+  <rect x="10" y="82" width="80" height="4" fill="white" opacity="0.3"/>
+</svg>

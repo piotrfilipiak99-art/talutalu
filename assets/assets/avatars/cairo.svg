@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#C07810"/>
+  <!-- Great Pyramids of Giza, Cairo -->
+  <!-- Large pyramid (Khufu) center-left -->
+  <polygon points="16,78 64,78 40,22" fill="white"/>
+  <!-- Medium pyramid (Khafre) center-right -->
+  <polygon points="38,78 78,78 58,30" fill="white"/>
+  <!-- Small pyramid (Menkaure) -->
+  <polygon points="60,78 88,78 74,44" fill="white"/>
+  <!-- Sphinx (lying down, left) -->
+  <ellipse cx="22" cy="80" rx="14" ry="6" fill="white" opacity="0.6"/>
+  <circle cx="16" cy="76" r="5" fill="white" opacity="0.6"/>
+  <!-- Desert sand dunes -->
+  <path d="M10,82 Q30,78 50,80 Q70,78 90,82 L90,90 L10,90Z" fill="white" opacity="0.3"/>
+  <!-- Base / sand line -->
+  <rect x="10" y="78" width="80" height="4" fill="white"/>
+</svg>

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A1A5A"/>
+  <!-- Uganda Martyrs Shrine, Namugongo (near Kampala) — Africa's most-visited Catholic pilgrimage site -->
+  <!-- Spectacular octagonal/conical thatched-style modern basilica -->
+  <!-- Central tall conical tower (resembling traditional Uganda hut, but modern) -->
+  <polygon points="24,62 50,10 76,62" fill="white"/>
+  <!-- Inner cone detail (layered look) -->
+  <polygon points="30,62 50,18 70,62" fill="#3A1A5A" opacity="0.15"/>
+  <polygon points="36,62 50,26 64,62" fill="#3A1A5A" opacity="0.12"/>
+  <!-- Band rings (layered conical structure) -->
+  <rect x="28" y="50" width="44" height="4" fill="white"/>
+  <rect x="34" y="42" width="32" height="3" fill="white"/>
+  <rect x="38" y="34" width="24" height="3" fill="white"/>
+  <!-- Cross on apex -->
+  <rect x="48" y="6" width="4" height="8" fill="white"/>
+  <rect x="44" y="9" width="12" height="3" fill="white"/>
+  <!-- Wide circular base ring (the ambulatory/colonnade ring) -->
+  <ellipse cx="50" cy="62" rx="38" ry="10" fill="white"/>
+  <ellipse cx="50" cy="62" rx="32" ry="7" fill="#3A1A5A" opacity="0.2"/>
+  <!-- Outer ring columns -->
+  <rect x="14" y="58" width="4" height="18" fill="white"/>
+  <rect x="22" y="56" width="4" height="20" fill="white"/>
+  <rect x="30" y="56" width="4" height="20" fill="white"/>
+  <rect x="62" y="56" width="4" height="20" fill="white"/>
+  <rect x="70" y="56" width="4" height="20" fill="white"/>
+  <rect x="78" y="58" width="4" height="18" fill="white"/>
+  <!-- Outer ambulatory roof ring -->
+  <rect x="10" y="74" width="80" height="6" fill="white"/>
+  <!-- Steps -->
+  <rect x="16" y="80" width="68" height="4" fill="white"/>
+  <rect x="10" y="84" width="80" height="4" fill="white" opacity="0.4"/>
+</svg>

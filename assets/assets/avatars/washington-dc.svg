@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A3A6A"/>
+  <!-- US Capitol Building, Washington D.C. -->
+  <!-- Dome -->
+  <ellipse cx="50" cy="38" rx="16" ry="18" fill="white"/>
+  <!-- Drum below dome -->
+  <rect x="36" y="46" width="28" height="6" fill="white"/>
+  <!-- Statue of Freedom on top -->
+  <rect x="47" y="18" width="6" height="10" fill="white"/>
+  <circle cx="50" cy="16" r="4" fill="white"/>
+  <polygon points="47,10 53,10 50,4" fill="white"/>
+  <!-- Main building body -->
+  <rect x="18" y="52" width="64" height="22" fill="white"/>
+  <!-- Senate wing (left) -->
+  <rect x="10" y="58" width="12" height="16" fill="white"/>
+  <!-- House wing (right) -->
+  <rect x="78" y="58" width="12" height="16" fill="white"/>
+  <!-- Portico columns -->
+  <rect x="22" y="52" width="4" height="22" fill="#1A3A6A" opacity="0.4"/>
+  <rect x="30" y="52" width="4" height="22" fill="#1A3A6A" opacity="0.4"/>
+  <rect x="62" y="52" width="4" height="22" fill="#1A3A6A" opacity="0.4"/>
+  <rect x="70" y="52" width="4" height="22" fill="#1A3A6A" opacity="0.4"/>
+  <!-- Central entrance steps -->
+  <rect x="36" y="72" width="28" height="4" fill="white"/>
+  <rect x="32" y="76" width="36" height="3" fill="white"/>
+  <!-- Mall reflecting pool -->
+  <rect x="10" y="82" width="80" height="4" fill="white" opacity="0.3"/>
+</svg>

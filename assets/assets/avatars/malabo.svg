@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#00693E"/>
+  <!-- Cathedral of Santa Isabel, Malabo, Equatorial Guinea -->
+  <!-- Neo-Gothic colonial cathedral — twin spires, one taller than the other -->
+  <!-- Left (taller) spire -->
+  <rect x="10" y="28" width="18" height="54" fill="white"/>
+  <polygon points="10,28 28,28 19,6" fill="white"/>
+  <!-- Right (shorter) spire -->
+  <rect x="50" y="36" width="16" height="46" fill="white"/>
+  <polygon points="50,36 66,36 58,18" fill="white"/>
+  <!-- Central nave -->
+  <rect x="26" y="48" width="26" height="34" fill="white"/>
+  <!-- Nave gable -->
+  <polygon points="26,48 39,32 52,48" fill="white"/>
+  <!-- Rose window in gable -->
+  <circle cx="39" cy="44" r="6" fill="#00693E" opacity="0.4"/>
+  <circle cx="39" cy="44" r="3" fill="white"/>
+  <!-- Lancet windows left tower -->
+  <rect x="13" y="36" width="5" height="12" fill="#00693E" opacity="0.4"/>
+  <rect x="20" y="36" width="5" height="12" fill="#00693E" opacity="0.4"/>
+  <!-- Lancet windows right tower -->
+  <rect x="53" y="44" width="4" height="10" fill="#00693E" opacity="0.4"/>
+  <rect x="59" y="44" width="4" height="10" fill="#00693E" opacity="0.4"/>
+  <!-- Main entrance door -->
+  <rect x="30" y="64" width="18" height="18" fill="#00693E"/>
+  <ellipse cx="39" cy="64" rx="9" ry="8" fill="#00693E"/>
+  <!-- Steps -->
+  <rect x="22" y="82" width="48" height="3" fill="white"/>
+  <rect x="18" y="85" width="56" height="3" fill="white"/>
+</svg>

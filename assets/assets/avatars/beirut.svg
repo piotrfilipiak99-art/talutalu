@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A8A"/>
+  <!-- Pigeon Rocks (Raouché), Beirut - sea stacks in Mediterranean -->
+  <!-- Sea / water -->
+  <rect x="10" y="68" width="80" height="20" fill="white" opacity="0.25"/>
+  <rect x="10" y="68" width="80" height="3" fill="white"/>
+  <!-- Left sea stack (arched / pierced) -->
+  <rect x="16" y="38" width="22" height="32" fill="white"/>
+  <ellipse cx="27" cy="70" rx="11" ry="8" fill="#1A5A8A"/>
+  <!-- Arch through left rock -->
+  <ellipse cx="27" cy="58" rx="7" ry="10" fill="#1A5A8A"/>
+  <!-- Right rock (taller) -->
+  <rect x="54" y="28" width="26" height="42" fill="white"/>
+  <!-- Rocky irregular tops -->
+  <polygon points="16,38 38,38 34,26 28,30 22,22 16,30" fill="white"/>
+  <polygon points="54,28 80,28 78,16 70,20 62,14 56,20" fill="white"/>
+  <!-- Coastline / corniche -->
+  <path d="M10,68 Q30,64 50,66 Q70,64 90,68" stroke="white" stroke-width="2" fill="none"/>
+  <!-- City skyline hint in background -->
+  <rect x="70" y="54" width="8" height="14" fill="white" opacity="0.3"/>
+  <rect x="80" y="50" width="8" height="18" fill="white" opacity="0.3"/>
+</svg>

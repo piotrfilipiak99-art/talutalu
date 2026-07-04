@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A0040"/>
+  <!-- Immaculate Conception Cathedral & Clock Tower, Apia, Samoa -->
+  <!-- The twin-towered cathedral and the famous 4-sided clock tower -->
+  <!-- Clock Tower (freestanding, most iconic landmark) -->
+  <rect x="40" y="22" width="20" height="58" fill="white"/>
+  <!-- Clock faces -->
+  <circle cx="50" cy="34" r="8" fill="#8A0040" opacity="0.4"/>
+  <circle cx="50" cy="34" r="5" fill="white"/>
+  <line x1="50" y1="34" x2="50" y2="28" stroke="#8A0040" stroke-width="2"/>
+  <line x1="50" y1="34" x2="54" y2="36" stroke="#8A0040" stroke-width="1.5"/>
+  <!-- Top decorative cornice -->
+  <rect x="36" y="18" width="28" height="8" fill="white"/>
+  <!-- Pyramidal top -->
+  <polygon points="36,18 50,4 64,18" fill="white"/>
+  <!-- Corner finials -->
+  <circle cx="36" cy="18" r="2.5" fill="white"/>
+  <circle cx="64" cy="18" r="2.5" fill="white"/>
+  <!-- Cathedral behind (partial view) -->
+  <rect x="8" y="46" width="28" height="38" fill="white"/>
+  <polygon points="4,46 22,26 40,46" fill="white"/>
+  <rect x="72" y="46" width="20" height="38" fill="white"/>
+  <polygon points="62,46 82,26 90,42" fill="white"/>
+  <!-- Lancet windows -->
+  <rect x="12" y="54" width="6" height="12" fill="#8A0040" opacity="0.4"/>
+  <ellipse cx="15" cy="54" rx="3" ry="3" fill="#8A0040" opacity="0.4"/>
+  <rect x="22" y="54" width="6" height="12" fill="#8A0040" opacity="0.4"/>
+  <ellipse cx="25" cy="54" rx="3" ry="3" fill="#8A0040" opacity="0.4"/>
+  <!-- Steps -->
+  <rect x="8" y="84" width="84" height="3" fill="white"/>
+  <rect x="4" y="87" width="92" height="3" fill="white" opacity="0.5"/>
+</svg>

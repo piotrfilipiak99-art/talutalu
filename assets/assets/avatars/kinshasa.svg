@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A1A00"/>
+  <!-- Independence Monument (Stade des Martyrs area), Kinshasa — flame torch -->
+  <!-- Tall obelisk/pylon base -->
+  <polygon points="40,82 44,18 56,18 60,82" fill="white"/>
+  <!-- Decorative horizontal bands -->
+  <rect x="38" y="42" width="24" height="4" fill="#3A1A00" opacity="0.3"/>
+  <rect x="38" y="62" width="24" height="4" fill="#3A1A00" opacity="0.3"/>
+  <!-- Torch flame on top -->
+  <path d="M 44,18 Q 38,10 42,4 Q 46,0 50,6 Q 54,0 58,4 Q 62,10 56,18 Z" fill="white"/>
+  <!-- Inner flame hint -->
+  <path d="M 46,18 Q 42,12 46,8 Q 50,4 54,8 Q 58,12 54,18 Z" fill="#3A1A00" opacity="0.25"/>
+  <!-- Wide base platform -->
+  <rect x="28" y="80" width="44" height="6" fill="white"/>
+  <rect x="18" y="86" width="64" height="5" fill="white"/>
+  <rect x="10" y="91" width="80" height="4" fill="white" opacity="0.5"/>
+  <!-- Stars around torch (DRC flag stars) -->
+  <polygon points="28,14 29,18 33,18 30,20 31,24 28,22 25,24 26,20 23,18 27,18" fill="white" opacity="0.6"/>
+  <polygon points="72,14 73,18 77,18 74,20 75,24 72,22 69,24 70,20 67,18 71,18" fill="white" opacity="0.6"/>
+</svg>

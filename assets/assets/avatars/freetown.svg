@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A00"/>
+  <!-- Cotton Tree, Freetown — the ancient kapok tree where freed slaves gathered in 1792 -->
+  <!-- Massive kapok tree (the most iconic landmark of Sierra Leone) -->
+  <!-- Trunk (buttressed, very wide) -->
+  <polygon points="38,88 40,56 44,40 56,40 60,56 62,88" fill="white"/>
+  <!-- Buttress roots (distinctive kapok feature) -->
+  <polygon points="38,88 32,76 40,70" fill="white"/>
+  <polygon points="62,88 68,76 60,70" fill="white"/>
+  <polygon points="38,88 28,82 36,74" fill="white"/>
+  <polygon points="62,88 72,82 64,74" fill="white"/>
+  <!-- Main canopy layers (spreading wide) -->
+  <!-- Lowest/widest layer -->
+  <ellipse cx="50" cy="46" rx="42" ry="14" fill="white"/>
+  <!-- Middle layer -->
+  <ellipse cx="50" cy="34" rx="32" ry="12" fill="white"/>
+  <!-- Upper layer -->
+  <ellipse cx="50" cy="22" rx="22" ry="10" fill="white"/>
+  <!-- Top cluster -->
+  <ellipse cx="50" cy="12" rx="12" ry="7" fill="white"/>
+  <!-- Canopy texture (branches visible) -->
+  <ellipse cx="22" cy="44" rx="12" ry="6" fill="#1A5A00" opacity="0.15"/>
+  <ellipse cx="78" cy="44" rx="12" ry="6" fill="#1A5A00" opacity="0.15"/>
+  <ellipse cx="30" cy="32" rx="10" ry="5" fill="#1A5A00" opacity="0.1"/>
+  <ellipse cx="70" cy="32" rx="10" ry="5" fill="#1A5A00" opacity="0.1"/>
+  <!-- Ground/roots line -->
+  <rect x="10" y="86" width="80" height="6" fill="white" opacity="0.2"/>
+</svg>

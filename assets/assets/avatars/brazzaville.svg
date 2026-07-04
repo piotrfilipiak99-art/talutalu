@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A1A5A"/>
+  <!-- Basilica of Sainte-Anne, Brazzaville — striking modernist brick church -->
+  <!-- Tall pointed twin towers (distinctive angular profile) -->
+  <!-- Left tower -->
+  <polygon points="12,82 12,26 26,8 40,82" fill="white"/>
+  <!-- Right tower (mirror) -->
+  <polygon points="88,82 88,26 74,8 60,82" fill="white"/>
+  <!-- Central nave facade (lower) -->
+  <rect x="28" y="44" width="44" height="38" fill="white"/>
+  <!-- Pointed arch gable of nave -->
+  <polygon points="28,44 50,26 72,44" fill="white"/>
+  <!-- Rose window -->
+  <circle cx="50" cy="40" r="8" fill="#2A1A5A" opacity="0.4"/>
+  <circle cx="50" cy="40" r="5" fill="white"/>
+  <circle cx="50" cy="40" r="2" fill="#2A1A5A" opacity="0.3"/>
+  <!-- Main arched entrance -->
+  <rect x="40" y="62" width="20" height="20" fill="#2A1A5A"/>
+  <ellipse cx="50" cy="62" rx="10" ry="9" fill="#2A1A5A"/>
+  <!-- Brick texture hint on towers -->
+  <line x1="16" y1="40" x2="36" y2="40" stroke="#2A1A5A" stroke-width="1.5" opacity="0.2"/>
+  <line x1="14" y1="56" x2="38" y2="56" stroke="#2A1A5A" stroke-width="1.5" opacity="0.2"/>
+  <line x1="62" y1="40" x2="84" y2="40" stroke="#2A1A5A" stroke-width="1.5" opacity="0.2"/>
+  <line x1="62" y1="56" x2="86" y2="56" stroke="#2A1A5A" stroke-width="1.5" opacity="0.2"/>
+  <!-- Congo River at base -->
+  <rect x="8" y="86" width="84" height="6" fill="white" opacity="0.2"/>
+</svg>

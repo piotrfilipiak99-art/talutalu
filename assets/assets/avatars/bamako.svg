@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A2A00"/>
+  <!-- Great Mosque of Djenné style / Monument de la Paix, Bamako, Mali -->
+  <!-- Using the iconic Djenné mosque style (Sahelian, mud-brick) as Mali's iconic image -->
+  <!-- Main mosque mass (three towers / torons) -->
+  <!-- Central and tallest tower -->
+  <rect x="38" y="12" width="24" height="60" fill="white"/>
+  <!-- Torons (protruding wood beams) on central tower -->
+  <rect x="34" y="20" width="6" height="4" fill="white"/>
+  <rect x="60" y="20" width="6" height="4" fill="white"/>
+  <rect x="34" y="34" width="6" height="4" fill="white"/>
+  <rect x="60" y="34" width="6" height="4" fill="white"/>
+  <rect x="34" y="48" width="6" height="4" fill="white"/>
+  <rect x="60" y="48" width="6" height="4" fill="white"/>
+  <!-- Tower top with mud spikes -->
+  <polygon points="38,12 41,4 44,12" fill="white"/>
+  <polygon points="44,12 47,2 50,12" fill="white"/>
+  <polygon points="50,12 53,4 56,12" fill="white"/>
+  <polygon points="56,12 59,2 62,12" fill="white"/>
+  <!-- Left flanking tower -->
+  <rect x="12" y="28" width="28" height="44" fill="white"/>
+  <rect x="8" y="26" width="6" height="4" fill="white"/>
+  <rect x="8" y="36" width="6" height="4" fill="white"/>
+  <rect x="8" y="46" width="6" height="4" fill="white"/>
+  <!-- Left tower spike top -->
+  <polygon points="12,28 16,16 20,28" fill="white"/>
+  <polygon points="20,28 24,18 28,28" fill="white"/>
+  <!-- Right flanking tower -->
+  <rect x="60" y="28" width="28" height="44" fill="white"/>
+  <rect x="86" y="26" width="6" height="4" fill="white"/>
+  <rect x="86" y="36" width="6" height="4" fill="white"/>
+  <rect x="86" y="46" width="6" height="4" fill="white"/>
+  <polygon points="72,28 76,16 80,28" fill="white"/>
+  <polygon points="80,28 84,18 88,28" fill="white"/>
+  <!-- Base platform -->
+  <rect x="8" y="72" width="84" height="8" fill="white"/>
+  <rect x="6" y="80" width="88" height="5" fill="white" opacity="0.5"/>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#6A3A00"/>
+  <!-- Old Cathedral of Managua (ruins after 1972 earthquake) -->
+  <!-- Iconic ruined twin towers -->
+  <rect x="18" y="28" width="16" height="50" fill="white"/>
+  <rect x="66" y="28" width="16" height="50" fill="white"/>
+  <!-- Left tower - still standing with dome -->
+  <ellipse cx="26" cy="26" rx="10" ry="7" fill="white"/>
+  <polygon points="18,26 34,26 26,12" fill="white"/>
+  <!-- Right tower - broken/damaged (jagged top) -->
+  <polygon points="66,28 82,28 78,18 74,22 70,14 66,20" fill="white"/>
+  <!-- Facade between towers (mostly standing) -->
+  <rect x="30" y="44" width="40" height="34" fill="white"/>
+  <!-- Large round window (partially visible) -->
+  <circle cx="50" cy="56" r="10" fill="#6A3A00"/>
+  <circle cx="50" cy="56" rx="8" r="7" fill="white" opacity="0.15"/>
+  <!-- Earthquake crack hint -->
+  <path d="M50,44 L46,52 L52,58 L48,68" stroke="#6A3A00" stroke-width="2" fill="none"/>
+  <!-- Ruined entrance (open) -->
+  <rect x="40" y="64" width="20" height="14" fill="#6A3A00"/>
+  <ellipse cx="50" cy="64" rx="10" ry="8" fill="#6A3A00"/>
+  <!-- Rubble at base -->
+  <rect x="14" y="76" width="72" height="6" fill="white" opacity="0.6"/>
+  <!-- Ground -->
+  <rect x="10" y="82" width="80" height="4" fill="white"/>
+  <!-- Lake Managua hint -->
+  <rect x="10" y="86" width="80" height="4" fill="white" opacity="0.2"/>
+</svg>

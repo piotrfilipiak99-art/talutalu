@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A6A"/>
+  <!-- Genghis Khan Equestrian Statue + Sukhbaatar Square -->
+  <!-- Horse (simplified silhouette) -->
+  <ellipse cx="50" cy="42" rx="22" ry="12" fill="white"/>
+  <!-- Horse head -->
+  <circle cx="70" cy="36" r="8" fill="white"/>
+  <polygon points="74,30 78,22 72,28" fill="white"/>
+  <!-- Horse legs -->
+  <rect x="32" y="52" width="5" height="16" fill="white"/>
+  <rect x="40" y="52" width="5" height="18" fill="white"/>
+  <rect x="54" y="52" width="5" height="16" fill="white"/>
+  <rect x="62" y="52" width="5" height="14" fill="white"/>
+  <!-- Rider (Genghis Khan) on horse -->
+  <rect x="48" y="28" width="10" height="16" fill="white"/>
+  <circle cx="53" cy="24" r="5" fill="white"/>
+  <!-- Helmet -->
+  <polygon points="48,24 58,24 53,16" fill="white"/>
+  <!-- Arm with scepter -->
+  <rect x="56" y="30" width="12" height="3" fill="white"/>
+  <rect x="66" y="24" width="3" height="10" fill="white"/>
+  <!-- Plinth/pedestal -->
+  <rect x="28" y="68" width="44" height="8" fill="white"/>
+  <rect x="22" y="76" width="56" height="5" fill="white"/>
+  <!-- Steppe horizon line -->
+  <rect x="10" y="81" width="80" height="3" fill="white" opacity="0.3"/>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A3A00"/>
+  <!-- Cathédrale de Port-au-Prince ruins (iconic after 2010 earthquake) -->
+  <!-- Ruins of twin towers -->
+  <rect x="16" y="30" width="14" height="48" fill="white"/>
+  <rect x="70" y="30" width="14" height="48" fill="white"/>
+  <!-- Partially collapsed facade (broken top right tower) -->
+  <polygon points="70,30 84,30 78,16" fill="white"/>
+  <polygon points="70,14 80,20 68,22" fill="white" opacity="0.5"/>
+  <!-- Left tower cap intact -->
+  <polygon points="16,30 30,30 23,14" fill="white"/>
+  <!-- Facade walls (partial) -->
+  <rect x="26" y="42" width="14" height="36" fill="white"/>
+  <rect x="60" y="42" width="14" height="36" fill="white"/>
+  <!-- Remaining arch / rose window (partially standing) -->
+  <circle cx="50" cy="52" r="10" fill="#5A3A00"/>
+  <circle cx="50" cy="52" r="7" fill="white" opacity="0.2"/>
+  <!-- Rubble/fallen stones at base -->
+  <rect x="16" y="74" width="68" height="6" fill="white" opacity="0.6"/>
+  <ellipse cx="32" cy="78" rx="8" ry="4" fill="white" opacity="0.5"/>
+  <ellipse cx="64" cy="76" rx="6" ry="3" fill="white" opacity="0.4"/>
+  <!-- Ground -->
+  <rect x="10" y="80" width="80" height="4" fill="white"/>
+</svg>

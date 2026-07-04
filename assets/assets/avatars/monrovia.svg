@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A1A00"/>
+  <!-- Providence Island, Monrovia — first settlement of freed American slaves, 1822 -->
+  <!-- Small rocky island with fort and lighthouse -->
+  <!-- Island mass -->
+  <ellipse cx="50" cy="76" rx="38" ry="12" fill="white"/>
+  <!-- Fort/settlement on island -->
+  <rect x="18" y="56" width="64" height="22" fill="white"/>
+  <!-- Fort battlements -->
+  <rect x="18" y="48" width="8" height="10" fill="white"/>
+  <rect x="28" y="48" width="8" height="10" fill="white"/>
+  <rect x="64" y="48" width="8" height="10" fill="white"/>
+  <rect x="74" y="48" width="8" height="10" fill="white"/>
+  <!-- Lighthouse (prominent landmark) -->
+  <rect x="44" y="24" width="12" height="36" fill="white"/>
+  <!-- Lighthouse lantern room -->
+  <rect x="40" y="18" width="20" height="10" fill="white"/>
+  <polygon points="40,18 50,8 60,18" fill="white"/>
+  <!-- Light beam hint -->
+  <line x1="50" y1="12" x2="70" y2="4" stroke="white" stroke-width="2" opacity="0.4"/>
+  <line x1="50" y1="12" x2="76" y2="14" stroke="white" stroke-width="2" opacity="0.4"/>
+  <!-- Liberian stripes hint on fort wall -->
+  <rect x="18" y="60" width="64" height="2" fill="#8A1A00" opacity="0.25"/>
+  <rect x="18" y="64" width="64" height="2" fill="#8A1A00" opacity="0.25"/>
+  <rect x="18" y="68" width="64" height="2" fill="#8A1A00" opacity="0.25"/>
+  <!-- Stars/window on fort -->
+  <polygon points="30,54 31,57 34,57 32,59 33,62 30,60 27,62 28,59 26,57 29,57" fill="#8A1A00" opacity="0.3"/>
+  <!-- Water around island -->
+  <rect x="8" y="86" width="84" height="6" fill="white" opacity="0.15"/>
+</svg>

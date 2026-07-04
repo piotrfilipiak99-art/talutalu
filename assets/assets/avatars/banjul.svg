@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A1A5A"/>
+  <!-- Arch 22, Banjul — independence arch straddling the road to the city -->
+  <!-- Massive square arch spanning across -->
+  <!-- Left pillar -->
+  <rect x="10" y="34" width="28" height="48" fill="white"/>
+  <!-- Right pillar -->
+  <rect x="62" y="34" width="28" height="48" fill="white"/>
+  <!-- Top connecting beam/arch lintel -->
+  <rect x="10" y="28" width="80" height="12" fill="white"/>
+  <!-- Decorative parapet on top -->
+  <rect x="10" y="20" width="80" height="10" fill="white"/>
+  <!-- Crenellations on top -->
+  <rect x="14" y="14" width="8" height="8" fill="white"/>
+  <rect x="26" y="14" width="8" height="8" fill="white"/>
+  <rect x="58" y="14" width="8" height="8" fill="white"/>
+  <rect x="70" y="14" width="8" height="8" fill="white"/>
+  <!-- Central opening (arch passthrough) -->
+  <rect x="38" y="34" width="24" height="48" fill="#3A1A5A"/>
+  <!-- Road perspective lines through arch -->
+  <line x1="50" y1="82" x2="42" y2="50" stroke="white" stroke-width="2" opacity="0.3"/>
+  <line x1="50" y1="82" x2="58" y2="50" stroke="white" stroke-width="2" opacity="0.3"/>
+  <!-- Gambia written (plaques on arch) -->
+  <rect x="14" y="50" width="20" height="6" fill="#3A1A5A" opacity="0.3"/>
+  <rect x="66" y="50" width="20" height="6" fill="#3A1A5A" opacity="0.3"/>
+  <!-- Ground -->
+  <rect x="8" y="82" width="84" height="5" fill="white" opacity="0.25"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A5A"/>
+  <!-- Saint Peter and Paul Cathedral, Paramaribo - wooden cathedral -->
+  <!-- Twin wooden towers -->
+  <rect x="22" y="24" width="16" height="52" fill="white"/>
+  <rect x="62" y="24" width="16" height="52" fill="white"/>
+  <!-- Pointed tower roofs -->
+  <polygon points="22,24 38,24 30,8" fill="white"/>
+  <polygon points="62,24 78,24 70,8" fill="white"/>
+  <!-- Nave -->
+  <rect x="34" y="46" width="32" height="30" fill="white"/>
+  <!-- Nave pitched roof -->
+  <polygon points="32,46 68,46 50,32" fill="white"/>
+  <!-- Louvered wooden windows (colonial Dutch-Caribbean style) -->
+  <rect x="24" y="38" width="4" height="6" fill="#1A6A5A"/>
+  <rect x="30" y="38" width="4" height="6" fill="#1A6A5A"/>
+  <rect x="62" y="38" width="4" height="6" fill="#1A6A5A"/>
+  <rect x="68" y="38" width="4" height="6" fill="#1A6A5A"/>
+  <!-- Gothic pointed windows on nave -->
+  <rect x="38" y="54" width="8" height="14" fill="#1A6A5A"/>
+  <polygon points="38,54 46,54 42,48" fill="#1A6A5A"/>
+  <rect x="54" y="54" width="8" height="14" fill="#1A6A5A"/>
+  <polygon points="54,54 62,54 58,48" fill="#1A6A5A"/>
+  <!-- Entry door -->
+  <rect x="44" y="64" width="12" height="12" fill="#1A6A5A"/>
+  <polygon points="44,64 56,64 50,58" fill="#1A6A5A"/>
+  <!-- Base / steps -->
+  <rect x="18" y="76" width="64" height="4" fill="white"/>
+</svg>

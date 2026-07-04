@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A3A"/>
+  <!-- Gediminas Tower, Vilnius -->
+  <!-- Hilltop base -->
+  <ellipse cx="50" cy="82" rx="34" ry="10" fill="white" opacity="0.5"/>
+  <!-- Tower body (3 slightly tapering tiers) -->
+  <rect x="34" y="60" width="32" height="18" fill="white"/>
+  <rect x="36" y="46" width="28" height="16" fill="white"/>
+  <rect x="38" y="32" width="24" height="16" fill="white"/>
+  <!-- Battlements on each tier -->
+  <rect x="34" y="56" width="4" height="4" fill="white"/>
+  <rect x="40" y="56" width="4" height="4" fill="white"/>
+  <rect x="46" y="56" width="4" height="4" fill="white"/>
+  <rect x="52" y="56" width="4" height="4" fill="white"/>
+  <rect x="58" y="56" width="4" height="4" fill="white"/>
+  <!-- Top parapet battlements -->
+  <rect x="38" y="28" width="3" height="4" fill="white"/>
+  <rect x="43" y="28" width="3" height="4" fill="white"/>
+  <rect x="48" y="28" width="3" height="4" fill="white"/>
+  <rect x="53" y="28" width="3" height="4" fill="white"/>
+  <rect x="58" y="28" width="3" height="4" fill="white"/>
+  <!-- Flagpole -->
+  <rect x="49" y="14" width="2" height="14" fill="white"/>
+  <polygon points="51,14 64,18 51,22" fill="white"/>
+  <!-- Arrow slit windows -->
+  <rect x="46" y="50" width="3" height="7" fill="#1A6A3A"/>
+  <rect x="46" y="36" width="3" height="7" fill="#1A6A3A"/>
+  <!-- Base steps on hill -->
+  <rect x="28" y="78" width="44" height="3" fill="white"/>
+</svg>

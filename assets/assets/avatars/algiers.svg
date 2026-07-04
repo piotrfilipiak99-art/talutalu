@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A8A"/>
+  <!-- Maqam Echahid (Martyrs Memorial), Algiers - 3 palm fronds -->
+  <!-- Three curved palm frond shapes meeting at top -->
+  <!-- Left frond -->
+  <path d="M50,22 Q22,30 14,66 Q20,60 30,56 Q36,46 44,36 Z" fill="white"/>
+  <!-- Right frond -->
+  <path d="M50,22 Q78,30 86,66 Q80,60 70,56 Q64,46 56,36 Z" fill="white"/>
+  <!-- Center frond (taller, in front) -->
+  <path d="M44,36 Q50,22 56,36 Q56,52 50,78 Q44,52 44,36Z" fill="white"/>
+  <!-- Eternal flame at top (where fronds meet) -->
+  <ellipse cx="50" cy="22" rx="6" ry="8" fill="white"/>
+  <!-- Flame -->
+  <path d="M44,22 Q50,10 56,22 Q52,16 50,12 Q48,16 44,22Z" fill="white"/>
+  <!-- Base circular tower -->
+  <rect x="34" y="68" width="32" height="12" fill="white"/>
+  <ellipse cx="50" cy="68" rx="16" ry="6" fill="white"/>
+  <!-- Platform base -->
+  <rect x="22" y="80" width="56" height="4" fill="white"/>
+  <!-- Bay of Algiers (Mediterranean) -->
+  <rect x="10" y="84" width="80" height="6" fill="white" opacity="0.2"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A2A"/>
+  <!-- São Tomé Cathedral (Sé Catedral), São Tomé — 16th-century Portuguese colonial -->
+  <!-- One of Africa's oldest cathedrals -->
+  <!-- Single bell tower (one tower survives) -->
+  <rect x="30" y="18" width="22" height="62" fill="white"/>
+  <!-- Bell tower top (rounded Manueline style) -->
+  <polygon points="26,22 41,4 56,22" fill="white"/>
+  <!-- Bell openings in tower -->
+  <rect x="33" y="28" width="7" height="10" fill="#1A6A2A" opacity="0.5"/>
+  <ellipse cx="36.5" cy="28" rx="3.5" ry="4" fill="#1A6A2A" opacity="0.5"/>
+  <rect x="42" y="28" width="7" height="10" fill="#1A6A2A" opacity="0.5"/>
+  <ellipse cx="45.5" cy="28" rx="3.5" ry="4" fill="#1A6A2A" opacity="0.5"/>
+  <!-- Nave (ruin — walls without roof) -->
+  <rect x="50" y="38" width="36" height="42" fill="white"/>
+  <!-- Nave open to sky (ruined nave) -->
+  <rect x="54" y="42" width="28" height="34" fill="#1A6A2A" opacity="0.3"/>
+  <!-- Nave facade gable with window -->
+  <polygon points="50,38 68,18 86,38" fill="white"/>
+  <circle cx="68" cy="34" r="7" fill="#1A6A2A" opacity="0.4"/>
+  <circle cx="68" cy="34" r="4" fill="white"/>
+  <!-- Lancet windows on nave sides -->
+  <rect x="54" y="50" width="5" height="12" fill="#1A6A2A" opacity="0.5"/>
+  <rect x="63" y="50" width="5" height="12" fill="#1A6A2A" opacity="0.5"/>
+  <rect x="76" y="50" width="5" height="12" fill="#1A6A2A" opacity="0.5"/>
+  <!-- Steps -->
+  <rect x="22" y="80" width="64" height="3" fill="white"/>
+  <rect x="18" y="83" width="72" height="3" fill="white"/>
+</svg>

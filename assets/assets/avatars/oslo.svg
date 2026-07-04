@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A4A6A"/>
+  <!-- Viking ship (longship) -->
+  <!-- Hull -->
+  <path d="M12,62 Q20,52 50,50 Q80,52 88,62 Q70,70 50,72 Q30,70 12,62Z" fill="white"/>
+  <!-- Dragon prow (right side) -->
+  <path d="M86,58 Q94,48 96,40 Q90,44 88,50 Q90,52 86,58Z" fill="white"/>
+  <!-- Tail stern (left) -->
+  <path d="M14,60 Q8,52 10,44 Q14,50 12,56Z" fill="white"/>
+  <!-- Mast -->
+  <rect x="48" y="28" width="4" height="24" fill="white"/>
+  <!-- Sail (square) -->
+  <rect x="32" y="28" width="36" height="22" fill="white"/>
+  <!-- Sail stripes (darker) -->
+  <rect x="32" y="34" width="36" height="4" fill="#2A4A6A" opacity="0.5"/>
+  <rect x="32" y="42" width="36" height="4" fill="#2A4A6A" opacity="0.5"/>
+  <!-- Oars -->
+  <rect x="24" y="64" width="2" height="10" fill="white" transform="rotate(-20 25 64)"/>
+  <rect x="36" y="66" width="2" height="10" fill="white" transform="rotate(-10 37 66)"/>
+  <rect x="60" y="66" width="2" height="10" fill="white" transform="rotate(10 61 66)"/>
+  <rect x="72" y="64" width="2" height="10" fill="white" transform="rotate(20 73 64)"/>
+  <!-- Water line -->
+  <rect x="10" y="70" width="80" height="3" fill="white" opacity="0.4"/>
+</svg>

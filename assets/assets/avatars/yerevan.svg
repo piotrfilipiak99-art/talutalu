@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A1A00"/>
+  <!-- Cascade Complex + Mount Ararat, Yerevan -->
+  <!-- Mt. Ararat silhouette (iconic backdrop) -->
+  <polygon points="50,20 80,70 20,70" fill="white" opacity="0.15"/>
+  <polygon points="66,32 86,70 46,70" fill="white" opacity="0.12"/>
+  <!-- Cascade stairway (monumental stepped complex) -->
+  <!-- 5 wide terraced steps -->
+  <rect x="16" y="74" width="68" height="6" fill="white"/>
+  <rect x="20" y="68" width="60" height="6" fill="white"/>
+  <rect x="24" y="62" width="52" height="6" fill="white"/>
+  <rect x="28" y="56" width="44" height="6" fill="white"/>
+  <rect x="32" y="50" width="36" height="6" fill="white"/>
+  <rect x="36" y="44" width="28" height="6" fill="white"/>
+  <!-- Top pavilion -->
+  <rect x="38" y="34" width="24" height="12" fill="white"/>
+  <!-- Victory arch at top of cascade -->
+  <polygon points="38,34 62,34 50,24" fill="white"/>
+  <!-- Water cascades (fountains) hinted by vertical slits -->
+  <rect x="48" y="50" width="4" height="22" fill="#8A1A00" opacity="0.3"/>
+  <!-- Small urartian column capital -->
+  <rect x="44" y="32" width="12" height="4" fill="white"/>
+</svg>

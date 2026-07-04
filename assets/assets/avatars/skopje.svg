@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#9A4A00"/>
+  <!-- Kale Fortress, Skopje -->
+  <!-- River Vardar -->
+  <rect x="10" y="72" width="80" height="10" fill="white" opacity="0.3"/>
+  <!-- Stone Bridge (Kameni Most) -->
+  <rect x="18" y="66" width="64" height="8" fill="white"/>
+  <!-- Bridge arches -->
+  <ellipse cx="30" cy="74" rx="8" ry="6" fill="#9A4A00"/>
+  <ellipse cx="50" cy="74" rx="8" ry="6" fill="#9A4A00"/>
+  <ellipse cx="70" cy="74" rx="8" ry="6" fill="#9A4A00"/>
+  <!-- Kale hilltop fortress above bridge -->
+  <!-- Hill -->
+  <ellipse cx="50" cy="58" rx="28" ry="12" fill="white" opacity="0.4"/>
+  <!-- Fortress walls -->
+  <rect x="24" y="34" width="52" height="26" fill="white"/>
+  <!-- Wall battlements -->
+  <rect x="24" y="28" width="4" height="6" fill="white"/>
+  <rect x="30" y="28" width="4" height="6" fill="white"/>
+  <rect x="36" y="28" width="4" height="6" fill="white"/>
+  <rect x="42" y="28" width="4" height="6" fill="white"/>
+  <rect x="48" y="28" width="4" height="6" fill="white"/>
+  <rect x="54" y="28" width="4" height="6" fill="white"/>
+  <rect x="60" y="28" width="4" height="6" fill="white"/>
+  <rect x="66" y="28" width="4" height="6" fill="white"/>
+  <!-- Corner towers -->
+  <rect x="18" y="30" width="10" height="30" fill="white"/>
+  <rect x="72" y="30" width="10" height="30" fill="white"/>
+  <!-- Gate arch -->
+  <rect x="44" y="48" width="12" height="12" fill="#9A4A00"/>
+  <ellipse cx="50" cy="48" rx="6" ry="5" fill="#9A4A00"/>
+</svg>

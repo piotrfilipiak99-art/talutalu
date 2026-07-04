@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8B1A1A"/>
+  <!-- Palace of Parliament, Bucharest - massive neoclassical building -->
+  <!-- Main massive block -->
+  <rect x="14" y="48" width="72" height="30" fill="white"/>
+  <!-- Upper stories with setbacks -->
+  <rect x="20" y="40" width="60" height="10" fill="white"/>
+  <rect x="26" y="32" width="48" height="10" fill="white"/>
+  <!-- Central pediment -->
+  <rect x="34" y="24" width="32" height="10" fill="white"/>
+  <polygon points="34,24 66,24 50,14" fill="white"/>
+  <!-- Columns on facade -->
+  <rect x="20" y="54" width="4" height="20" fill="#8B1A1A" opacity="0.5"/>
+  <rect x="28" y="54" width="4" height="20" fill="#8B1A1A" opacity="0.5"/>
+  <rect x="44" y="54" width="4" height="20" fill="#8B1A1A" opacity="0.5"/>
+  <rect x="52" y="54" width="4" height="20" fill="#8B1A1A" opacity="0.5"/>
+  <rect x="68" y="54" width="4" height="20" fill="#8B1A1A" opacity="0.5"/>
+  <rect x="76" y="54" width="4" height="20" fill="#8B1A1A" opacity="0.5"/>
+  <!-- Central entrance arch -->
+  <rect x="42" y="62" width="16" height="16" fill="#8B1A1A"/>
+  <ellipse cx="50" cy="62" rx="8" ry="6" fill="#8B1A1A"/>
+  <!-- Base steps -->
+  <rect x="10" y="78" width="80" height="3" fill="white"/>
+  <rect x="6" y="81" width="88" height="3" fill="white"/>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#0A5A8A"/>
+  <!-- Majuro Atoll — Marshall Islands capital; the atoll itself is the landmark -->
+  <!-- Alele Museum & Library (traditional Marshallese canoe) -->
+  <!-- Traditional proa/outrigger canoe (waan aelon in Majel) — iconic Marshallese symbol -->
+  <!-- Main hull (sharp prow, lateen rigged) -->
+  <path d="M 8,62 Q 20,56 50,54 Q 80,56 92,62 Q 80,68 50,70 Q 20,68 8,62 Z" fill="white"/>
+  <!-- Narrow prow coming to a point -->
+  <polygon points="8,62 16,58 16,66" fill="white"/>
+  <!-- Stern -->
+  <polygon points="92,62 86,58 86,66" fill="white"/>
+  <!-- Outrigger float (ama) on left side -->
+  <path d="M 14,72 Q 30,70 60,70 Q 70,72 60,74 Q 30,74 14,72 Z" fill="white" opacity="0.7"/>
+  <!-- Booms connecting outrigger (iakos) -->
+  <line x1="24" y1="64" x2="24" y2="72" stroke="white" stroke-width="3"/>
+  <line x1="44" y1="63" x2="44" y2="72" stroke="white" stroke-width="3"/>
+  <line x1="62" y1="63" x2="55" y2="72" stroke="white" stroke-width="3"/>
+  <!-- Sail (distinctive crab-claw shape) -->
+  <path d="M 50,54 L 36,16 L 62,42 Z" fill="white"/>
+  <!-- Mast -->
+  <rect x="48" y="18" width="4" height="38" fill="white"/>
+  <!-- Pacific atoll shape hint (low flat land in background) -->
+  <rect x="10" y="80" width="80" height="5" fill="white" opacity="0.3"/>
+  <ellipse cx="30" cy="80" rx="18" ry="4" fill="white" opacity="0.4"/>
+  <ellipse cx="70" cy="80" rx="18" ry="4" fill="white" opacity="0.4"/>
+  <!-- Ocean -->
+  <rect x="8" y="86" width="84" height="6" fill="white" opacity="0.15"/>
+</svg>

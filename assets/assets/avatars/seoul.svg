@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A3A7A"/>
+  <!-- Gyeongbokgung / Gwanghwamun Gate, Seoul -->
+  <!-- Main gate tower (Heungnyemun style) -->
+  <!-- Base stone platform -->
+  <rect x="14" y="60" width="72" height="16" fill="white"/>
+  <!-- Gate arch tunnel (center) -->
+  <rect x="38" y="62" width="24" height="14" fill="#1A3A7A"/>
+  <ellipse cx="50" cy="62" rx="12" ry="8" fill="#1A3A7A"/>
+  <!-- Two-story pavilion on top of gate -->
+  <rect x="20" y="40" width="60" height="22" fill="white"/>
+  <!-- Curved Korean eave roof -->
+  <polygon points="14,40 86,40 80,30 20,30" fill="white"/>
+  <!-- Second story smaller pavilion -->
+  <rect x="30" y="24" width="40" height="16" fill="white"/>
+  <polygon points="24,24 76,24 70,14 30,14" fill="white"/>
+  <!-- Roof ridge finials -->
+  <rect x="30" y="12" width="4" height="4" fill="white"/>
+  <rect x="66" y="12" width="4" height="4" fill="white"/>
+  <!-- Windows on pavilion -->
+  <rect x="26" y="46" width="8" height="10" fill="#1A3A7A"/>
+  <rect x="66" y="46" width="8" height="10" fill="#1A3A7A"/>
+</svg>

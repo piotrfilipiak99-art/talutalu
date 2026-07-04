@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A1A00"/>
+  <!-- Parliament Haus, Port Moresby — stunning Sepik-style traditional architecture -->
+  <!-- One of the world's most beautiful parliament buildings; tall carved roof ridge -->
+  <!-- Traditional Haus Tambaran (spirit house) massive entrance facade -->
+  <!-- Steeply pitched tall peaked roof -->
+  <polygon points="14,80 50,8 86,80" fill="white"/>
+  <!-- Inner roof shadow/layer -->
+  <polygon points="20,80 50,16 80,80" fill="#5A1A00" opacity="0.15"/>
+  <!-- Carved ridge pole decorations -->
+  <!-- Central sunburst/Bird of Paradise motif at apex -->
+  <circle cx="50" cy="12" r="6" fill="white"/>
+  <line x1="50" y1="6" x2="50" y2="2" stroke="white" stroke-width="2"/>
+  <line x1="50" y1="8" x2="44" y2="4" stroke="white" stroke-width="2"/>
+  <line x1="50" y1="8" x2="56" y2="4" stroke="white" stroke-width="2"/>
+  <!-- Traditional spiral/face carvings on facade (Sepik style) -->
+  <circle cx="50" cy="36" r="7" fill="#5A1A00" opacity="0.3"/>
+  <circle cx="50" cy="36" r="4" fill="white"/>
+  <!-- Decorative zig-zag bands (traditional PNG pattern) -->
+  <path d="M 22,56 L 30,50 L 38,56 L 46,50 L 54,56 L 62,50 L 70,56 L 78,50" stroke="#5A1A00" stroke-width="3" fill="none" opacity="0.3"/>
+  <path d="M 26,66 L 34,60 L 42,66 L 50,60 L 58,66 L 66,60 L 74,66" stroke="#5A1A00" stroke-width="3" fill="none" opacity="0.3"/>
+  <!-- Ground floor / entrance building -->
+  <rect x="18" y="72" width="64" height="12" fill="white"/>
+  <!-- Tall entrance columns -->
+  <rect x="24" y="66" width="6" height="18" fill="white"/>
+  <rect x="38" y="66" width="6" height="18" fill="white"/>
+  <rect x="56" y="66" width="6" height="18" fill="white"/>
+  <rect x="70" y="66" width="6" height="18" fill="white"/>
+  <!-- Steps -->
+  <rect x="14" y="84" width="72" height="3" fill="white"/>
+  <rect x="8" y="87" width="84" height="3" fill="white" opacity="0.5"/>
+</svg>

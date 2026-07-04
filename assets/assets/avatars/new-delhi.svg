@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#C07010"/>
+  <!-- India Gate, New Delhi - war memorial arch -->
+  <!-- Main arch -->
+  <rect x="30" y="40" width="16" height="38" fill="white"/>
+  <rect x="54" y="40" width="16" height="38" fill="white"/>
+  <!-- Arch span -->
+  <ellipse cx="50" cy="40" rx="24" ry="14" fill="white"/>
+  <ellipse cx="50" cy="42" rx="18" ry="10" fill="#C07010"/>
+  <!-- Attic above arch -->
+  <rect x="26" y="26" width="48" height="14" fill="white"/>
+  <!-- Decorative top course -->
+  <rect x="22" y="22" width="56" height="6" fill="white"/>
+  <!-- Flame memorial (Amar Jawan Jyoti) -->
+  <rect x="46" y="76" width="8" height="4" fill="white"/>
+  <!-- Flame -->
+  <path d="M47,76 Q50,68 53,76" fill="white"/>
+  <!-- Reflecting pool -->
+  <rect x="10" y="82" width="80" height="4" fill="white" opacity="0.35"/>
+  <!-- Base plinth -->
+  <rect x="20" y="78" width="60" height="4" fill="white"/>
+</svg>

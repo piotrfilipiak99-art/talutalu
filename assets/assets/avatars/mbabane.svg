@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A2A6A"/>
+  <!-- Sibebe Rock, Eswatini — world's second-largest monolith (near Mbabane) -->
+  <!-- Massive rounded granite dome dominating skyline -->
+  <!-- Main rock mass -->
+  <ellipse cx="50" cy="55" rx="42" ry="34" fill="white"/>
+  <!-- Rock texture streaks -->
+  <path d="M 16,48 Q 30,42 50,40 Q 70,38 84,48" stroke="#3A2A6A" stroke-width="2" fill="none" opacity="0.2"/>
+  <path d="M 10,58 Q 28,52 50,50 Q 72,48 90,56" stroke="#3A2A6A" stroke-width="2" fill="none" opacity="0.15"/>
+  <path d="M 12,66 Q 30,62 50,60 Q 70,58 88,64" stroke="#3A2A6A" stroke-width="2" fill="none" opacity="0.1"/>
+  <!-- Summit rounded shape emphasis -->
+  <ellipse cx="50" cy="38" rx="24" ry="12" fill="white"/>
+  <!-- Vegetation at base -->
+  <!-- Trees (Swazi bush) -->
+  <polygon points="22,78 28,60 34,78" fill="white" opacity="0.4"/>
+  <polygon points="36,80 40,66 44,80" fill="white" opacity="0.4"/>
+  <polygon points="56,80 60,66 64,80" fill="white" opacity="0.4"/>
+  <polygon points="66,78 72,60 78,78" fill="white" opacity="0.4"/>
+  <!-- Ground line -->
+  <rect x="8" y="82" width="84" height="6" fill="white" opacity="0.25"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A1A6A"/>
+  <!-- Basilica of Our Lady of Suyapa, Tegucigalpa -->
+  <!-- Main twin towers -->
+  <rect x="16" y="22" width="16" height="54" fill="white"/>
+  <rect x="68" y="22" width="16" height="54" fill="white"/>
+  <!-- Tower spires with cross -->
+  <polygon points="16,22 32,22 24,8" fill="white"/>
+  <polygon points="68,22 84,22 76,8" fill="white"/>
+  <!-- Crosses on spires -->
+  <rect x="22" y="4" width="4" height="8" fill="white"/>
+  <rect x="19" y="7" width="10" height="3" fill="white"/>
+  <rect x="74" y="4" width="4" height="8" fill="white"/>
+  <rect x="71" y="7" width="10" height="3" fill="white"/>
+  <!-- Nave -->
+  <rect x="28" y="46" width="44" height="30" fill="white"/>
+  <!-- Upper rose window -->
+  <circle cx="50" cy="56" r="8" fill="#3A1A6A"/>
+  <!-- Main entrance arch portal -->
+  <rect x="36" y="62" width="28" height="14" fill="#3A1A6A"/>
+  <ellipse cx="50" cy="62" rx="14" ry="10" fill="#3A1A6A"/>
+  <!-- Three entrance doors -->
+  <rect x="38" y="68" width="7" height="8" fill="#3A1A6A"/>
+  <rect x="47" y="66" width="6" height="10" fill="#3A1A6A"/>
+  <rect x="55" y="68" width="7" height="8" fill="#3A1A6A"/>
+  <!-- Base steps -->
+  <rect x="14" y="76" width="72" height="3" fill="white"/>
+  <rect x="10" y="79" width="80" height="3" fill="white"/>
+</svg>

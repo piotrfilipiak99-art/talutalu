@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A3A00"/>
+  <!-- Old Sanaa tower houses - distinctive multi-story decorated towers -->
+  <!-- Left tower house -->
+  <rect x="10" y="30" width="20" height="50" fill="white"/>
+  <!-- Decorative friezes on left tower -->
+  <rect x="10" y="34" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="10" y="44" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="10" y="54" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="10" y="64" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <!-- White plaster windows (arched) on left -->
+  <rect x="14" y="36" width="5" height="6" fill="#5A3A00"/>
+  <ellipse cx="16" cy="36" rx="2.5" ry="2" fill="#5A3A00"/>
+  <rect x="21" y="36" width="5" height="6" fill="#5A3A00"/>
+  <ellipse cx="23" cy="36" rx="2.5" ry="2" fill="#5A3A00"/>
+  <!-- Center tower (tallest) -->
+  <rect x="34" y="18" width="20" height="62" fill="white"/>
+  <rect x="34" y="22" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="34" y="32" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="34" y="42" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="34" y="52" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="34" y="62" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <!-- Right tower -->
+  <rect x="58" y="26" width="20" height="54" fill="white"/>
+  <rect x="58" y="30" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="58" y="40" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="58" y="50" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <rect x="58" y="60" width="20" height="3" fill="#5A3A00" opacity="0.5"/>
+  <!-- Far right tower -->
+  <rect x="80" y="36" width="14" height="44" fill="white"/>
+  <!-- Ground -->
+  <rect x="8" y="80" width="84" height="4" fill="white"/>
+</svg>

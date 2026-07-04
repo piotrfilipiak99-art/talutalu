@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A4A22"/>
+  <!-- St. Stephen's Cathedral Vienna -->
+  <!-- Main nave -->
+  <rect x="25" y="60" width="50" height="18" fill="white"/>
+  <!-- Main tall spire (left) -->
+  <rect x="30" y="18" width="12" height="42" fill="white"/>
+  <!-- Spire tip -->
+  <polygon points="30,18 42,18 36,8" fill="white"/>
+  <!-- South tower stub (right) -->
+  <rect x="58" y="46" width="10" height="32" fill="white"/>
+  <polygon points="58,46 68,46 63,38" fill="white"/>
+  <!-- Roof checkered hint -->
+  <rect x="25" y="52" width="50" height="8" fill="#2A4A22" opacity="0.4"/>
+  <!-- Entrance arch -->
+  <rect x="44" y="68" width="12" height="10" fill="#2A4A22"/>
+  <ellipse cx="50" cy="68" rx="6" ry="4" fill="#2A4A22"/>
+  <!-- Base -->
+  <rect x="20" y="78" width="60" height="3" fill="white"/>
+</svg>

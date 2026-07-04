@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A2A6A"/>
+  <!-- Monaco Palace on the Rock, sea view -->
+  <!-- Sea / harbor -->
+  <rect x="10" y="72" width="80" height="16" fill="white" opacity="0.25"/>
+  <!-- Rock of Monaco -->
+  <polygon points="14,72 22,46 78,46 86,72" fill="white" opacity="0.5"/>
+  <!-- Palace building -->
+  <rect x="26" y="36" width="48" height="36" fill="white"/>
+  <!-- Palace tower left -->
+  <rect x="22" y="24" width="14" height="20" fill="white"/>
+  <polygon points="22,24 36,24 29,12" fill="white"/>
+  <!-- Palace tower right -->
+  <rect x="64" y="24" width="14" height="20" fill="white"/>
+  <polygon points="64,24 78,24 71,12" fill="white"/>
+  <!-- Battlements on palace -->
+  <rect x="26" y="32" width="4" height="4" fill="white"/>
+  <rect x="32" y="32" width="4" height="4" fill="white"/>
+  <rect x="60" y="32" width="4" height="4" fill="white"/>
+  <rect x="66" y="32" width="4" height="4" fill="white"/>
+  <!-- Palace gate arch -->
+  <rect x="42" y="56" width="16" height="16" fill="#2A2A6A"/>
+  <ellipse cx="50" cy="56" rx="8" ry="6" fill="#2A2A6A"/>
+  <!-- Windows -->
+  <rect x="30" y="44" width="6" height="8" fill="#2A2A6A"/>
+  <rect x="64" y="44" width="6" height="8" fill="#2A2A6A"/>
+  <!-- Yacht hint in harbor -->
+  <polygon points="20,76 24,68 28,76" fill="white" opacity="0.6"/>
+</svg>

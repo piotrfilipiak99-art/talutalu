@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#4A1A6A"/>
+  <!-- Kalemegdan Fortress, Belgrade -->
+  <!-- Main fortress tower (Zindan Gate) -->
+  <rect x="32" y="30" width="36" height="46" fill="white"/>
+  <!-- Tower battlements -->
+  <rect x="32" y="22" width="5" height="8" fill="white"/>
+  <rect x="39" y="22" width="5" height="8" fill="white"/>
+  <rect x="46" y="22" width="5" height="8" fill="white"/>
+  <rect x="53" y="22" width="5" height="8" fill="white"/>
+  <rect x="60" y="22" width="5" height="8" fill="white"/>
+  <!-- Flanking round towers -->
+  <circle cx="32" cy="50" r="10" fill="white"/>
+  <circle cx="68" cy="50" r="10" fill="white"/>
+  <!-- Round tower battlements -->
+  <rect x="28" y="36" width="4" height="5" fill="white"/>
+  <rect x="32" y="34" width="4" height="5" fill="white"/>
+  <rect x="64" y="34" width="4" height="5" fill="white"/>
+  <rect x="68" y="36" width="4" height="5" fill="white"/>
+  <!-- Gate arch -->
+  <rect x="42" y="54" width="16" height="22" fill="#4A1A6A"/>
+  <ellipse cx="50" cy="54" rx="8" ry="7" fill="#4A1A6A"/>
+  <!-- Arrow slits -->
+  <rect x="48" y="36" width="3" height="10" fill="#4A1A6A"/>
+  <!-- Cliff/hill base -->
+  <path d="M14,76 Q30,70 50,72 Q70,70 86,76 L86,84 L14,84Z" fill="white" opacity="0.5"/>
+  <rect x="10" y="76" width="80" height="4" fill="white"/>
+</svg>

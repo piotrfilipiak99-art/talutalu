@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A3A6A"/>
+  <!-- Aso Rock monolith + Nigerian National Mosque, Abuja -->
+  <!-- Aso Rock (massive granite inselberg) -->
+  <polygon points="10,76 36,20 62,40 90,76" fill="white" opacity="0.3"/>
+  <ellipse cx="38" cy="26" rx="20" ry="12" fill="white" opacity="0.4"/>
+  <!-- National Mosque (in foreground) -->
+  <!-- Main golden dome -->
+  <ellipse cx="50" cy="58" rx="16" ry="14" fill="white"/>
+  <!-- Drum -->
+  <rect x="36" y="64" width="28" height="6" fill="white"/>
+  <!-- Crescent -->
+  <circle cx="50" cy="44" r="4" fill="#1A3A6A"/>
+  <circle cx="53" cy="42" r="3" fill="white"/>
+  <rect x="49" y="39" width="2" height="5" fill="white"/>
+  <!-- Prayer hall base -->
+  <rect x="18" y="70" width="64" height="14" fill="white"/>
+  <!-- 4 minarets -->
+  <rect x="12" y="46" width="8" height="38" fill="white"/>
+  <polygon points="12,46 20,46 16,34" fill="white"/>
+  <rect x="80" y="46" width="8" height="38" fill="white"/>
+  <polygon points="80,46 88,46 84,34" fill="white"/>
+  <rect x="18" y="50" width="6" height="34" fill="white"/>
+  <polygon points="18,50 24,50 21,40" fill="white"/>
+  <rect x="76" y="50" width="6" height="34" fill="white"/>
+  <polygon points="76,50 82,50 79,40" fill="white"/>
+  <!-- Base -->
+  <rect x="12" y="82" width="76" height="4" fill="white"/>
+</svg>

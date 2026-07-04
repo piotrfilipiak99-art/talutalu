@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A5A00"/>
+  <!-- Pyramids of Meroe (Sudan's symbol), Khartoum -->
+  <!-- Three narrow Nubian pyramids (steeper than Egyptian) -->
+  <!-- Left pyramid -->
+  <polygon points="14,76 36,76 25,30" fill="white"/>
+  <!-- Center pyramid (tallest) -->
+  <polygon points="32,76 60,76 46,18" fill="white"/>
+  <!-- Right pyramid -->
+  <polygon points="54,76 78,76 66,36" fill="white"/>
+  <!-- Small pyramid right edge -->
+  <polygon points="72,76 90,76 81,46" fill="white"/>
+  <!-- Chapel pylon at base of center pyramid (Nubian style) -->
+  <rect x="36" y="68" width="10" height="8" fill="white"/>
+  <rect x="50" y="68" width="10" height="8" fill="white"/>
+  <!-- Confluence of Nile hint at base (Blue + White Nile) -->
+  <path d="M10,80 Q36,76 50,78 Q64,76 90,80" stroke="white" stroke-width="4" fill="none" opacity="0.4"/>
+  <!-- Sandy desert ground -->
+  <rect x="10" y="76" width="80" height="4" fill="white"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A2A"/>
+  <!-- Vaduz Castle on mountain -->
+  <!-- Mountain -->
+  <polygon points="10,82 50,28 90,82" fill="white" opacity="0.3"/>
+  <!-- Castle body on mountain peak -->
+  <rect x="30" y="36" width="40" height="30" fill="white"/>
+  <!-- Main keep tower -->
+  <rect x="36" y="18" width="16" height="22" fill="white"/>
+  <polygon points="36,18 52,18 44,8" fill="white"/>
+  <!-- Corner tower (round) -->
+  <circle cx="66" cy="46" r="8" fill="white"/>
+  <polygon points="58,40 74,40 66,30" fill="white"/>
+  <!-- Battlements on main building -->
+  <rect x="30" y="32" width="4" height="4" fill="white"/>
+  <rect x="36" y="32" width="4" height="4" fill="white"/>
+  <rect x="60" y="32" width="4" height="4" fill="white"/>
+  <rect x="66" y="32" width="4" height="4" fill="white"/>
+  <!-- Windows -->
+  <rect x="38" y="44" width="5" height="8" fill="#2A5A2A"/>
+  <rect x="48" y="44" width="5" height="8" fill="#2A5A2A"/>
+  <rect x="58" y="44" width="5" height="8" fill="#2A5A2A"/>
+  <!-- Gate -->
+  <rect x="42" y="54" width="10" height="12" fill="#2A5A2A"/>
+  <ellipse cx="47" cy="54" rx="5" ry="4" fill="#2A5A2A"/>
+  <!-- Alpine tree hints -->
+  <polygon points="14,76 20,56 26,76" fill="white" opacity="0.4"/>
+  <polygon points="74,76 80,56 86,76" fill="white" opacity="0.4"/>
+</svg>

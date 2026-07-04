@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A3A00"/>
+  <!-- Monas (National Monument), Jakarta -->
+  <!-- Flame at top (gold) -->
+  <ellipse cx="50" cy="14" rx="8" ry="12" fill="white"/>
+  <!-- Obelisk shaft - tapers slightly -->
+  <polygon points="44,24 56,24 54,72 46,72" fill="white"/>
+  <!-- Base platform (wide) -->
+  <rect x="22" y="72" width="56" height="6" fill="white"/>
+  <rect x="16" y="78" width="68" height="4" fill="white"/>
+  <!-- Lower square base -->
+  <rect x="26" y="82" width="48" height="4" fill="white"/>
+  <!-- Museum at very base (underground box) -->
+  <rect x="30" y="82" width="40" height="2" fill="white" opacity="0.5"/>
+</svg>
