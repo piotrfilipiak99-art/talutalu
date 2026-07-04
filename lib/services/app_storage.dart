@@ -62,7 +62,9 @@ class AppStorage {
   };
   static const _boolKeys = {'darkMode', 'notificationsEnabled', 'reminderEnabled'};
   static const _intKeys = {'reminderHour', 'reminderMinute', 'selectedAvatar'};
-  static const _stringKeys = {'userName', 'userHobby', 'appLanguage', 'selectedBase'};
+  static const _stringKeys = {
+    'userName', 'userHobby', 'appLanguage', 'selectedBase', 'nativeLanguage',
+  };
 
   Timer? _syncDebounce;
   final syncError = ValueNotifier<String?>(null);
@@ -194,6 +196,14 @@ class AppStorage {
     _touch('reminderEnabled');
     _touch('reminderHour');
     _touch('reminderMinute');
+  }
+
+  // ── Native language (mother tongue, asked during onboarding) ───────────────
+
+  String? get nativeLanguage => _p.getString('nativeLanguage');
+  Future<void> setNativeLanguage(String code) async {
+    await _p.setString('nativeLanguage', code);
+    _touch('nativeLanguage');
   }
 
   // ── App language (UI language, not the learning target) ────────────────────

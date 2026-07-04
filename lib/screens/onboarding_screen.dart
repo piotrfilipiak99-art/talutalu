@@ -27,7 +27,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _hobbyCtrl = TextEditingController();
 
-  // Page 2 — language
+  // Page 2 — native language
+  String? _nativeLangCode;
+
+  // Page 3 — course
   bool _hasCourse = false;
   List<Map<String, String>> _pickerBases = [];
   List<Map<String, String>> _pickerCourses = [];
@@ -58,7 +61,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _nextPage() {
-    if (_currentPage < 2) {
+    if (_currentPage < 3) {
       _fadeCtrl.reverse().then((_) {
         _pageCtrl.nextPage(
           duration: const Duration(milliseconds: 400),
@@ -80,6 +83,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       _nameCtrl.text.trim(),
       _hobbyCtrl.text.trim(),
     );
+    if (_nativeLangCode != null) {
+      await AppStorage.instance.setNativeLanguage(_nativeLangCode!);
+    }
     await AppStorage.instance.saveCourseState(
       bases: _pickerBases,
       courses: _pickerCourses,
@@ -98,6 +104,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
         return _nameCtrl.text.trim().isNotEmpty &&
             _hobbyCtrl.text.trim().isNotEmpty;
       case 2:
+        return _nativeLangCode != null;
+      case 3:
         return _hasCourse;
       default:
         return false;
@@ -120,6 +128,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 children: [
                   _buildAvatarPage(),
                   _buildPersonalPage(),
+                  _buildNativeLanguagePage(),
                   _buildLanguagePage(),
                 ],
               ),
@@ -136,12 +145,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Row(
-        children: List.generate(3, (i) {
+        children: List.generate(4, (i) {
           final active = i <= _currentPage;
           return Expanded(
             child: Container(
               height: 2,
-              margin: EdgeInsets.only(right: i < 2 ? 6 : 0),
+              margin: EdgeInsets.only(right: i < 3 ? 6 : 0),
               decoration: BoxDecoration(
                 color: active ? AppColors.primary : AppColors.border,
                 borderRadius: BorderRadius.circular(2),
@@ -395,7 +404,102 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     );
   }
 
-  // ── Page 2: Language ────────────────────────────────────────────────────────
+  // ── Page 2: Native language ─────────────────────────────────────────────────
+
+  Widget _buildNativeLanguagePage() {
+    return FadeTransition(
+      opacity: _fadeAnim,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 56, 28, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'What\'s your\nnative language?',
+                  style: Theme.of(context).textTheme.displayMedium,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Translations and explanations will use it.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+              itemCount: availableLanguages.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (_, i) {
+                final lang = availableLanguages[i];
+                final isSelected = _nativeLangCode == lang['code'];
+                return GestureDetector(
+                  onTap: () =>
+                      setState(() => _nativeLangCode = lang['code']),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.card : AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.border,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(lang['flag']!,
+                            style: const TextStyle(fontSize: 22)),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                lang['native']!,
+                                style: GoogleFonts.dmSans(
+                                  color: AppColors.text,
+                                  fontSize: 15,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                ),
+                              ),
+                              Text(
+                                lang['name']!,
+                                style: GoogleFonts.dmSans(
+                                  color: AppColors.text3,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(Icons.check_circle_rounded,
+                              color: AppColors.primary, size: 20),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Page 3: Course ──────────────────────────────────────────────────────────
 
   Widget _buildLanguagePage() {
     return FadeTransition(
@@ -459,7 +563,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
             alignment: Alignment.center,
             child: Text(
-              _currentPage < 2 ? 'Continue' : 'Get Started',
+              _currentPage < 3 ? 'Continue' : 'Get Started',
               style: GoogleFonts.dmSans(
                 color: Colors.white,
                 fontSize: 15,
