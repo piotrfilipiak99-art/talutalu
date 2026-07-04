@@ -26,10 +26,16 @@ class _TokenGroup {
   int _end;
 }
 
+final _letterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
+
+/// Punctuation by content, not by tag — the model sometimes labels "." or
+/// "!" with pos "." instead of "PUNCT", which used to leak gaps back in.
+bool _isPunctSurface(String surface) => !_letterOrDigit.hasMatch(surface);
+
 List<_TokenGroup> _groupTokens(List<TextToken> tokens) {
   final groups = <_TokenGroup>[];
   for (final t in tokens) {
-    if (t.pos == 'PUNCT' &&
+    if (_isPunctSurface(t.surface) &&
         groups.isNotEmpty &&
         t.charStart == groups.last._end) {
       groups.last.trail += t.surface;
