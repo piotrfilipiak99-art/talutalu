@@ -1,5 +1,6 @@
 import json
 
+from email_validator import EmailNotValidError, validate_email
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
@@ -57,6 +58,16 @@ def health():
 @app.post("/auth/register", response_model=AuthResponse, status_code=201)
 def register(body: Credentials, db: Session = Depends(get_db)):
     email = body.email.lower()
+    # Pydantic already validated the syntax; this DNS lookup verifies the
+    # domain actually accepts mail (has MX/A records), so typos like
+    # "gmial.com" or made-up domains are rejected at signup.
+    try:
+        validate_email(email, check_deliverability=True)
+    except EmailNotValidError:
+        raise HTTPException(
+            status_code=400,
+            detail="This email domain does not exist or cannot receive mail",
+        )
     if db.scalar(select(User).where(User.email == email)):
         raise HTTPException(status_code=409, detail="Account already exists")
     user = User(email=email, password_hash=hash_password(body.password))

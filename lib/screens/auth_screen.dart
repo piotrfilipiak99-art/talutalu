@@ -50,7 +50,10 @@ class _AuthScreenState extends State<AuthScreen>
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
 
-    if (email.isEmpty || !email.contains('@')) {
+    // Format check only — whether the domain really accepts mail is
+    // verified server-side with a DNS lookup during registration.
+    final emailFormat = RegExp(r'^[\w.+-]+@[\w-]+(\.[\w-]+)+$');
+    if (!emailFormat.hasMatch(email)) {
       _showError('Enter a valid email address.');
       return;
     }
