@@ -1811,6 +1811,23 @@ class _AddCardViewState extends State<_AddCardView> {
 
 // ─── Write view ───────────────────────────────────────────────────────────────
 
+/// Write-mode answer check. The stored answer can list several accepted
+/// meanings separated by ",", "/" or ";" in any spacing ("over / above",
+/// "x,y", "a; b"). The learner may type one meaning or several (same
+/// separators, any order) — everything they typed just has to be among
+/// the accepted variants.
+bool matchesWriteAnswer(String input, String answer) {
+  Set<String> variants(String s) => s
+      .split(RegExp(r'[,;/]'))
+      .map((v) => v.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' '))
+      .where((v) => v.isNotEmpty)
+      .toSet();
+
+  final accepted = variants(answer);
+  final given = variants(input);
+  return given.isNotEmpty && given.every(accepted.contains);
+}
+
 class _WriteView extends StatefulWidget {
   final _FlashcardsScreenState state;
   const _WriteView({required this.state});
@@ -1847,25 +1864,8 @@ class _WriteViewState extends State<_WriteView> {
   String get _answer =>
       _reversed ? _queue[_index].word : _queue[_index].translation;
 
-  // The stored answer can list several comma-separated accepted meanings
-  // (e.g. "real, true"). Accept any one-or-more of them, in any order —
-  // everything the learner typed just has to be among the accepted parts.
-  bool _matchesAnswer(String input, String answer) {
-    final accepted = answer
-        .split(',')
-        .map((s) => s.trim().toLowerCase())
-        .where((s) => s.isNotEmpty)
-        .toSet();
-    final given = input
-        .split(',')
-        .map((s) => s.trim().toLowerCase())
-        .where((s) => s.isNotEmpty)
-        .toList();
-    return given.isNotEmpty && given.every(accepted.contains);
-  }
-
   void _submit() {
-    final isOk = _matchesAnswer(_ctrl.text, _answer);
+    final isOk = matchesWriteAnswer(_ctrl.text, _answer);
     setState(() => _correct = isOk);
     _queue[_index].seen = true;
     if (isOk) {
