@@ -56,9 +56,11 @@ class AppStorage {
   // the merged state, which is applied back here.
 
   /// Keys whose SharedPreferences value is a JSON-encoded string.
+  /// Flashcards and decks are NOT here — they sync per item through
+  /// /sync/flashcards and /sync/decks (see _syncCollection below).
   static const _jsonKeys = {
     'bases', 'courses', 'activeCourse', 'texts',
-    'flashcards', 'decks', 'deck_settings', 'conversations',
+    'deck_settings', 'conversations',
   };
   static const _boolKeys = {'darkMode', 'notificationsEnabled', 'reminderEnabled'};
   static const _intKeys = {'reminderHour', 'reminderMinute', 'selectedAvatar'};
@@ -85,11 +87,122 @@ class AppStorage {
     final meta = _syncMeta..[key] = DateTime.now().millisecondsSinceEpoch;
     _p.setString('sync_meta', jsonEncode(meta));
     _p.setString('sync_dirty', jsonEncode([..._dirtyKeys, key]));
+    _scheduleSync();
+  }
+
+  void _scheduleSync() {
     if (!ApiClient.instance.hasSession) return; // offline-only until login
     _syncDebounce?.cancel();
     _syncDebounce = Timer(const Duration(seconds: 3), () {
-      syncNow().catchError((_) {}); // dirty keys survive for the next attempt
+      syncNow().catchError((_) {}); // pending changes survive for a retry
     });
+  }
+
+  // ── Per-item ops for flashcards/decks ──────────────────────────────────────
+  //
+  // Whole-list keys sync all-or-nothing, so two devices editing different
+  // cards would clobber each other. Instead every list save is diffed
+  // against the previous one and each changed/removed item becomes a
+  // pending op ({id: {payload, updatedAt, deleted}}) pushed on next sync.
+
+  Map<String, dynamic> _pendingOps(String opsKey) {
+    final raw = _p.getString(opsKey);
+    if (raw == null) return {};
+    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+  }
+
+  void _recordListOps(String opsKey, String storageKey,
+      List<Map<String, dynamic>> after) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final rawBefore = _p.getString(storageKey);
+    final before = rawBefore == null
+        ? <Map<String, dynamic>>[]
+        : [
+            for (final e in jsonDecode(rawBefore) as List)
+              Map<String, dynamic>.from(e as Map),
+          ];
+    final ops = _pendingOps(opsKey);
+    final beforeById = {
+      for (final e in before) e['id'] as String: jsonEncode(e),
+    };
+    final afterIds = <String>{};
+    for (final e in after) {
+      final id = e['id'] as String;
+      afterIds.add(id);
+      if (beforeById[id] != jsonEncode(e)) {
+        ops[id] = {'payload': e, 'updatedAt': now, 'deleted': false};
+      }
+    }
+    for (final id in beforeById.keys) {
+      if (!afterIds.contains(id)) {
+        ops[id] = {'payload': null, 'updatedAt': now, 'deleted': true};
+      }
+    }
+    _p.setString(opsKey, jsonEncode(ops));
+    _scheduleSync();
+  }
+
+  /// Push pending ops for one collection, then rebuild the local list from
+  /// the server's merged state plus any ops recorded while the request was
+  /// in flight (those stay pending for the next round).
+  Future<bool> _syncCollection({
+    required String path,
+    required String opsKey,
+    required String storageKey,
+  }) async {
+    final snapshot = _pendingOps(opsKey);
+    final serverItems = await ApiClient.instance.syncItems(path, [
+      for (final e in snapshot.entries)
+        {'id': e.key, ...Map<String, dynamic>.from(e.value as Map)},
+    ]);
+
+    // Drop acknowledged ops; keep ones that changed mid-request.
+    final ops = _pendingOps(opsKey);
+    for (final e in snapshot.entries) {
+      if (jsonEncode(ops[e.key]) == jsonEncode(e.value)) ops.remove(e.key);
+    }
+
+    final byId = <String, Map<String, dynamic>>{};
+    for (final item in serverItems) {
+      if (item['deleted'] == true) continue;
+      byId[item['id'] as String] =
+          Map<String, dynamic>.from(item['payload'] as Map);
+    }
+    for (final e in ops.entries) {
+      final op = Map<String, dynamic>.from(e.value as Map);
+      if (op['deleted'] == true) {
+        byId.remove(e.key);
+      } else {
+        byId[e.key] = Map<String, dynamic>.from(op['payload'] as Map);
+      }
+    }
+
+    final merged = jsonEncode(byId.values.toList());
+    final changed = merged != _p.getString(storageKey);
+    await _p.setString(storageKey, merged);
+    await _p.setString(opsKey, jsonEncode(ops));
+    return changed;
+  }
+
+  /// One-time seeding: data created before per-item sync existed (or while
+  /// logged out) becomes a full set of upsert ops on the first sync.
+  void _seedCollectionOps() {
+    if (_p.getBool('rel_seeded') ?? false) return;
+    for (final (opsKey, storageKey) in [
+      ('card_ops', 'flashcards'),
+      ('deck_ops', 'decks'),
+    ]) {
+      final raw = _p.getString(storageKey);
+      if (raw == null) continue;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final ops = _pendingOps(opsKey);
+      for (final e in jsonDecode(raw) as List) {
+        final item = Map<String, dynamic>.from(e as Map);
+        ops.putIfAbsent(item['id'] as String,
+            () => {'payload': item, 'updatedAt': now, 'deleted': false});
+      }
+      _p.setString(opsKey, jsonEncode(ops));
+    }
   }
 
   Object? _readForPush(String key) {
@@ -117,6 +230,24 @@ class AppStorage {
   /// Push dirty keys, pull the merged state, apply newer server values.
   Future<void> syncNow() async {
     if (!ApiClient.instance.hasSession) return;
+    _seedCollectionOps();
+    try {
+      final cardsChanged = await _syncCollection(
+        path: '/sync/flashcards',
+        opsKey: 'card_ops',
+        storageKey: 'flashcards',
+      );
+      final decksChanged = await _syncCollection(
+        path: '/sync/decks',
+        opsKey: 'deck_ops',
+        storageKey: 'decks',
+      );
+      await _p.setBool('rel_seeded', true);
+      if (cardsChanged || decksChanged) flashcardsChanged.value++;
+    } on ApiException catch (e) {
+      syncError.value = e.message;
+      rethrow;
+    }
     final meta = _syncMeta;
     final push = <String, dynamic>{
       for (final key in _dirtyKeys)
@@ -295,9 +426,9 @@ class AppStorage {
   }
 
   Future<void> saveFlashcards(List<Flashcard> cards) async {
-    await _p.setString(
-        'flashcards', jsonEncode(cards.map((c) => c.toJson()).toList()));
-    _touch('flashcards');
+    final maps = cards.map((c) => c.toJson()).toList();
+    _recordListOps('card_ops', 'flashcards', maps);
+    await _p.setString('flashcards', jsonEncode(maps));
   }
 
   List<Deck> get decks {
@@ -309,9 +440,9 @@ class AppStorage {
   }
 
   Future<void> saveDecks(List<Deck> decks) async {
-    await _p.setString(
-        'decks', jsonEncode(decks.map((d) => d.toJson()).toList()));
-    _touch('decks');
+    final maps = decks.map((d) => d.toJson()).toList();
+    _recordListOps('deck_ops', 'decks', maps);
+    await _p.setString('decks', jsonEncode(maps));
   }
 
   // ── Flashcards settings (per-deck map) ──────────────────────────────────────

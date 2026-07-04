@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from auth import create_token, get_current_user, hash_password, verify_password
 from database import Base, engine, get_db
-from models import User, UserData
+from models import DeckRow, FlashcardRow, User, UserData
 
 Base.metadata.create_all(engine)
 
@@ -45,6 +45,17 @@ class SyncItem(BaseModel):
 
 class SyncPush(BaseModel):
     items: dict[str, SyncItem]
+
+
+class CollectionItem(BaseModel):
+    id: str = Field(max_length=64)
+    payload: object | None = None  # full item JSON; None for deletions
+    updatedAt: int
+    deleted: bool = False
+
+
+class CollectionPush(BaseModel):
+    items: list[CollectionItem]
 
 
 # ── Routes ───────────────────────────────────────────────────────────────────
@@ -102,6 +113,69 @@ def _state(db: Session, user_id: int) -> dict:
 @app.get("/sync")
 def sync_pull(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return _state(db, user.id)
+
+
+# ── Per-item collection sync (flashcards, decks) ────────────────────────────
+#
+# Same last-write-wins idea as /sync, but one timestamp per item instead of
+# per whole list, so two devices editing different cards no longer clobber
+# each other. Deletions are tombstoned, not erased, so they propagate.
+
+
+def _merge_collection(db: Session, model, user_id: int, items, set_columns):
+    for item in items:
+        row = db.get(model, (user_id, item.id))
+        if row is None:
+            row = model(user_id=user_id, id=item.id, updated_at=item.updatedAt)
+            db.add(row)
+        elif item.updatedAt < row.updated_at:
+            continue  # the server already has something newer
+        row.updated_at = item.updatedAt
+        row.deleted = item.deleted
+        if not item.deleted and item.payload is not None:
+            row.payload = json.dumps(item.payload)
+            set_columns(row, item.payload)
+    db.commit()
+    rows = db.scalars(select(model).where(model.user_id == user_id)).all()
+    return {
+        "items": [
+            {
+                "id": r.id,
+                "payload": json.loads(r.payload) if not r.deleted else None,
+                "updatedAt": r.updated_at,
+                "deleted": r.deleted,
+            }
+            for r in rows
+        ]
+    }
+
+
+@app.put("/sync/flashcards")
+def sync_flashcards(
+    body: CollectionPush,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    def set_columns(row, p):
+        row.course_id = str(p.get("courseId", ""))[:64]
+        row.word = str(p.get("word", ""))[:256]
+        row.translation = str(p.get("translation", ""))[:256]
+        row.mastery_level = int(p.get("masteryLevel", 0))
+
+    return _merge_collection(db, FlashcardRow, user.id, body.items, set_columns)
+
+
+@app.put("/sync/decks")
+def sync_decks(
+    body: CollectionPush,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    def set_columns(row, p):
+        row.course_id = str(p.get("courseId", ""))[:64]
+        row.name = str(p.get("name", ""))[:128]
+
+    return _merge_collection(db, DeckRow, user.id, body.items, set_columns)
 
 
 @app.put("/sync")

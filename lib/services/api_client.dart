@@ -89,6 +89,28 @@ class ApiClient {
 
   // ── Sync ──────────────────────────────────────────────────────────────────
 
+  /// Per-item collection sync (flashcards, decks): pushes changed items
+  /// ([{id, payload, updatedAt, deleted}]) and returns the server's full
+  /// merged item list, tombstones included.
+  Future<List<Map<String, dynamic>>> syncItems(
+      String path, List<Map<String, dynamic>> items) async {
+    try {
+      final res = await http
+          .put(Uri.parse('$baseUrl$path'),
+              headers: _jsonHeaders, body: jsonEncode({'items': items}))
+          .timeout(const Duration(seconds: 75));
+      final data = await _decode(res);
+      return [
+        for (final item in data['items'] as List)
+          Map<String, dynamic>.from(item as Map),
+      ];
+    } on ApiException {
+      rethrow;
+    } catch (_) {
+      throw ApiException('Sync failed: server unreachable.');
+    }
+  }
+
   /// Pushes [items] ({key: {value, updatedAt}}) and returns the server's
   /// full merged state in the same shape. Pass empty items for a pure pull.
   Future<Map<String, dynamic>> sync(Map<String, dynamic> items) async {
