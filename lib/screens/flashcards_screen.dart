@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/api_client.dart';
 import '../services/app_storage.dart';
 import '../services/language_levels.dart';
 import '../models/flashcard.dart';
@@ -491,15 +492,17 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
     _saveCards();
   }
 
-  void _addDeck(String name) {
+  Deck? _addDeck(String name, {String type = Deck.typeVocab}) {
     final id = _courseId;
-    if (id == null) return;
+    if (id == null) return null;
     final deck = Deck(
         id: '${DateTime.now().millisecondsSinceEpoch}',
         name: name,
-        courseId: id);
+        courseId: id,
+        type: type);
     setState(() => _decks.add(deck));
     _saveDecks();
+    return deck;
   }
 
   void _deleteDeck(Deck deck) {
@@ -708,52 +711,295 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
 
   void _showNewDeckDialog() {
     final ctrl = TextEditingController();
+    var type = Deck.typeVocab;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.card,
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('New deck',
-            style: GoogleFonts.cormorantGaramond(
-                color: AppColors.text,
-                fontSize: 22,
-                fontWeight: FontWeight.w500)),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 15),
-          decoration: const InputDecoration(hintText: 'Deck name'),
-          textCapitalization: TextCapitalization.sentences,
-          onSubmitted: (v) {
-            if (v.trim().isNotEmpty) {
-              _addDeck(v.trim());
-              Navigator.pop(ctx);
-            }
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Cancel',
-                style: GoogleFonts.dmSans(color: AppColors.text2)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => AlertDialog(
+          backgroundColor: AppColors.card,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text('New deck',
+              style: GoogleFonts.cormorantGaramond(
+                  color: AppColors.text,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: ctrl,
+                autofocus: true,
+                style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 15),
+                decoration: const InputDecoration(hintText: 'Deck name'),
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _DeckTypeChip(
+                    label: 'Vocabulary',
+                    icon: Icons.style_rounded,
+                    selected: type == Deck.typeVocab,
+                    onTap: () => setDialog(() => type = Deck.typeVocab),
+                  ),
+                  _DeckTypeChip(
+                    label: 'Phrases',
+                    icon: Icons.format_quote_rounded,
+                    selected: type == Deck.typePhrases,
+                    onTap: () => setDialog(() => type = Deck.typePhrases),
+                  ),
+                ],
+              ),
+            ],
           ),
-          FilledButton(
-            onPressed: () {
-              if (ctrl.text.trim().isNotEmpty) {
-                _addDeck(ctrl.text.trim());
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel',
+                  style: GoogleFonts.dmSans(color: AppColors.text2)),
+            ),
+            // Create the deck and immediately open AI generation for it.
+            TextButton(
+              onPressed: () {
+                if (ctrl.text.trim().isEmpty) return;
+                final deck = _addDeck(ctrl.text.trim(), type: type);
                 Navigator.pop(ctx);
-              }
-            },
-            style:
-                FilledButton.styleFrom(backgroundColor: AppColors.primary),
-            child: Text('Create',
-                style: GoogleFonts.dmSans(
-                    color: Colors.white, fontWeight: FontWeight.w600)),
-          ),
-        ],
+                if (deck != null) _showDeckGenerationSheet(context, deck);
+              },
+              child: Text('Create & generate',
+                  style: GoogleFonts.dmSans(
+                      color: AppColors.primarySoft,
+                      fontWeight: FontWeight.w600)),
+            ),
+            FilledButton(
+              onPressed: () {
+                if (ctrl.text.trim().isNotEmpty) {
+                  _addDeck(ctrl.text.trim(), type: type);
+                  Navigator.pop(ctx);
+                }
+              },
+              style:
+                  FilledButton.styleFrom(backgroundColor: AppColors.primary),
+              child: Text('Create',
+                  style: GoogleFonts.dmSans(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  // ── AI deck generation ───────────────────────────────────────────────────────
+
+  static const _genCounts = [5, 10, 15, 20, 30, 50];
+  static const _genLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+  /// Bottom sheet for filling a user deck with AI-generated content:
+  /// topic (typed), count and level. Vocabulary decks get single words,
+  /// phrase decks get expressions.
+  void _showDeckGenerationSheet(BuildContext context, Deck deck) {
+    final course = _activeCourse;
+    if (course == null) return;
+    if (!ApiClient.instance.hasSession) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Sign in to generate decks with AI',
+            style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 13)),
+        backgroundColor: AppColors.card,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+    final topicCtrl = TextEditingController();
+    var count = 10;
+    var level = 'B1';
+    var generating = false;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.card,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheet) => Padding(
+          padding: EdgeInsets.fromLTRB(
+              24, 20, 24, MediaQuery.of(ctx).viewInsets.bottom + 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                      deck.isPhrases
+                          ? Icons.format_quote_rounded
+                          : Icons.style_rounded,
+                      size: 20,
+                      color: AppColors.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                        deck.isPhrases
+                            ? 'Generate phrases'
+                            : 'Generate vocabulary',
+                        style: GoogleFonts.cormorantGaramond(
+                            color: AppColors.text,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: topicCtrl,
+                autofocus: true,
+                style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 15),
+                decoration: const InputDecoration(
+                    hintText: 'Topic, e.g. kitchen, fruit, travel…'),
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: 18),
+              Text('HOW MANY',
+                  style: GoogleFonts.dmSans(
+                      color: AppColors.text3,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final c in _genCounts)
+                    _SheetChip(
+                        label: '$c',
+                        selected: count == c,
+                        onTap: () => setSheet(() => count = c)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('LEVEL',
+                  style: GoogleFonts.dmSans(
+                      color: AppColors.text3,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final l in _genLevels)
+                    _SheetChip(
+                        label: l,
+                        selected: level == l,
+                        onTap: () => setSheet(() => level = l)),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: generating
+                      ? null
+                      : () async {
+                          final topic = topicCtrl.text.trim();
+                          if (topic.isEmpty) return;
+                          setSheet(() => generating = true);
+                          try {
+                            final items =
+                                await ApiClient.instance.generateDeck(
+                              targetLang: course['targetCode'] ?? '',
+                              baseLang: course['baseCode'] ?? '',
+                              topic: topic,
+                              count: count,
+                              level: level,
+                              kind: deck.isPhrases
+                                  ? Deck.typePhrases
+                                  : Deck.typeVocab,
+                            );
+                            if (!ctx.mounted) return;
+                            final added = _addGeneratedCards(deck, items);
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(SnackBar(
+                              content: Text(
+                                  added == items.length
+                                      ? 'Added $added cards to "${deck.name}"'
+                                      : 'Added $added cards ('
+                                          '${items.length - added} already '
+                                          'existed)',
+                                  style: GoogleFonts.dmSans(
+                                      color: AppColors.text, fontSize: 13)),
+                              backgroundColor: AppColors.card,
+                              behavior: SnackBarBehavior.floating,
+                            ));
+                          } on ApiException catch (e) {
+                            if (!ctx.mounted) return;
+                            setSheet(() => generating = false);
+                            ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                              content: Text(e.message,
+                                  style: GoogleFonts.dmSans(
+                                      color: AppColors.text, fontSize: 13)),
+                              backgroundColor: AppColors.card,
+                              behavior: SnackBarBehavior.floating,
+                            ));
+                          }
+                        },
+                  style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 14)),
+                  child: generating
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : Text('Generate',
+                          style: GoogleFonts.dmSans(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Adds generated items as cards in [deck], skipping words the course
+  /// already has (case-insensitive). Returns how many were added.
+  int _addGeneratedCards(Deck deck, List<Map<String, dynamic>> items) {
+    final existing = {
+      for (final c in _cards)
+        if (c.courseId == deck.courseId) c.word.trim().toLowerCase(),
+    };
+    final now = DateTime.now().millisecondsSinceEpoch;
+    var added = 0;
+    setState(() {
+      for (final item in items) {
+        final word = (item['word'] as String? ?? '').trim();
+        if (word.isEmpty || existing.contains(word.toLowerCase())) continue;
+        existing.add(word.toLowerCase());
+        _cards.add(Flashcard(
+          id: '${now + added}',
+          word: word,
+          translation: (item['translation'] as String? ?? '').trim(),
+          wordType: item['wordType'] as String?,
+          courseId: deck.courseId,
+          deckIds: {deck.id},
+        ));
+        added++;
+      }
+    });
+    if (added > 0) _saveCards();
+    return added;
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────
@@ -1031,6 +1277,28 @@ class _DeckHubView extends StatelessWidget {
                           overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(width: 8),
+                    if (!deck.isVirtual) ...[
+                      Tooltip(
+                        message: deck.isPhrases
+                            ? 'Generate phrases with AI'
+                            : 'Generate vocabulary with AI',
+                        child: GestureDetector(
+                          onTap: () =>
+                              state._showDeckGenerationSheet(context, deck),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: AppColors.card,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Icon(Icons.auto_awesome_rounded,
+                                size: 18, color: AppColors.primary),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     if (deck.isBabel)
                       GestureDetector(
                         onTap: () => state._showBabelBaseSheet(context),
@@ -2686,7 +2954,9 @@ class _DeckGridTile extends StatelessWidget {
                                 ? Icons.abc_rounded
                                 : deck.isBabel
                                     ? Icons.language_rounded
-                                    : Icons.layers_rounded,
+                                    : deck.isPhrases
+                                        ? Icons.format_quote_rounded
+                                        : Icons.style_rounded,
                     size: 18,
                     color: deck.accentColor,
                   ),
@@ -4926,6 +5196,84 @@ class _SettingsSheetState extends State<_SettingsSheet> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Deck creation / generation chips ─────────────────────────────────────────
+
+class _DeckTypeChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+  const _DeckTypeChip(
+      {required this.label,
+      required this.icon,
+      required this.selected,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryGlow : AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+              width: selected ? 1.5 : 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon,
+                size: 15,
+                color: selected ? AppColors.primary : AppColors.text2),
+            const SizedBox(width: 6),
+            Text(label,
+                style: GoogleFonts.dmSans(
+                    color: selected ? AppColors.primarySoft : AppColors.text2,
+                    fontSize: 13,
+                    fontWeight:
+                        selected ? FontWeight.w600 : FontWeight.w400)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SheetChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _SheetChip(
+      {required this.label, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryGlow : AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+              width: selected ? 1.5 : 1),
+        ),
+        child: Text(label,
+            style: GoogleFonts.dmSans(
+                color: selected ? AppColors.primarySoft : AppColors.text2,
+                fontSize: 13,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
       ),
     );
   }

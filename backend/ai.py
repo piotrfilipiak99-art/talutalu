@@ -510,6 +510,86 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
     return result
 
 
+# ── Deck generation (Flashcards tab) ─────────────────────────────────────────
+
+
+class GenerateDeckRequest(BaseModel):
+    targetLang: str = Field(max_length=16)
+    baseLang: str = Field(max_length=16)
+    level: str = Field(default="", max_length=32)
+    topic: str = Field(max_length=200)
+    count: int = Field(ge=1, le=50)
+    kind: str = Field(default="vocab", pattern="^(vocab|phrases)$")
+
+
+_DECK_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "word": {"type": "string"},
+                    "translation": {"type": "string"},
+                    "wordType": {"type": ["string", "null"]},
+                },
+                "required": ["word", "translation", "wordType"],
+            },
+        },
+    },
+    "required": ["items"],
+}
+
+
+@router.post("/generate-deck")
+def generate_deck(body: GenerateDeckRequest, user=Depends(get_current_user)):
+    if body.kind == "phrases":
+        what = (
+            "short, genuinely useful everyday phrases or expressions "
+            "(2-6 words each, e.g. set phrases, collocations, functional "
+            "chunks people actually say). Set 'wordType' to 'phrase' for "
+            "every item."
+        )
+    else:
+        what = (
+            "single vocabulary words in their dictionary (base) form. Set "
+            "'wordType' to one of: noun, verb, adjective, adverb, other."
+        )
+    system = (
+        "You build flashcard decks for a language-learning app. Generate "
+        f"items in language '{body.targetLang}' for "
+        f"{_level_line(body.level)}. 'translation' is the meaning in "
+        f"language '{body.baseLang}'. Produce {what} No duplicates, no "
+        "numbering inside values."
+    )
+    user_msg = (
+        f"Generate exactly {body.count} items on the topic: "
+        f"\"{body.topic}\"."
+    )
+    data = _call_structured(GENERATE_MODEL, system,
+                            [{"role": "user", "content": user_msg}],
+                            "deck_items", _DECK_SCHEMA, 6000)
+    # Dedupe case-insensitively and cap at the requested count.
+    seen: set[str] = set()
+    items = []
+    for it in data["items"]:
+        key = it["word"].strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        items.append({
+            "word": it["word"].strip(),
+            "translation": it["translation"].strip(),
+            "wordType": (it["wordType"] or "").strip().lower() or None,
+        })
+        if len(items) >= body.count:
+            break
+    return {"items": items}
+
+
 # ── Chat replies (Converse tab) ──────────────────────────────────────────────
 
 

@@ -126,6 +126,30 @@ class ApiClient {
         'messages': messages,
       }, timeout: const Duration(seconds: 120));
 
+  /// AI deck content: returns [{word, translation, wordType}] for the
+  /// given topic — single vocabulary words or short phrases per [kind].
+  Future<List<Map<String, dynamic>>> generateDeck({
+    required String targetLang,
+    required String baseLang,
+    required String topic,
+    required int count,
+    String level = '',
+    String kind = 'vocab',
+  }) async {
+    final data = await _post('/ai/generate-deck', {
+      'targetLang': targetLang,
+      'baseLang': baseLang,
+      'topic': topic,
+      'count': count,
+      'level': level,
+      'kind': kind,
+    }, timeout: const Duration(seconds: 120));
+    return [
+      for (final item in data['items'] as List)
+        Map<String, dynamic>.from(item as Map),
+    ];
+  }
+
   // ── Sync ──────────────────────────────────────────────────────────────────
 
   /// Per-item collection sync (flashcards, decks): pushes changed items

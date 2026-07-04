@@ -5,12 +5,27 @@ class Deck {
   final String name;
   final String courseId;
 
+  /// What the deck collects: 'vocab' (single words) or 'phrases'
+  /// (expressions). Drives the tile icon and what AI generation produces.
+  /// Decks saved before this field existed default to 'vocab'.
+  final String type;
+
   static const generalId = 'general';
   static const fromTextsId = 'from_texts';
   static const alphabetId = 'alphabet';
   static const babelId = 'babel';
 
-  const Deck({required this.id, required this.name, required this.courseId});
+  static const typeVocab = 'vocab';
+  static const typePhrases = 'phrases';
+
+  const Deck({
+    required this.id,
+    required this.name,
+    required this.courseId,
+    this.type = typeVocab,
+  });
+
+  bool get isPhrases => type == typePhrases;
 
   bool get isGeneral => id == generalId;
   bool get isFromTexts => id == fromTextsId;
@@ -27,12 +42,13 @@ class Deck {
   }
 
   Map<String, dynamic> toJson() =>
-      {'id': id, 'name': name, 'courseId': courseId};
+      {'id': id, 'name': name, 'courseId': courseId, 'type': type};
 
   factory Deck.fromJson(Map<String, dynamic> j) => Deck(
         id: j['id'] as String,
         name: j['name'] as String,
         courseId: j['courseId'] as String,
+        type: (j['type'] as String?) ?? typeVocab,
       );
 
   factory Deck.general(String courseId) =>
