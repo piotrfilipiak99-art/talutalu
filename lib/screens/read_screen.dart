@@ -127,8 +127,10 @@ class _ReadScreenState extends State<ReadScreen>
   final TextEditingController _promptCtrl = TextEditingController();
 
   // Reader state
-  bool _showTranslation = false;
   String? _tappedWord;
+  // Inspect bar display mode: false = the tapped (inflected) form with its
+  // in-context gloss, true = the dictionary base form with its lemma gloss.
+  bool _inspectBaseForm = false;
   // Single-word inspection: tapping a word highlights it here and (via the
   // sentence alignment data) its gloss in the translation, instead of
   // opening the word sheet right away. A floating bottom panel steps
@@ -136,8 +138,6 @@ class _ReadScreenState extends State<ReadScreen>
   int? _inspectTokenStart; // charStart of the inspected body token
   int? _transHlStart; // highlighted char range in the translation
   int? _transHlEnd;
-  late AnimationController _translateCtrl;
-  late Animation<double> _translateAnim;
   // Split view: text on top, translation below, scroll positions mirrored
   // proportionally so both panes show roughly the same fragment.
   bool _splitView = false;
@@ -214,12 +214,6 @@ class _ReadScreenState extends State<ReadScreen>
   @override
   void initState() {
     super.initState();
-    _translateCtrl = AnimationController(
-      duration: const Duration(milliseconds: 350),
-      vsync: this,
-    );
-    _translateAnim =
-        CurvedAnimation(parent: _translateCtrl, curve: Curves.easeOutCubic);
     // Makes _tts.speak() resolve exactly when the utterance finishes (instead
     // of immediately), so _runPlayback can auto-advance with a plain await
     // loop instead of a setCompletionHandler callback chain — that chain
@@ -285,10 +279,8 @@ class _ReadScreenState extends State<ReadScreen>
       _activeCourse = newCourse;
       if (_openedText != null && _openedText!['courseId'] != newId) {
         _openedText = null;
-        _showTranslation = false;
         _tappedWord = null;
         _clearInspection();
-        _translateCtrl.reset();
       }
     });
   }
@@ -298,7 +290,6 @@ class _ReadScreenState extends State<ReadScreen>
     AppStorage.instance.courseChanged.removeListener(_reloadActiveCourse);
     _playToken++;
     _tts.stop();
-    _translateCtrl.dispose();
     _promptCtrl.dispose();
     _bodyScrollCtrl.dispose();
     _transScrollCtrl.dispose();
@@ -790,10 +781,8 @@ class _ReadScreenState extends State<ReadScreen>
                       final newId = '${course['baseCode']}_${course['targetCode']}';
                       if (_openedText != null && _openedText!['courseId'] != newId) {
                         _openedText = null;
-                        _showTranslation = false;
                         _tappedWord = null;
                         _clearInspection();
-                        _translateCtrl.reset();
                       }
                     });
                     Navigator.pop(context);
@@ -1362,26 +1351,8 @@ class _ReadScreenState extends State<ReadScreen>
 
   // ── Reader actions ──────────────────────────────────────────────────────────
 
-  void _toggleTranslation() {
-    setState(() {
-      _showTranslation = !_showTranslation;
-      _splitView = false; // the two translation modes are mutually exclusive
-    });
-    if (_showTranslation) {
-      _translateCtrl.forward();
-    } else {
-      _translateCtrl.reverse();
-    }
-  }
-
   void _toggleSplitView() {
-    setState(() {
-      _splitView = !_splitView;
-      if (_splitView) {
-        _showTranslation = false;
-        _translateCtrl.reset();
-      }
-    });
+    setState(() => _splitView = !_splitView);
   }
 
   // ── Long-press to jump playback ─────────────────────────────────────────────
@@ -1945,14 +1916,12 @@ class _ReadScreenState extends State<ReadScreen>
   void _openText(Map<String, dynamic> text) {
     setState(() {
       _openedText = text;
-      _showTranslation = false;
       _tappedWord = null;
       _clearInspection();
       _selectMode = false;
       _selStart = null;
       _selEnd = null;
     });
-    _translateCtrl.reset();
   }
 
   // Word-by-word, mirroring the base text — lets long-press jump playback to
@@ -2038,7 +2007,6 @@ class _ReadScreenState extends State<ReadScreen>
     _tts.stop();
     setState(() {
       _openedText = null;
-      _showTranslation = false;
       _tappedWord = null;
       _clearInspection();
       _selectMode = false;
@@ -2050,7 +2018,6 @@ class _ReadScreenState extends State<ReadScreen>
       _speakWordStart = null;
       _speakWordEnd = null;
     });
-    _translateCtrl.reset();
   }
 
   // ── Build ───────────────────────────────────────────────────────────────────
@@ -2447,7 +2414,15 @@ class _ReadScreenState extends State<ReadScreen>
   Widget _buildInspectBar() {
     final token = _inspectedToken();
     if (token == null) return const SizedBox.shrink();
-    final gloss = splitTrailingPunct((token.translation ?? '').trim()).core;
+    // Base-form mode (toggled in the top bar) shows the dictionary form and
+    // its lemma gloss instead of the tapped inflected form.
+    final headline = _inspectBaseForm
+        ? token.lemma
+        : splitTrailingPunct(token.surface).core;
+    final glossSource = _inspectBaseForm
+        ? (token.lemmaTranslation ?? token.translation)
+        : token.translation;
+    final gloss = splitTrailingPunct((glossSource ?? '').trim()).core;
     void openSheet() {
       setState(() => _tappedWord = token.surface);
       _showWordSheet(token);
@@ -2473,7 +2448,7 @@ class _ReadScreenState extends State<ReadScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    splitTrailingPunct(token.surface).core,
+                    headline,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.dmSans(
@@ -2683,44 +2658,12 @@ class _ReadScreenState extends State<ReadScreen>
                 ),
               ),
               const Spacer(),
-              // Inline translation toggle — icon-only (with the split-view
-              // button beside it, the labelled version no longer fits on
-              // narrow phones).
-              Tooltip(
-                message: _showTranslation
-                    ? 'Hide translation'
-                    : 'Show translation under the text',
-                child: GestureDetector(
-                  onTap: _toggleTranslation,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _showTranslation
-                          ? AppColors.primaryGlow
-                          : AppColors.surface,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _showTranslation
-                            ? AppColors.primary
-                            : AppColors.border,
-                      ),
-                    ),
-                    child: Icon(Icons.translate_rounded,
-                        color: _showTranslation
-                            ? AppColors.primary
-                            : AppColors.text2,
-                        size: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 6),
-              // Split view — text on top, translation below, synced scroll.
+              // Translation — opens the split view (text top, translation
+              // bottom, synced scrolling).
               Tooltip(
                 message: _splitView
-                    ? 'Exit split view'
-                    : 'Split view: text and translation together',
+                    ? 'Hide translation'
+                    : 'Show translation (split view)',
                 child: GestureDetector(
                   onTap: _toggleSplitView,
                   child: AnimatedContainer(
@@ -2737,10 +2680,44 @@ class _ReadScreenState extends State<ReadScreen>
                             _splitView ? AppColors.primary : AppColors.border,
                       ),
                     ),
+                    child: Icon(Icons.translate_rounded,
+                        color:
+                            _splitView ? AppColors.primary : AppColors.text2,
+                        size: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Word-bar display mode: base (dictionary) form instead of
+              // the tapped inflected form.
+              Tooltip(
+                message: _inspectBaseForm
+                    ? 'Word bar: showing base form'
+                    : 'Word bar: show base form',
+                child: GestureDetector(
+                  onTap: () => setState(
+                      () => _inspectBaseForm = !_inspectBaseForm),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _inspectBaseForm
+                          ? AppColors.primaryGlow
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _inspectBaseForm
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
+                    ),
                     child: Icon(
-                      Icons.splitscreen_rounded,
+                      Icons.spellcheck_rounded,
                       size: 16,
-                      color: _splitView ? AppColors.primary : AppColors.text2,
+                      color: _inspectBaseForm
+                          ? AppColors.primary
+                          : AppColors.text2,
                     ),
                   ),
                 ),
@@ -2749,9 +2726,8 @@ class _ReadScreenState extends State<ReadScreen>
           ),
         ),
         const SizedBox(height: 16),
-        // Text content — normal reader (inline translation expands under
-        // the text) or split view (text top / translation bottom, scroll
-        // positions mirrored).
+        // Text content — plain reader, or split view (text top /
+        // translation bottom, scroll positions mirrored).
         Expanded(
           child: _splitView &&
                   ((text['translation'] as String?) ?? '').isNotEmpty
@@ -2760,35 +2736,7 @@ class _ReadScreenState extends State<ReadScreen>
             controller: _bodyScrollCtrl,
             padding: EdgeInsets.fromLTRB(
                 20, 0, 20, _hasSelection ? 110 : 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBodyWrap(text, body, words, wordStarts),
-                SizeTransition(
-                  sizeFactor: _translateAnim,
-                  child: FadeTransition(
-                    opacity: _translateAnim,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 24),
-                        Container(height: 1, color: AppColors.border),
-                        const SizedBox(height: 20),
-                        Text('TRANSLATION',
-                            style: GoogleFonts.dmSans(
-                                color: AppColors.text3,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.2)),
-                        const SizedBox(height: 10),
-                        _buildTranslationText(
-                            body, text['translation'] as String),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: _buildBodyWrap(text, body, words, wordStarts),
           ),
         ),
         if (_playbackMode)

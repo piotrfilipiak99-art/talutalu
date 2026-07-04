@@ -97,6 +97,16 @@ void main() {
     await tester.tapAt(const Offset(195, 60));
     await tester.pumpAndSettle();
 
+    // Base-form mode: the top-bar toggle switches the bar to the lemma
+    // and its dictionary gloss ('jest' -> 'byc' / 'to be').
+    await tester.tap(find.byIcon(Icons.spellcheck_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('być').hitTestable(), findsOneWidget);
+    expect(find.text('to be').hitTestable(), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.spellcheck_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('być').hitTestable(), findsNothing);
+
     // Tapping the same word again clears the highlight and hides the panel.
     await tester.tap(find.text('jest').first);
     await tester.pumpAndSettle();

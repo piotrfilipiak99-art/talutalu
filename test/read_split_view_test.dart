@@ -62,8 +62,8 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(find.text('Warsaw').hitTestable(), findsNothing);
 
-    // Toggle split view via the new button next to Translation.
-    await tester.tap(find.byIcon(Icons.splitscreen_rounded));
+    // The translate icon now toggles the split view directly.
+    await tester.tap(find.byIcon(Icons.translate_rounded).hitTestable());
     await tester.pumpAndSettle();
 
     // Both panes are live now: two scrollables, body words on top and
@@ -75,7 +75,7 @@ void main() {
     expect(find.text('TRANSLATION'), findsNothing);
 
     // Toggling again returns to the single-pane reader.
-    await tester.tap(find.byIcon(Icons.splitscreen_rounded));
+    await tester.tap(find.byIcon(Icons.translate_rounded).hitTestable());
     await tester.pumpAndSettle();
     expect(find.byType(SingleChildScrollView), findsOneWidget);
     expect(find.text('Warsaw').hitTestable(), findsNothing);
