@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -25,17 +24,15 @@ class ApiClient {
 
   void init(SharedPreferences prefs) => _p = prefs;
 
-  /// Compile-time override: flutter run --dart-define=API_URL=https://...
+  /// Compile-time override for local development, e.g.:
+  ///   flutter run --dart-define=API_URL=http://localhost:8000   (desktop/web)
+  ///   flutter run --dart-define=API_URL=http://10.0.2.2:8000    (emulator)
+  ///   flutter run --dart-define=API_URL=http://192.168.0.196:8000 (phone+LAN)
   static const _envUrl = String.fromEnvironment('API_URL');
 
-  String get baseUrl {
-    if (_envUrl.isNotEmpty) return _envUrl;
-    // The Android emulator reaches the host machine via 10.0.2.2.
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:8000';
-    }
-    return 'http://localhost:8000';
-  }
+  /// Defaults to production so any build works on any device out of the box.
+  String get baseUrl =>
+      _envUrl.isNotEmpty ? _envUrl : 'https://talutalu-api.onrender.com';
 
   String? get token => _p.getString('authToken');
   bool get hasSession => token != null;
@@ -59,10 +56,12 @@ class ApiClient {
 
   Future<Map<String, dynamic>> _post(String path, Object payload) async {
     try {
+      // Generous timeout: Render's free tier spins the server down when idle
+      // and a cold start can take close to a minute.
       final res = await http
           .post(Uri.parse('$baseUrl$path'),
               headers: _jsonHeaders, body: jsonEncode(payload))
-          .timeout(const Duration(seconds: 15));
+          .timeout(const Duration(seconds: 75));
       return _decode(res);
     } on ApiException {
       rethrow;
@@ -97,7 +96,7 @@ class ApiClient {
       final res = await http
           .put(Uri.parse('$baseUrl/sync'),
               headers: _jsonHeaders, body: jsonEncode({'items': items}))
-          .timeout(const Duration(seconds: 20));
+          .timeout(const Duration(seconds: 75));
       final data = await _decode(res);
       return Map<String, dynamic>.from(data['items'] as Map);
     } on ApiException {
