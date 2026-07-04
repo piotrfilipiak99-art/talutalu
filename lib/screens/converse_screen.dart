@@ -15,6 +15,32 @@ import '../widgets/word_attributes.dart';
 String _ttsLocaleFor(String code) =>
     alphabetFor(code)?.ttsLocale ?? '$code-${code.toUpperCase()}';
 
+/// One renderable chunk of an AI bubble: a word token plus any punctuation
+/// tokens that hug it in the source text (charStart == previous charEnd).
+/// Without this merge, Wrap's spacing would put a gap before ".", "?" etc.,
+/// since the AI tokenizes punctuation separately.
+class _TokenGroup {
+  _TokenGroup(this.token) : trail = '', _end = token.charEnd;
+  final TextToken token;
+  String trail;
+  int _end;
+}
+
+List<_TokenGroup> _groupTokens(List<TextToken> tokens) {
+  final groups = <_TokenGroup>[];
+  for (final t in tokens) {
+    if (t.pos == 'PUNCT' &&
+        groups.isNotEmpty &&
+        t.charStart == groups.last._end) {
+      groups.last.trail += t.surface;
+      groups.last._end = t.charEnd;
+    } else {
+      groups.add(_TokenGroup(t));
+    }
+  }
+  return groups;
+}
+
 String _posLabel(String pos) => switch (pos) {
       'NOUN' => 'noun',
       'PROPN' => 'proper noun',
@@ -878,10 +904,12 @@ class _MessageBubble extends StatelessWidget {
                                 fontSize: 15,
                                 height: 1.4))
                       ]
-                    : message.tokens.map((t) {
+                    : _groupTokens(message.tokens).map((g) {
+                        final t = g.token;
                         final isTapped =
                             tappedKey == '${message.id}:${t.charStart}';
-                        final split = splitTrailingPunct(t.surface);
+                        final base = splitTrailingPunct(t.surface);
+                        final split = (core: base.core, trail: base.trail + g.trail);
                         return GestureDetector(
                           onTap: () => onWordTap(t),
                           child: Row(

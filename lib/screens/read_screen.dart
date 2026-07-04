@@ -666,13 +666,19 @@ class _ReadScreenState extends State<ReadScreen>
   // ── Continue text ────────────────────────────────────────────────────────────
 
   /// Words from the user's flashcards in the given decks, weakest mastery
-  /// first, for the AI to weave into generated/continued texts.
+  /// first, for the AI to weave into generated texts. Mirrors the deck
+  /// semantics of the Flashcards screen: General means every course card
+  /// and From Texts means text-sourced cards — those two are virtual, so
+  /// their ids never appear in a card's own deckIds.
   List<String> _vocabForDecks(Iterable<String> deckIds) {
     final ids = deckIds.toSet();
     if (ids.isEmpty) return const [];
     final cards = AppStorage.instance.flashcards
+        .where((c) => c.courseId == _activeCourseId)
         .where((c) =>
-            c.courseId == _activeCourseId && c.deckIds.any(ids.contains))
+            ids.contains(Deck.generalId) ||
+            (ids.contains(Deck.fromTextsId) && c.fromTexts) ||
+            c.deckIds.any(ids.contains))
         .toList()
       ..sort((a, b) => a.masteryLevel.compareTo(b.masteryLevel));
     return [for (final c in cards.take(15)) c.word];
@@ -2531,22 +2537,10 @@ class _ReadScreenState extends State<ReadScreen>
           height: 1,
           color: AppColors.border,
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text('TRANSLATION',
-                style: GoogleFonts.dmSans(
-                    color: AppColors.text3,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2)),
-          ),
-        ),
         Expanded(
           child: SingleChildScrollView(
             controller: _transScrollCtrl,
-            padding: EdgeInsets.fromLTRB(20, 10, 20, bottomPad),
+            padding: EdgeInsets.fromLTRB(20, 16, 20, bottomPad),
             child:
                 _buildTranslationText(body, text['translation'] as String),
           ),

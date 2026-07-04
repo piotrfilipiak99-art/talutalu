@@ -71,7 +71,8 @@ void main() {
     expect(find.byType(SingleChildScrollView), findsNWidgets(2));
     expect(find.text('Warszawa').hitTestable(), findsWidgets);
     expect(find.text('Warsaw').hitTestable(), findsWidgets);
-    expect(find.text('TRANSLATION'), findsOneWidget);
+    // The split panes are self-explanatory — no TRANSLATION label.
+    expect(find.text('TRANSLATION'), findsNothing);
 
     // Toggling again returns to the single-pane reader.
     await tester.tap(find.byIcon(Icons.splitscreen_rounded));
