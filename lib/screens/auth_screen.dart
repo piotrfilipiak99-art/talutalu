@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/api_client.dart';
 import '../services/app_storage.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -36,20 +37,58 @@ class _AuthScreenState extends State<AuthScreen>
     super.dispose();
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message, style: GoogleFonts.dmSans()),
+      backgroundColor: AppColors.card,
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
   Future<void> _submit() async {
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 800));
-    if (!mounted) return;
-    setState(() => _isLoading = false);
     final isCreatingAccount = _tabCtrl.index == 1;
-    if (!isCreatingAccount) {
-      await AppStorage.instance.setLoggedIn(true);
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+
+    if (email.isEmpty || !email.contains('@')) {
+      _showError('Enter a valid email address.');
+      return;
     }
-    if (!mounted) return;
-    Navigator.pushReplacementNamed(
-      context,
-      isCreatingAccount ? '/onboarding' : '/home',
-    );
+    if (password.length < 8) {
+      _showError('Password must be at least 8 characters.');
+      return;
+    }
+    if (isCreatingAccount && password != _repeatPasswordCtrl.text) {
+      _showError('Passwords do not match.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      if (isCreatingAccount) {
+        await ApiClient.instance.register(email, password);
+      } else {
+        await ApiClient.instance.login(email, password);
+        await AppStorage.instance.setLoggedIn(true);
+        // Bring this account's data down before showing Home; if it fails
+        // (offline), local data still works and syncs later.
+        try {
+          await AppStorage.instance.syncNow();
+        } on ApiException {
+          // ignore: sync retries on next write / app start
+        }
+      }
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        isCreatingAccount ? '/onboarding' : '/home',
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showError(e.message);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

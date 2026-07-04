@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -6,6 +7,7 @@ import '../models/deck.dart';
 import '../models/conversation.dart';
 import '../models/explain_request.dart';
 import '../theme/app_theme.dart';
+import 'api_client.dart';
 
 /// Single source of truth for local persistence.
 /// All methods are synchronous after [init] is called in main().
@@ -34,15 +36,122 @@ class AppStorage {
 
   Future<void> init() async {
     _p = await SharedPreferences.getInstance();
+    ApiClient.instance.init(_p);
     final storedDark = _p.getBool('darkMode') ?? true;
     AppColors.setDark(storedDark);
     darkMode.value = storedDark;
+    // Pick up changes made on other devices; offline is fine — local wins
+    // until the next successful sync.
+    if (ApiClient.instance.hasSession) {
+      unawaited(syncNow().catchError((_) {}));
+    }
+  }
+
+  // ── Sync (offline-first, per-key last-write-wins) ───────────────────────────
+  //
+  // Every mutating method below calls _touch(key): the write always lands in
+  // SharedPreferences first (the app never waits for the network), the key is
+  // marked dirty with a wall-clock timestamp, and a debounced push sends dirty
+  // keys to the backend. The server keeps whichever side is newer and returns
+  // the merged state, which is applied back here.
+
+  /// Keys whose SharedPreferences value is a JSON-encoded string.
+  static const _jsonKeys = {
+    'bases', 'courses', 'activeCourse', 'texts',
+    'flashcards', 'decks', 'deck_settings', 'conversations',
+  };
+  static const _boolKeys = {'darkMode', 'notificationsEnabled', 'reminderEnabled'};
+  static const _intKeys = {'reminderHour', 'reminderMinute', 'selectedAvatar'};
+  static const _stringKeys = {'userName', 'userHobby', 'appLanguage', 'selectedBase'};
+
+  Timer? _syncDebounce;
+  final syncError = ValueNotifier<String?>(null);
+
+  Map<String, int> get _syncMeta {
+    final raw = _p.getString('sync_meta');
+    if (raw == null) return {};
+    return Map<String, int>.from(jsonDecode(raw) as Map);
+  }
+
+  Set<String> get _dirtyKeys {
+    final raw = _p.getString('sync_dirty');
+    if (raw == null) return {};
+    return Set<String>.from(jsonDecode(raw) as List);
+  }
+
+  void _touch(String key) {
+    final meta = _syncMeta..[key] = DateTime.now().millisecondsSinceEpoch;
+    _p.setString('sync_meta', jsonEncode(meta));
+    _p.setString('sync_dirty', jsonEncode([..._dirtyKeys, key]));
+    if (!ApiClient.instance.hasSession) return; // offline-only until login
+    _syncDebounce?.cancel();
+    _syncDebounce = Timer(const Duration(seconds: 3), () {
+      syncNow().catchError((_) {}); // dirty keys survive for the next attempt
+    });
+  }
+
+  Object? _readForPush(String key) {
+    if (_jsonKeys.contains(key)) {
+      final raw = _p.getString(key);
+      return raw == null ? null : jsonDecode(raw);
+    }
+    if (_boolKeys.contains(key)) return _p.getBool(key);
+    if (_intKeys.contains(key)) return _p.getInt(key);
+    return _p.getString(key);
+  }
+
+  Future<void> _applyFromServer(String key, Object? value) async {
+    if (_jsonKeys.contains(key)) {
+      await _p.setString(key, jsonEncode(value));
+    } else if (_boolKeys.contains(key) && value is bool) {
+      await _p.setBool(key, value);
+    } else if (_intKeys.contains(key) && value is int) {
+      await _p.setInt(key, value);
+    } else if (_stringKeys.contains(key) && value is String) {
+      await _p.setString(key, value);
+    }
+  }
+
+  /// Push dirty keys, pull the merged state, apply newer server values.
+  Future<void> syncNow() async {
+    if (!ApiClient.instance.hasSession) return;
+    final meta = _syncMeta;
+    final push = <String, dynamic>{
+      for (final key in _dirtyKeys)
+        key: {'value': _readForPush(key), 'updatedAt': meta[key] ?? 0},
+    };
+    try {
+      final serverState = await ApiClient.instance.sync(push);
+      var changed = false;
+      for (final entry in serverState.entries) {
+        final item = Map<String, dynamic>.from(entry.value as Map);
+        final serverAt = item['updatedAt'] as int;
+        if (serverAt > (meta[entry.key] ?? 0)) {
+          await _applyFromServer(entry.key, item['value']);
+          meta[entry.key] = serverAt;
+          changed = true;
+        }
+      }
+      await _p.setString('sync_meta', jsonEncode(meta));
+      await _p.setString('sync_dirty', jsonEncode(<String>[]));
+      syncError.value = null;
+      if (changed) {
+        AppColors.setDark(_p.getBool('darkMode') ?? true);
+        darkMode.value = _p.getBool('darkMode') ?? true;
+        flashcardsChanged.value++;
+        courseChanged.value++;
+      }
+    } on ApiException catch (e) {
+      syncError.value = e.message;
+      rethrow;
+    }
   }
 
   Future<void> setDarkMode(bool value) async {
     await _p.setBool('darkMode', value);
     AppColors.setDark(value);
     darkMode.value = value;
+    _touch('darkMode');
   }
 
   // ── Auth ────────────────────────────────────────────────────────────────────
@@ -58,6 +167,8 @@ class AppStorage {
   Future<void> saveProfile(String name, String hobby) async {
     await _p.setString('userName', name);
     await _p.setString('userHobby', hobby);
+    _touch('userName');
+    _touch('userHobby');
   }
 
   // ── Notifications ────────────────────────────────────────────────────────────
@@ -66,8 +177,10 @@ class AppStorage {
   // for the user-facing caveat.
 
   bool get notificationsEnabled => _p.getBool('notificationsEnabled') ?? true;
-  Future<void> setNotificationsEnabled(bool value) =>
-      _p.setBool('notificationsEnabled', value);
+  Future<void> setNotificationsEnabled(bool value) async {
+    await _p.setBool('notificationsEnabled', value);
+    _touch('notificationsEnabled');
+  }
 
   bool get reminderEnabled => _p.getBool('reminderEnabled') ?? false;
   int get reminderHour => _p.getInt('reminderHour') ?? 19;
@@ -78,12 +191,18 @@ class AppStorage {
     await _p.setBool('reminderEnabled', enabled);
     await _p.setInt('reminderHour', hour);
     await _p.setInt('reminderMinute', minute);
+    _touch('reminderEnabled');
+    _touch('reminderHour');
+    _touch('reminderMinute');
   }
 
   // ── App language (UI language, not the learning target) ────────────────────
 
   String get appLanguage => _p.getString('appLanguage') ?? 'en';
-  Future<void> setAppLanguage(String code) => _p.setString('appLanguage', code);
+  Future<void> setAppLanguage(String code) async {
+    await _p.setString('appLanguage', code);
+    _touch('appLanguage');
+  }
 
   // ── Courses ─────────────────────────────────────────────────────────────────
 
@@ -123,6 +242,10 @@ class AppStorage {
     if (activeCourse != null) {
       await _p.setString('activeCourse', jsonEncode(activeCourse));
     }
+    _touch('bases');
+    _touch('courses');
+    if (selectedBase != null) _touch('selectedBase');
+    if (activeCourse != null) _touch('activeCourse');
     courseChanged.value++;
   }
 
@@ -136,15 +259,20 @@ class AppStorage {
         .toList();
   }
 
-  Future<void> saveTexts(List<Map<String, dynamic>> texts) =>
-      _p.setString('texts', jsonEncode(texts));
+  Future<void> saveTexts(List<Map<String, dynamic>> texts) async {
+    await _p.setString('texts', jsonEncode(texts));
+    _touch('texts');
+  }
 
   // ── Avatar ──────────────────────────────────────────────────────────────────
 
   int? get selectedAvatar => _p.containsKey('selectedAvatar')
       ? _p.getInt('selectedAvatar')
       : null;
-  Future<void> saveAvatar(int index) => _p.setInt('selectedAvatar', index);
+  Future<void> saveAvatar(int index) async {
+    await _p.setInt('selectedAvatar', index);
+    _touch('selectedAvatar');
+  }
 
   // ── Flashcards ──────────────────────────────────────────────────────────────
 
@@ -156,8 +284,11 @@ class AppStorage {
         .toList();
   }
 
-  Future<void> saveFlashcards(List<Flashcard> cards) =>
-      _p.setString('flashcards', jsonEncode(cards.map((c) => c.toJson()).toList()));
+  Future<void> saveFlashcards(List<Flashcard> cards) async {
+    await _p.setString(
+        'flashcards', jsonEncode(cards.map((c) => c.toJson()).toList()));
+    _touch('flashcards');
+  }
 
   List<Deck> get decks {
     final raw = _p.getString('decks');
@@ -167,8 +298,11 @@ class AppStorage {
         .toList();
   }
 
-  Future<void> saveDecks(List<Deck> decks) =>
-      _p.setString('decks', jsonEncode(decks.map((d) => d.toJson()).toList()));
+  Future<void> saveDecks(List<Deck> decks) async {
+    await _p.setString(
+        'decks', jsonEncode(decks.map((d) => d.toJson()).toList()));
+    _touch('decks');
+  }
 
   // ── Flashcards settings (per-deck map) ──────────────────────────────────────
 
@@ -178,8 +312,10 @@ class AppStorage {
     return Map<String, dynamic>.from(jsonDecode(raw) as Map);
   }
 
-  Future<void> saveDeckSettings(Map<String, dynamic> s) =>
-      _p.setString('deck_settings', jsonEncode(s));
+  Future<void> saveDeckSettings(Map<String, dynamic> s) async {
+    await _p.setString('deck_settings', jsonEncode(s));
+    _touch('deck_settings');
+  }
 
   // ── Conversations (Converse) ────────────────────────────────────────────────
 
@@ -191,10 +327,16 @@ class AppStorage {
         .toList();
   }
 
-  Future<void> saveConversations(List<Conversation> list) => _p.setString(
-      'conversations', jsonEncode(list.map((c) => c.toJson()).toList()));
+  Future<void> saveConversations(List<Conversation> list) async {
+    await _p.setString(
+        'conversations', jsonEncode(list.map((c) => c.toJson()).toList()));
+    _touch('conversations');
+  }
 
   // ── Clear ───────────────────────────────────────────────────────────────────
 
-  Future<void> clearAll() => _p.clear();
+  Future<void> clearAll() async {
+    _syncDebounce?.cancel();
+    await _p.clear(); // also drops authToken — logging out ends the session
+  }
 }
