@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8B1A2A"/>
+  <!-- Puerta de Alcalá -->
+  <!-- 5 columns -->
+  <rect x="18" y="44" width="5" height="32" fill="white"/>
+  <rect x="28" y="44" width="5" height="32" fill="white"/>
+  <rect x="44" y="38" width="6" height="38" fill="white"/>
+  <rect x="67" y="44" width="5" height="32" fill="white"/>
+  <rect x="77" y="44" width="5" height="32" fill="white"/>
+  <!-- Horizontal entablature over outer columns -->
+  <rect x="16" y="38" width="20" height="6" fill="white"/>
+  <rect x="64" y="38" width="20" height="6" fill="white"/>
+  <!-- Central arch -->
+  <rect x="40" y="50" width="20" height="26" fill="white"/>
+  <ellipse cx="50" cy="50" rx="10" ry="8" fill="white"/>
+  <ellipse cx="50" cy="52" rx="7" ry="6" fill="#8B1A2A"/>
+  <!-- Side arches cutouts -->
+  <rect x="24" y="56" width="10" height="12" fill="#8B1A2A"/>
+  <ellipse cx="29" cy="56" rx="5" ry="4" fill="#8B1A2A"/>
+  <rect x="66" y="56" width="10" height="12" fill="#8B1A2A"/>
+  <ellipse cx="71" cy="56" rx="5" ry="4" fill="#8B1A2A"/>
+  <!-- Top ornaments (obelisks) -->
+  <rect x="19" y="30" width="3" height="8" fill="white"/>
+  <rect x="78" y="30" width="3" height="8" fill="white"/>
+  <polygon points="19,30 22,30 20.5,24" fill="white"/>
+  <polygon points="78,30 81,30 79.5,24" fill="white"/>
+  <!-- Urns -->
+  <ellipse cx="46" cy="32" rx="3" ry="4" fill="white"/>
+  <ellipse cx="54" cy="32" rx="3" ry="4" fill="white"/>
+  <!-- Base -->
+  <rect x="14" y="76" width="72" height="4" fill="white"/>
+</svg>

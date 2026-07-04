@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A3A6A"/>
+  <!-- Atomium - 9 spheres arranged like iron crystal -->
+  <!-- Central sphere -->
+  <circle cx="50" cy="44" r="10" fill="white"/>
+  <!-- Top sphere -->
+  <circle cx="50" cy="22" r="8" fill="white"/>
+  <!-- Bottom sphere -->
+  <circle cx="50" cy="66" r="8" fill="white"/>
+  <!-- Left sphere -->
+  <circle cx="28" cy="44" r="8" fill="white"/>
+  <!-- Right sphere -->
+  <circle cx="72" cy="44" r="8" fill="white"/>
+  <!-- Connecting tubes -->
+  <rect x="49" y="30" width="2" height="14" fill="white"/>
+  <rect x="49" y="54" width="2" height="12" fill="white"/>
+  <rect x="36" y="43" width="14" height="2" fill="white"/>
+  <rect x="58" y="43" width="14" height="2" fill="white"/>
+  <!-- Diagonal tubes -->
+  <line x1="36" y1="36" x2="44" y2="44" stroke="white" stroke-width="2"/>
+  <line x1="56" y1="44" x2="64" y2="36" stroke="white" stroke-width="2"/>
+  <line x1="36" y1="52" x2="44" y2="44" stroke="white" stroke-width="2"/>
+  <line x1="56" y1="44" x2="64" y2="52" stroke="white" stroke-width="2"/>
+  <!-- Base legs -->
+  <rect x="48" y="74" width="4" height="8" fill="white"/>
+  <rect x="28" y="68" width="4" height="14" fill="white"/>
+  <rect x="68" y="68" width="4" height="14" fill="white"/>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A3A"/>
+  <!-- Faisal Mosque, Islamabad - tent-shaped contemporary mosque -->
+  <!-- Main tent structure (8-sided) -->
+  <polygon points="50,14 80,56 50,64 20,56" fill="white"/>
+  <!-- Inner lines on tent -->
+  <line x1="50" y1="14" x2="50" y2="64" stroke="#1A5A3A" stroke-width="2"/>
+  <line x1="50" y1="14" x2="30" y2="64" stroke="#1A5A3A" stroke-width="1.5"/>
+  <line x1="50" y1="14" x2="70" y2="64" stroke="#1A5A3A" stroke-width="1.5"/>
+  <!-- Prayer hall base -->
+  <rect x="20" y="60" width="60" height="10" fill="white"/>
+  <!-- 4 minarets (pencil-thin) -->
+  <rect x="10" y="30" width="6" height="52" fill="white"/>
+  <rect x="84" y="30" width="6" height="52" fill="white"/>
+  <rect x="18" y="34" width="6" height="48" fill="white"/>
+  <rect x="76" y="34" width="6" height="48" fill="white"/>
+  <!-- Minaret tips -->
+  <polygon points="10,30 16,30 13,18" fill="white"/>
+  <polygon points="84,30 90,30 87,18" fill="white"/>
+  <polygon points="18,34 24,34 21,22" fill="white"/>
+  <polygon points="76,34 82,34 79,22" fill="white"/>
+  <!-- Crescent on top of tent -->
+  <circle cx="50" cy="12" r="4" fill="#1A5A3A"/>
+  <circle cx="53" cy="10" r="3" fill="white"/>
+  <rect x="49" y="8" width="2" height="3" fill="white"/>
+  <!-- Base platform -->
+  <rect x="14" y="70" width="72" height="4" fill="white"/>
+  <rect x="18" y="74" width="64" height="4" fill="white"/>
+</svg>

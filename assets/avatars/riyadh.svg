@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A1A"/>
+  <!-- Kingdom Centre Tower (Burj Al Mamlaka), Riyadh -->
+  <!-- Main tower base (wide bottom) -->
+  <polygon points="30,80 70,80 64,54 36,54" fill="white"/>
+  <!-- Middle section (narrowing) -->
+  <rect x="36" y="36" width="28" height="20" fill="white"/>
+  <!-- Sky bridge / opening gap (signature arch at top) -->
+  <rect x="36" y="28" width="12" height="10" fill="white"/>
+  <rect x="52" y="28" width="12" height="10" fill="white"/>
+  <!-- Curved sky bridge connecting the split top -->
+  <path d="M36,28 Q50,20 64,28" stroke="white" stroke-width="6" fill="none"/>
+  <!-- Top spire -->
+  <rect x="44" y="14" width="12" height="16" fill="white"/>
+  <polygon points="44,14 56,14 50,6" fill="white"/>
+  <!-- Podium base -->
+  <rect x="20" y="80" width="60" height="4" fill="white"/>
+</svg>

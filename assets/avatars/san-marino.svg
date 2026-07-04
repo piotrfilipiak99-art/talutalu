@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A4A"/>
+  <!-- Three Towers of San Marino on Monte Titano -->
+  <!-- Mountain -->
+  <polygon points="10,80 50,20 90,80" fill="white" opacity="0.3"/>
+  <!-- First tower (Guaita) - largest, left peak -->
+  <rect x="20" y="36" width="16" height="34" fill="white"/>
+  <rect x="18" y="30" width="5" height="6" fill="white"/>
+  <rect x="25" y="30" width="5" height="6" fill="white"/>
+  <rect x="30" y="30" width="5" height="6" fill="white"/>
+  <polygon points="18,36 36,36 27,20" fill="white"/>
+  <!-- Second tower (Cesta) - center peak -->
+  <rect x="43" y="30" width="14" height="40" fill="white"/>
+  <rect x="41" y="24" width="4" height="6" fill="white"/>
+  <rect x="47" y="24" width="4" height="6" fill="white"/>
+  <rect x="53" y="24" width="4" height="6" fill="white"/>
+  <polygon points="41,30 57,30 49,14" fill="white"/>
+  <!-- Third tower (Montale) - smallest, right -->
+  <rect x="64" y="42" width="14" height="28" fill="white"/>
+  <rect x="62" y="36" width="4" height="6" fill="white"/>
+  <rect x="68" y="36" width="4" height="6" fill="white"/>
+  <rect x="74" y="36" width="4" height="6" fill="white"/>
+  <!-- Connecting walls -->
+  <rect x="36" y="62" width="8" height="8" fill="white" opacity="0.6"/>
+  <rect x="58" y="64" width="8" height="6" fill="white" opacity="0.6"/>
+</svg>

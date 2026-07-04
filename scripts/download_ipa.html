@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Pobierz pliki IPA – Talutalu</title>
+<style>
+  body { font-family: sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+  h2 { color: #333; }
+  button { padding: 12px 28px; font-size: 16px; background: #6c47ff; color: #fff;
+           border: none; border-radius: 8px; cursor: pointer; margin-bottom: 16px; }
+  button:disabled { background: #aaa; cursor: default; }
+  #status { margin-bottom: 12px; font-weight: bold; color: #333; }
+  #log { background: #fff; border: 1px solid #ddd; border-radius: 6px;
+         padding: 12px; font-size: 12px; font-family: monospace;
+         height: 340px; overflow-y: auto; }
+  .ok   { color: green; }
+  .fail { color: red; }
+  .info { color: #888; }
+  #move { background: #fff; border: 1px solid #ccc; border-radius: 8px;
+          padding: 16px; margin-top: 16px; display: none; }
+  #move code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h2>Pobieranie nagrań IPA dla Talutalu</h2>
+<p>Kliknij przycisk. Pliki zostaną pobrane do folderu <b>Pobrane</b>. Potem przenieś je do <code>assets/audio/ipa/</code>.</p>
+<div id="status">Gotowy do pobrania 32 plików.</div>
+<button id="btn" onclick="startDownload()">Pobierz wszystkie</button>
+<div id="log"></div>
+<div id="move">
+  <b>Gotowe! Przenieś pliki do projektu:</b><br><br>
+  Otwórz PowerShell w folderze projektu i wklej:<br><br>
+  <code>Move-Item "$env:USERPROFILE\Downloads\*.ogg","$env:USERPROFILE\Downloads\*.oga" "assets\audio\ipa\" -Force</code>
+</div>
+
+<script>
+const files = [
+  ["PR-open_front_unrounded_vowel.ogg",         "https://upload.wikimedia.org/wikipedia/commons/0/0e/PR-open_front_unrounded_vowel.ogg"],
+  ["Close_front_unrounded_vowel.ogg",            "https://upload.wikimedia.org/wikipedia/commons/9/91/Close_front_unrounded_vowel.ogg"],
+  ["Close_back_rounded_vowel.ogg",               "https://upload.wikimedia.org/wikipedia/commons/5/5d/Close_back_rounded_vowel.ogg"],
+  ["Close-mid_back_rounded_vowel.ogg",           "https://upload.wikimedia.org/wikipedia/commons/8/84/Close-mid_back_rounded_vowel.ogg"],
+  ["Close-mid_front_unrounded_vowel.ogg",        "https://upload.wikimedia.org/wikipedia/commons/6/6c/Close-mid_front_unrounded_vowel.ogg"],
+  ["Close_central_unrounded_vowel.ogg",          "https://upload.wikimedia.org/wikipedia/commons/5/53/Close_central_unrounded_vowel.ogg"],
+  ["Voiced_bilabial_plosive.ogg",                "https://upload.wikimedia.org/wikipedia/commons/2/2c/Voiced_bilabial_plosive.ogg"],
+  ["Voiceless_bilabial_plosive.ogg",             "https://upload.wikimedia.org/wikipedia/commons/5/51/Voiceless_bilabial_plosive.ogg"],
+  ["Voiced_alveolar_plosive.ogg",                "https://upload.wikimedia.org/wikipedia/commons/0/01/Voiced_alveolar_plosive.ogg"],
+  ["Voiceless_alveolar_plosive.ogg",             "https://upload.wikimedia.org/wikipedia/commons/0/02/Voiceless_alveolar_plosive.ogg"],
+  ["Voiced_velar_plosive_02.ogg",                "https://upload.wikimedia.org/wikipedia/commons/1/12/Voiced_velar_plosive_02.ogg"],
+  ["Voiceless_velar_plosive.ogg",                "https://upload.wikimedia.org/wikipedia/commons/e/e3/Voiceless_velar_plosive.ogg"],
+  ["Bilabial_nasal.ogg",                         "https://upload.wikimedia.org/wikipedia/commons/a/a9/Bilabial_nasal.ogg"],
+  ["Alveolar_nasal.ogg",                         "https://upload.wikimedia.org/wikipedia/commons/2/29/Alveolar_nasal.ogg"],
+  ["Palatal_nasal.ogg",                          "https://upload.wikimedia.org/wikipedia/commons/4/46/Palatal_nasal.ogg"],
+  ["Voiced_labio-dental_fricative.ogg",          "https://upload.wikimedia.org/wikipedia/commons/4/42/Voiced_labio-dental_fricative.ogg"],
+  ["Voiceless_labio-dental_fricative.ogg",       "https://upload.wikimedia.org/wikipedia/commons/c/c7/Voiceless_labio-dental_fricative.ogg"],
+  ["Voiced_alveolar_sibilant.ogg",               "https://upload.wikimedia.org/wikipedia/commons/c/c0/Voiced_alveolar_sibilant.ogg"],
+  ["Voiceless_alveolar_sibilant.ogg",            "https://upload.wikimedia.org/wikipedia/commons/a/ac/Voiceless_alveolar_sibilant.ogg"],
+  ["Voiced_retroflex_sibilant.ogg",              "https://upload.wikimedia.org/wikipedia/commons/7/7f/Voiced_retroflex_sibilant.ogg"],
+  ["Voiceless_retroflex_sibilant.ogg",           "https://upload.wikimedia.org/wikipedia/commons/b/b1/Voiceless_retroflex_sibilant.ogg"],
+  ["Voiceless_alveolo-palatal_sibilant.ogg",     "https://upload.wikimedia.org/wikipedia/commons/0/0b/Voiceless_alveolo-palatal_sibilant.ogg"],
+  ["Voiceless_velar_fricative.ogg",              "https://upload.wikimedia.org/wikipedia/commons/0/0f/Voiceless_velar_fricative.ogg"],
+  ["Voiced_velar_fricative.ogg",                 "https://upload.wikimedia.org/wikipedia/commons/4/47/Voiced_velar_fricative.ogg"],
+  ["Voiced_dental_fricative.ogg",                "https://upload.wikimedia.org/wikipedia/commons/6/6a/Voiced_dental_fricative.ogg"],
+  ["Voiceless_dental_fricative.ogg",             "https://upload.wikimedia.org/wikipedia/commons/8/80/Voiceless_dental_fricative.ogg"],
+  ["Voiced_glottal_fricative.ogg",               "https://upload.wikimedia.org/wikipedia/commons/e/e2/Voiced_glottal_fricative.ogg"],
+  ["Voiceless_alveolar_sibilant_affricate.oga",  "https://upload.wikimedia.org/wikipedia/commons/9/9d/Voiceless_alveolar_sibilant_affricate.oga"],
+  ["Voiceless_alveolo-palatal_affricate.ogg",    "https://upload.wikimedia.org/wikipedia/commons/c/c4/Voiceless_alveolo-palatal_affricate.ogg"],
+  ["Palatal_approximant.ogg",                    "https://upload.wikimedia.org/wikipedia/commons/e/e8/Palatal_approximant.ogg"],
+  ["Alveolar_lateral_approximant.ogg",           "https://upload.wikimedia.org/wikipedia/commons/b/bc/Alveolar_lateral_approximant.ogg"],
+  ["Alveolar_trill.ogg",                         "https://upload.wikimedia.org/wikipedia/commons/c/ce/Alveolar_trill.ogg"]
+];
+
+const log = document.getElementById('log');
+const status = document.getElementById('status');
+const delay = ms => new Promise(r => setTimeout(r, ms));
+
+function addLog(text, cls) {
+  const d = document.createElement('div');
+  d.className = cls || '';
+  d.textContent = text;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function startDownload() {
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  addLog('Pobieranie rozpoczęte – nie zamykaj okna...', 'info');
+
+  for (let i = 0; i < files.length; i++) {
+    const [name, url] = files[i];
+    status.textContent = `Pobieranie ${i + 1}/${files.length}: ${name}`;
+
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      addLog(`OK  ${name}`, 'ok');
+    } catch (e) {
+      addLog(`FAIL ${name} – ${e.message}`, 'fail');
+    }
+
+    if (i < files.length - 1) await delay(1200);
+  }
+
+  status.textContent = 'Gotowe! Przenieś pliki do assets/audio/ipa/';
+  document.getElementById('move').style.display = 'block';
+  btn.textContent = 'Pobrano';
+}
+</script>
+</body>
+</html>

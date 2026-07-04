@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A1A"/>
+  <!-- Obelisk of Axum (returned from Rome), Addis Ababa displayed -->
+  <!-- Tall Aksumite obelisk (stepped like a multi-story tower) -->
+  <!-- Base -->
+  <rect x="38" y="74" width="24" height="6" fill="white"/>
+  <!-- Obelisk shaft with Aksumite windows (false doors/windows per story) -->
+  <polygon points="40,74 60,74 56,14 44,14" fill="white"/>
+  <!-- Horizontal beam markings (floor plates of the "tower") -->
+  <rect x="42" y="64" width="16" height="3" fill="#2A5A1A" opacity="0.4"/>
+  <rect x="42" y="54" width="16" height="3" fill="#2A5A1A" opacity="0.4"/>
+  <rect x="43" y="44" width="14" height="3" fill="#2A5A1A" opacity="0.4"/>
+  <rect x="43" y="34" width="14" height="3" fill="#2A5A1A" opacity="0.4"/>
+  <rect x="44" y="24" width="12" height="3" fill="#2A5A1A" opacity="0.4"/>
+  <!-- False windows (Aksumite style) -->
+  <rect x="44" y="56" width="4" height="6" fill="#2A5A1A" opacity="0.5"/>
+  <rect x="52" y="56" width="4" height="6" fill="#2A5A1A" opacity="0.5"/>
+  <!-- Crescent-shaped top (Aksumite) -->
+  <path d="M46,14 Q50,8 54,14 Q50,12 46,14Z" fill="white"/>
+  <!-- Semicircular arch at very top -->
+  <ellipse cx="50" cy="14" rx="6" ry="4" fill="white"/>
+  <!-- Platform pedestal -->
+  <rect x="30" y="80" width="40" height="4" fill="white"/>
+  <!-- Ethiopian highlands hint -->
+  <polygon points="10,78 26,52 42,70 58,48 74,66 90,78" fill="white" opacity="0.12"/>
+</svg>

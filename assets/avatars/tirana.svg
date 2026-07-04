@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#9A0A0A"/>
+  <!-- Et'hem Bey Mosque, Tirana -->
+  <!-- Main dome -->
+  <ellipse cx="50" cy="44" rx="16" ry="18" fill="white"/>
+  <!-- Drum under dome -->
+  <rect x="36" y="52" width="28" height="6" fill="white"/>
+  <!-- Crescent on dome -->
+  <circle cx="50" cy="26" r="4" fill="#9A0A0A"/>
+  <circle cx="53" cy="24" r="3" fill="white"/>
+  <rect x="49" y="22" width="2" height="4" fill="white"/>
+  <!-- Main prayer hall body -->
+  <rect x="22" y="58" width="56" height="18" fill="white"/>
+  <!-- Minaret (right) -->
+  <rect x="68" y="24" width="8" height="46" fill="white"/>
+  <!-- Minaret balcony -->
+  <rect x="66" y="46" width="12" height="3" fill="white"/>
+  <!-- Minaret tip -->
+  <polygon points="68,24 76,24 72,12" fill="white"/>
+  <rect x="71" y="10" width="2" height="4" fill="white"/>
+  <!-- Entrance arch -->
+  <rect x="42" y="64" width="16" height="12" fill="#9A0A0A"/>
+  <ellipse cx="50" cy="64" rx="8" ry="6" fill="#9A0A0A"/>
+  <!-- Arched windows -->
+  <rect x="26" y="64" width="8" height="10" fill="#9A0A0A"/>
+  <ellipse cx="30" cy="64" rx="4" ry="3" fill="#9A0A0A"/>
+  <rect x="66" y="64" width="8" height="10" fill="#9A0A0A"/>
+  <ellipse cx="70" cy="64" rx="4" ry="3" fill="#9A0A0A"/>
+  <!-- Base -->
+  <rect x="18" y="76" width="64" height="4" fill="white"/>
+</svg>

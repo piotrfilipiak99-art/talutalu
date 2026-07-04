@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A3A"/>
+  <!-- The Pitons of Saint Lucia (Gros Piton + Petit Piton) - UNESCO landmark -->
+  <!-- Sea -->
+  <rect x="10" y="76" width="80" height="14" fill="white" opacity="0.25"/>
+  <rect x="10" y="76" width="80" height="3" fill="white"/>
+  <!-- Gros Piton (larger, left) - volcanic spike peak -->
+  <polygon points="10,76 36,76 28,14" fill="white"/>
+  <!-- Gros Piton vegetation hints (slightly bumpy silhouette) -->
+  <ellipse cx="22" cy="48" rx="10" ry="6" fill="white" opacity="0.3"/>
+  <!-- Petit Piton (smaller, right) -->
+  <polygon points="44,76 68,76 62,28" fill="white"/>
+  <!-- Tropical trees/palms on hillsides -->
+  <circle cx="14" cy="72" r="5" fill="white" opacity="0.4"/>
+  <circle cx="74" cy="72" r="4" fill="white" opacity="0.4"/>
+  <!-- Castries harbor in foreground -->
+  <ellipse cx="82" cy="78" rx="14" ry="6" fill="white" opacity="0.4"/>
+</svg>

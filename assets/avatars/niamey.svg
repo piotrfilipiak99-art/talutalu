@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#6A4A00"/>
+  <!-- Grand Mosque of Niamey, Niger — Sudano-Sahelian style with torons -->
+  <!-- Main building -->
+  <rect x="16" y="50" width="68" height="30" fill="white"/>
+  <!-- Flat-top parapet with torons -->
+  <rect x="14" y="44" width="72" height="10" fill="white"/>
+  <!-- Toron beams across facade -->
+  <rect x="18" y="40" width="3" height="16" fill="white"/>
+  <rect x="26" y="40" width="3" height="16" fill="white"/>
+  <rect x="34" y="40" width="3" height="16" fill="white"/>
+  <rect x="42" y="40" width="3" height="16" fill="white"/>
+  <rect x="55" y="40" width="3" height="16" fill="white"/>
+  <rect x="63" y="40" width="3" height="16" fill="white"/>
+  <rect x="71" y="40" width="3" height="16" fill="white"/>
+  <rect x="79" y="40" width="3" height="16" fill="white"/>
+  <!-- Central minaret (Sahelian cone) -->
+  <rect x="40" y="16" width="20" height="36" fill="white"/>
+  <polygon points="36,16 50,4 64,16" fill="white"/>
+  <!-- Toron on minaret -->
+  <rect x="36" y="24" width="4" height="4" fill="white"/>
+  <rect x="60" y="24" width="4" height="4" fill="white"/>
+  <rect x="36" y="34" width="4" height="4" fill="white"/>
+  <rect x="60" y="34" width="4" height="4" fill="white"/>
+  <!-- Crescent at apex -->
+  <circle cx="50" cy="4" r="2.5" fill="#6A4A00"/>
+  <circle cx="51.5" cy="3.5" r="2" fill="white"/>
+  <!-- Arched entrance -->
+  <rect x="42" y="60" width="16" height="20" fill="#6A4A00"/>
+  <ellipse cx="50" cy="60" rx="8" ry="7" fill="#6A4A00"/>
+  <!-- Niger River hint at bottom -->
+  <rect x="8" y="84" width="84" height="6" fill="white" opacity="0.2"/>
+</svg>

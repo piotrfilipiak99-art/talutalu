@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#4A2A7A"/>
+  <!-- Three Chiefs Monument, Gaborone — celebrates Botswana founding chiefs -->
+  <!-- Three standing figures on a joint plinth -->
+  <!-- Left figure -->
+  <rect x="18" y="34" width="10" height="28" fill="white"/>
+  <circle cx="23" cy="31" r="5" fill="white"/>
+  <!-- raised arm -->
+  <rect x="10" y="30" width="12" height="4" fill="white"/>
+  <!-- Middle figure (taller) -->
+  <rect x="45" y="26" width="10" height="36" fill="white"/>
+  <circle cx="50" cy="22" r="6" fill="white"/>
+  <!-- raised arm -->
+  <rect x="50" y="20" width="4" height="12" fill="white" transform="rotate(-15 52 20)"/>
+  <!-- Right figure -->
+  <rect x="72" y="34" width="10" height="28" fill="white"/>
+  <circle cx="77" cy="31" r="5" fill="white"/>
+  <!-- raised arm -->
+  <rect x="78" y="30" width="12" height="4" fill="white"/>
+  <!-- Shared base/plinth -->
+  <rect x="12" y="62" width="76" height="8" fill="white"/>
+  <rect x="8" y="70" width="84" height="6" fill="white"/>
+  <rect x="6" y="76" width="88" height="6" fill="white"/>
+  <!-- Ground -->
+  <rect x="4" y="82" width="92" height="4" fill="white" opacity="0.3"/>
+</svg>

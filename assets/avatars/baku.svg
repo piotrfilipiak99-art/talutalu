@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A5A"/>
+  <!-- Flame Towers, Baku - three flaming leaf-shaped towers -->
+  <!-- Left flame tower -->
+  <path d="M18,80 Q14,50 22,28 Q28,14 30,28 Q34,50 28,80Z" fill="white"/>
+  <!-- Center flame tower (tallest) -->
+  <path d="M38,80 Q34,46 44,18 Q50,4 56,18 Q66,46 62,80Z" fill="white"/>
+  <!-- Right flame tower -->
+  <path d="M72,80 Q66,50 70,28 Q72,14 78,28 Q82,50 82,80Z" fill="white"/>
+  <!-- Flame tips glow hint -->
+  <ellipse cx="26" cy="22" rx="6" ry="10" fill="white" opacity="0.4"/>
+  <ellipse cx="50" cy="12" rx="8" ry="12" fill="white" opacity="0.4"/>
+  <ellipse cx="74" cy="22" rx="6" ry="10" fill="white" opacity="0.4"/>
+  <!-- Caspian Sea waterfront base -->
+  <rect x="10" y="80" width="80" height="5" fill="white" opacity="0.35"/>
+  <rect x="10" y="80" width="80" height="2" fill="white"/>
+</svg>

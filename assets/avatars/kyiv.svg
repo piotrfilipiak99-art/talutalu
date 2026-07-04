@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5CB0"/>
+  <!-- St. Sophia Cathedral, Kyiv -->
+  <!-- Central tall dome -->
+  <ellipse cx="50" cy="34" rx="10" ry="13" fill="white"/>
+  <rect x="46" y="18" width="8" height="6" fill="white"/>
+  <rect x="48" y="13" width="4" height="5" fill="white"/>
+  <rect x="49" y="10" width="2" height="3" fill="white"/>
+  <!-- Main body -->
+  <rect x="24" y="50" width="52" height="26" fill="white"/>
+  <!-- 4 flanking domes -->
+  <ellipse cx="32" cy="46" rx="7" ry="9" fill="white"/>
+  <rect x="30" y="34" width="4" height="5" fill="white"/>
+  <rect x="29" y="32" width="6" height="2" fill="white"/>
+  <ellipse cx="68" cy="46" rx="7" ry="9" fill="white"/>
+  <rect x="66" y="34" width="4" height="5" fill="white"/>
+  <rect x="65" y="32" width="6" height="2" fill="white"/>
+  <!-- Outer small domes -->
+  <ellipse cx="20" cy="52" rx="5" ry="7" fill="white"/>
+  <rect x="18" y="42" width="4" height="4" fill="white"/>
+  <ellipse cx="80" cy="52" rx="5" ry="7" fill="white"/>
+  <rect x="78" y="42" width="4" height="4" fill="white"/>
+  <!-- Belfry window arcade -->
+  <rect x="30" y="58" width="6" height="10" fill="#1A5CB0"/>
+  <ellipse cx="33" cy="58" rx="3" ry="3" fill="#1A5CB0"/>
+  <rect x="64" y="58" width="6" height="10" fill="#1A5CB0"/>
+  <ellipse cx="67" cy="58" rx="3" ry="3" fill="#1A5CB0"/>
+  <!-- Base -->
+  <rect x="16" y="76" width="68" height="4" fill="white"/>
+</svg>

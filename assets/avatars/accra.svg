@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A3A"/>
+  <!-- Black Star Gate (Independence Arch), Accra -->
+  <!-- Three-arched triumphal arch structure -->
+  <!-- Central tall arch -->
+  <rect x="34" y="38" width="32" height="40" fill="white"/>
+  <ellipse cx="50" cy="38" rx="16" ry="14" fill="white"/>
+  <ellipse cx="50" cy="42" rx="10" ry="10" fill="#1A5A3A"/>
+  <!-- Flanking lower arches (side passages) -->
+  <rect x="10" y="52" width="26" height="26" fill="white"/>
+  <ellipse cx="23" cy="52" rx="13" ry="10" fill="white"/>
+  <ellipse cx="23" cy="56" rx="8" ry="7" fill="#1A5A3A"/>
+  <rect x="64" y="52" width="26" height="26" fill="white"/>
+  <ellipse cx="77" cy="52" rx="13" ry="10" fill="white"/>
+  <ellipse cx="77" cy="56" rx="8" ry="7" fill="#1A5A3A"/>
+  <!-- Attic/cornice above arches -->
+  <rect x="8" y="24" width="84" height="16" fill="white"/>
+  <!-- Black Star (Ghana's symbol) on central attic -->
+  <polygon points="50,20 52,28 60,28 54,32 56,40 50,36 44,40 46,32 40,28 48,28" fill="#1A5A3A" opacity="0.6"/>
+  <!-- Base steps -->
+  <rect x="8" y="78" width="84" height="3" fill="white"/>
+  <rect x="4" y="81" width="92" height="3" fill="white"/>
+</svg>

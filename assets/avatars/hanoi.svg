@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A0A1A"/>
+  <!-- Hoan Kiem Lake Turtle Tower (Tháp Rùa), Hanoi -->
+  <!-- Lake water -->
+  <ellipse cx="50" cy="78" rx="38" ry="12" fill="white" opacity="0.25"/>
+  <!-- Rocky island base -->
+  <ellipse cx="50" cy="74" rx="20" ry="7" fill="white" opacity="0.5"/>
+  <!-- Tower tiers (3 tiers narrowing upward) -->
+  <rect x="30" y="60" width="40" height="14" fill="white"/>
+  <rect x="34" y="46" width="32" height="16" fill="white"/>
+  <rect x="38" y="34" width="24" height="14" fill="white"/>
+  <!-- 4th tier (top) -->
+  <rect x="42" y="24" width="16" height="12" fill="white"/>
+  <!-- Arched windows on each tier -->
+  <rect x="42" y="64" width="6" height="8" fill="#8A0A1A"/>
+  <ellipse cx="45" cy="64" rx="3" ry="3" fill="#8A0A1A"/>
+  <rect x="52" y="64" width="6" height="8" fill="#8A0A1A"/>
+  <ellipse cx="55" cy="64" rx="3" ry="3" fill="#8A0A1A"/>
+  <!-- Top tier arches -->
+  <rect x="44" y="28" width="5" height="7" fill="#8A0A1A"/>
+  <ellipse cx="46" cy="28" rx="2.5" ry="2" fill="#8A0A1A"/>
+  <rect x="51" y="28" width="5" height="7" fill="#8A0A1A"/>
+  <ellipse cx="53" cy="28" rx="2.5" ry="2" fill="#8A0A1A"/>
+  <!-- Spire -->
+  <polygon points="44,24 56,24 50,12" fill="white"/>
+</svg>

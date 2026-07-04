@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A2A00"/>
+  <!-- Basílica del Voto Nacional, Quito - Neo-Gothic with Ecuadorian fauna gargoyles -->
+  <!-- Twin Gothic towers -->
+  <rect x="16" y="18" width="16" height="58" fill="white"/>
+  <rect x="68" y="18" width="16" height="58" fill="white"/>
+  <!-- Tower spires -->
+  <polygon points="16,18 32,18 24,4" fill="white"/>
+  <polygon points="68,18 84,18 76,4" fill="white"/>
+  <!-- Nave body between towers -->
+  <rect x="28" y="42" width="44" height="34" fill="white"/>
+  <!-- Nave roof (pitched) -->
+  <polygon points="26,42 74,42 50,28" fill="white"/>
+  <!-- Rose window -->
+  <circle cx="50" cy="48" r="8" fill="#5A2A00"/>
+  <circle cx="50" cy="48" r="6" fill="white" opacity="0.2"/>
+  <!-- Entry portal -->
+  <rect x="42" y="62" width="16" height="14" fill="#5A2A00"/>
+  <ellipse cx="50" cy="62" rx="8" ry="6" fill="#5A2A00"/>
+  <!-- Flying buttresses -->
+  <rect x="28" y="52" width="4" height="12" fill="white"/>
+  <rect x="68" y="52" width="4" height="12" fill="white"/>
+  <!-- Andes volcanoes silhouette -->
+  <polygon points="10,76 26,50 42,70 58,48 74,66 90,76" fill="white" opacity="0.15"/>
+  <!-- Base -->
+  <rect x="10" y="76" width="80" height="4" fill="white"/>
+</svg>

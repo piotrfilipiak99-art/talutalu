@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A4A6A"/>
+  <!-- Gazi Husrev-beg Mosque, Sarajevo -->
+  <!-- Main dome -->
+  <ellipse cx="50" cy="42" rx="18" ry="20" fill="white"/>
+  <!-- Drum -->
+  <rect x="34" y="50" width="32" height="6" fill="white"/>
+  <!-- Crescent + star on dome -->
+  <circle cx="50" cy="22" r="4" fill="#2A4A6A"/>
+  <circle cx="53" cy="20" r="3" fill="white"/>
+  <rect x="49" y="18" width="2" height="4" fill="white"/>
+  <!-- Main prayer hall -->
+  <rect x="20" y="56" width="60" height="20" fill="white"/>
+  <!-- Minaret left -->
+  <rect x="18" y="20" width="8" height="56" fill="white"/>
+  <rect x="16" y="46" width="12" height="3" fill="white"/>
+  <polygon points="18,20 26,20 22,8" fill="white"/>
+  <!-- Minaret right -->
+  <rect x="74" y="20" width="8" height="56" fill="white"/>
+  <rect x="72" y="46" width="12" height="3" fill="white"/>
+  <polygon points="74,20 82,20 78,8" fill="white"/>
+  <!-- Entrance porch arches -->
+  <rect x="30" y="62" width="10" height="14" fill="#2A4A6A"/>
+  <ellipse cx="35" cy="62" rx="5" ry="4" fill="#2A4A6A"/>
+  <rect x="60" y="62" width="10" height="14" fill="#2A4A6A"/>
+  <ellipse cx="65" cy="62" rx="5" ry="4" fill="#2A4A6A"/>
+  <!-- Base -->
+  <rect x="14" y="76" width="72" height="4" fill="white"/>
+</svg>

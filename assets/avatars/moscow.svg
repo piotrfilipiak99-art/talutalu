@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8B0000"/>
+  <!-- St. Basil's Cathedral -->
+  <!-- Central tall spire -->
+  <rect x="46" y="24" width="8" height="30" fill="white"/>
+  <polygon points="46,24 54,24 50,14" fill="white"/>
+  <!-- Central onion dome base -->
+  <ellipse cx="50" cy="56" rx="8" ry="10" fill="white"/>
+  <!-- Left large dome -->
+  <rect x="26" y="52" width="6" height="18" fill="white"/>
+  <ellipse cx="29" cy="50" rx="7" ry="9" fill="white"/>
+  <!-- Right large dome -->
+  <rect x="68" y="52" width="6" height="18" fill="white"/>
+  <ellipse cx="71" cy="50" rx="7" ry="9" fill="white"/>
+  <!-- Left small dome -->
+  <rect x="15" y="58" width="5" height="14" fill="white"/>
+  <ellipse cx="17" cy="56" rx="5" ry="7" fill="white"/>
+  <!-- Right small dome -->
+  <rect x="80" y="58" width="5" height="14" fill="white"/>
+  <ellipse cx="83" cy="56" rx="5" ry="7" fill="white"/>
+  <!-- Base platform -->
+  <rect x="10" y="70" width="80" height="5" fill="white"/>
+  <rect x="14" y="75" width="72" height="4" fill="white"/>
+</svg>

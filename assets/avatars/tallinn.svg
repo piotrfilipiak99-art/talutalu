@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A6A4A"/>
+  <!-- Toompea Castle / Hermann Tower, Tallinn -->
+  <!-- Main tower (Hermann Tower) -->
+  <rect x="38" y="22" width="24" height="54" fill="white"/>
+  <!-- Tower battlements -->
+  <rect x="38" y="16" width="4" height="6" fill="white"/>
+  <rect x="44" y="16" width="4" height="6" fill="white"/>
+  <rect x="50" y="16" width="4" height="6" fill="white"/>
+  <rect x="56" y="16" width="4" height="6" fill="white"/>
+  <!-- Flagpole on tower -->
+  <rect x="49" y="6" width="2" height="10" fill="white"/>
+  <polygon points="51,6 60,10 51,14" fill="white"/>
+  <!-- Lower castle wing (left) -->
+  <rect x="14" y="50" width="26" height="26" fill="white"/>
+  <!-- Left wing battlements -->
+  <rect x="14" y="44" width="4" height="6" fill="white"/>
+  <rect x="20" y="44" width="4" height="6" fill="white"/>
+  <rect x="26" y="44" width="4" height="6" fill="white"/>
+  <!-- Lower castle wing (right) -->
+  <rect x="60" y="50" width="26" height="26" fill="white"/>
+  <rect x="60" y="44" width="4" height="6" fill="white"/>
+  <rect x="66" y="44" width="4" height="6" fill="white"/>
+  <rect x="72" y="44" width="4" height="6" fill="white"/>
+  <!-- Arrow slits -->
+  <rect x="47" y="38" width="3" height="8" fill="#2A6A4A"/>
+  <rect x="47" y="52" width="3" height="8" fill="#2A6A4A"/>
+  <!-- Gate arch in lower wing -->
+  <rect x="22" y="62" width="12" height="14" fill="#2A6A4A"/>
+  <ellipse cx="28" cy="62" rx="6" ry="5" fill="#2A6A4A"/>
+  <!-- Base hill -->
+  <rect x="10" y="76" width="80" height="4" fill="white"/>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#6A8A00"/>
+  <!-- Heroes' Acre & Independence Monument, Lusaka, Zambia -->
+  <!-- Tall obelisk with eagle on top (national monument) -->
+  <!-- Obelisk shaft -->
+  <polygon points="43,80 46,16 54,16 57,80" fill="white"/>
+  <!-- Obelisk cap (pyramidion) -->
+  <polygon points="43,16 50,6 57,16" fill="white"/>
+  <!-- Zambian Eagle on top -->
+  <!-- Eagle body -->
+  <ellipse cx="50" cy="6" rx="4" ry="3" fill="white"/>
+  <!-- Wings spread wide -->
+  <polygon points="46,5 36,2 40,8" fill="white"/>
+  <polygon points="54,5 64,2 60,8" fill="white"/>
+  <!-- Eagle head -->
+  <circle cx="50" cy="3" r="2" fill="white"/>
+  <!-- Horizontal relief bands on obelisk -->
+  <rect x="43" y="36" width="14" height="3" fill="#6A8A00" opacity="0.3"/>
+  <rect x="43" y="52" width="14" height="3" fill="#6A8A00" opacity="0.3"/>
+  <rect x="43" y="68" width="14" height="3" fill="#6A8A00" opacity="0.3"/>
+  <!-- Wide stepped base -->
+  <rect x="34" y="78" width="32" height="6" fill="white"/>
+  <rect x="26" y="84" width="48" height="5" fill="white"/>
+  <rect x="16" y="89" width="68" height="4" fill="white" opacity="0.5"/>
+  <!-- Eternal flame columns flanking -->
+  <rect x="22" y="60" width="6" height="26" fill="white"/>
+  <path d="M 22,60 Q 20,54 25,50 Q 30,54 28,60 Z" fill="white"/>
+  <rect x="72" y="60" width="6" height="26" fill="white"/>
+  <path d="M 72,60 Q 70,54 75,50 Q 80,54 78,60 Z" fill="white"/>
+</svg>

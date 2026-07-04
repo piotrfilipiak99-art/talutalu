@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A3A5A"/>
+  <!-- Fiat Tagliero Building, Asmara — iconic 1938 Futurist petrol station -->
+  <!-- Two cantilevered wings (concrete airplane-like structure) -->
+  <!-- Left wing (horizontal cantilever, no visible support) -->
+  <rect x="6" y="44" width="36" height="10" fill="white"/>
+  <!-- Left wing tapers to point -->
+  <polygon points="6,44 6,54 2,49" fill="white"/>
+  <!-- Right wing -->
+  <rect x="58" y="44" width="36" height="10" fill="white"/>
+  <polygon points="94,44 94,54 98,49" fill="white"/>
+  <!-- Central tower/body -->
+  <rect x="36" y="22" width="28" height="46" fill="white"/>
+  <!-- Cylindrical top -->
+  <ellipse cx="50" cy="22" rx="14" ry="8" fill="white"/>
+  <rect x="42" y="14" width="16" height="12" fill="white"/>
+  <ellipse cx="50" cy="14" rx="9" ry="6" fill="white"/>
+  <!-- Flagpole/mast on top -->
+  <rect x="48" y="4" width="4" height="14" fill="white"/>
+  <!-- Futurist horizontal windows -->
+  <rect x="38" y="26" width="24" height="3" fill="#1A3A5A" opacity="0.4"/>
+  <rect x="38" y="32" width="24" height="3" fill="#1A3A5A" opacity="0.4"/>
+  <rect x="38" y="38" width="24" height="3" fill="#1A3A5A" opacity="0.4"/>
+  <!-- Forecourt / petrol canopy area -->
+  <rect x="30" y="68" width="40" height="4" fill="white"/>
+  <!-- Ground slab -->
+  <rect x="14" y="72" width="72" height="6" fill="white"/>
+  <rect x="10" y="78" width="80" height="4" fill="white" opacity="0.4"/>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A2A"/>
+  <!-- Trafalgar Falls / Morne Trois Pitons, Dominica - volcanic island's nature -->
+  <!-- Three mountain peaks (Morne Trois Pitons) -->
+  <polygon points="10,82 26,36 42,82" fill="white" opacity="0.4"/>
+  <polygon points="36,82 54,22 72,82" fill="white" opacity="0.5"/>
+  <polygon points="60,82 76,42 90,82" fill="white" opacity="0.4"/>
+  <!-- Trafalgar Falls - two waterfalls -->
+  <!-- Left waterfall -->
+  <rect x="30" y="42" width="5" height="36" fill="white"/>
+  <ellipse cx="32" cy="78" rx="8" ry="4" fill="white" opacity="0.5"/>
+  <!-- Right waterfall -->
+  <rect x="42" y="34" width="5" height="44" fill="white"/>
+  <ellipse cx="44" cy="78" rx="8" ry="4" fill="white" opacity="0.5"/>
+  <!-- Lush tropical vegetation (curved shapes) -->
+  <ellipse cx="16" cy="74" rx="12" ry="8" fill="white" opacity="0.3"/>
+  <ellipse cx="74" cy="72" rx="14" ry="10" fill="white" opacity="0.3"/>
+  <ellipse cx="62" cy="78" rx="12" ry="6" fill="white" opacity="0.25"/>
+  <!-- River at base -->
+  <path d="M16,82 Q36,78 56,80 Q72,76 86,82" stroke="white" stroke-width="4" fill="none" opacity="0.5"/>
+</svg>

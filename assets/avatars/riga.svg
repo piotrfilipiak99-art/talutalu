@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A0A1A"/>
+  <!-- Freedom Monument, Riga - tall column with Liberty figure -->
+  <!-- Base pedestal (wide) -->
+  <rect x="28" y="70" width="44" height="10" fill="white"/>
+  <rect x="32" y="62" width="36" height="10" fill="white"/>
+  <!-- Column shaft (slender, tall) -->
+  <rect x="44" y="28" width="12" height="36" fill="white"/>
+  <!-- Capital top of column -->
+  <rect x="40" y="22" width="20" height="6" fill="white"/>
+  <!-- Liberty figure (Milda) holding 3 stars -->
+  <!-- Body -->
+  <rect x="46" y="10" width="8" height="12" fill="white"/>
+  <!-- Head -->
+  <circle cx="50" cy="8" r="4" fill="white"/>
+  <!-- Arms raised holding stars -->
+  <rect x="36" y="12" width="14" height="3" fill="white"/>
+  <rect x="50" y="12" width="14" height="3" fill="white"/>
+  <!-- 3 stars above hands -->
+  <polygon points="36,8 38,14 34,10 40,10 36,14" fill="white"/>
+  <polygon points="50,6 52,12 48,8 54,8 50,12" fill="white"/>
+  <polygon points="64,8 66,14 62,10 68,10 64,14" fill="white"/>
+  <!-- Steps at base -->
+  <rect x="22" y="80" width="56" height="3" fill="white"/>
+</svg>

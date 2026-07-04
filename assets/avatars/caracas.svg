@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A6A00"/>
+  <!-- Capitolio Nacional, Caracas - neoclassical with dome -->
+  <!-- Central dome -->
+  <ellipse cx="50" cy="40" rx="16" ry="16" fill="white"/>
+  <!-- Lantern on dome -->
+  <rect x="46" y="22" width="8" height="10" fill="white"/>
+  <ellipse cx="50" cy="22" rx="4" ry="3" fill="white"/>
+  <rect x="48" y="16" width="4" height="6" fill="white"/>
+  <!-- Drum under dome -->
+  <rect x="36" y="46" width="28" height="6" fill="white"/>
+  <!-- Main building body -->
+  <rect x="14" y="52" width="72" height="26" fill="white"/>
+  <!-- Columns on facade -->
+  <rect x="18" y="52" width="4" height="22" fill="#8A6A00" opacity="0.3"/>
+  <rect x="26" y="52" width="4" height="22" fill="#8A6A00" opacity="0.3"/>
+  <rect x="66" y="52" width="4" height="22" fill="#8A6A00" opacity="0.3"/>
+  <rect x="74" y="52" width="4" height="22" fill="#8A6A00" opacity="0.3"/>
+  <!-- Side wings -->
+  <rect x="6" y="58" width="12" height="20" fill="white"/>
+  <rect x="82" y="58" width="12" height="20" fill="white"/>
+  <!-- Entrance steps -->
+  <rect x="30" y="78" width="40" height="3" fill="white"/>
+  <rect x="26" y="81" width="48" height="3" fill="white"/>
+  <!-- Ávila mountain silhouette in back -->
+  <polygon points="10,56 50,28 90,56" fill="white" opacity="0.1"/>
+</svg>

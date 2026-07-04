@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A0A1A"/>
+  <!-- Peace Tower, Ottawa (Parliament Hill) -->
+  <!-- Peace Tower (tall central tower) -->
+  <rect x="38" y="18" width="24" height="58" fill="white"/>
+  <!-- Tower spire -->
+  <polygon points="38,18 62,18 50,4" fill="white"/>
+  <!-- Spire tip (copper finial) -->
+  <rect x="48" y="2" width="4" height="4" fill="white"/>
+  <!-- Clock face on tower -->
+  <circle cx="50" cy="42" r="8" fill="#8A0A1A"/>
+  <circle cx="50" cy="42" r="6" fill="white" opacity="0.15"/>
+  <!-- Clock hands -->
+  <rect x="49" y="36" width="2" height="6" fill="white"/>
+  <rect x="49" y="42" width="2" height="5" fill="white" transform="rotate(90 50 42)"/>
+  <!-- Main Centre Block (long building) -->
+  <rect x="10" y="64" width="80" height="16" fill="white"/>
+  <!-- Centre Block roofline with Gothic finials -->
+  <rect x="10" y="60" width="80" height="6" fill="white"/>
+  <polygon points="12,60 20,60 16,50" fill="white"/>
+  <polygon points="30,60 38,60 34,52" fill="white"/>
+  <polygon points="62,60 70,60 66,52" fill="white"/>
+  <polygon points="80,60 88,60 84,50" fill="white"/>
+  <!-- East and West blocks flanking -->
+  <rect x="6" y="68" width="8" height="12" fill="white"/>
+  <rect x="86" y="68" width="8" height="12" fill="white"/>
+  <!-- Parliamentary library dome (back, circular) -->
+  <rect x="10" y="80" width="80" height="4" fill="white"/>
+</svg>

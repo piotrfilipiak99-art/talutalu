@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A3A00"/>
+  <!-- Red House (Parliament), Port of Spain -->
+  <!-- Main building -->
+  <rect x="12" y="52" width="76" height="28" fill="white"/>
+  <!-- Ornate roof balustrade -->
+  <rect x="10" y="48" width="80" height="6" fill="white"/>
+  <!-- Urns/pinnacles along roofline -->
+  <ellipse cx="18" cy="46" rx="3" ry="4" fill="white"/>
+  <ellipse cx="30" cy="46" rx="3" ry="4" fill="white"/>
+  <ellipse cx="42" cy="46" rx="3" ry="4" fill="white"/>
+  <ellipse cx="58" cy="46" rx="3" ry="4" fill="white"/>
+  <ellipse cx="70" cy="46" rx="3" ry="4" fill="white"/>
+  <ellipse cx="82" cy="46" rx="3" ry="4" fill="white"/>
+  <!-- Central clock tower -->
+  <rect x="38" y="26" width="24" height="28" fill="white"/>
+  <!-- Tower top with small dome -->
+  <ellipse cx="50" cy="26" rx="12" ry="6" fill="white"/>
+  <polygon points="42,22 58,22 50,12" fill="white"/>
+  <!-- Clock face -->
+  <circle cx="50" cy="38" r="7" fill="#8A3A00"/>
+  <circle cx="50" cy="38" r="5" fill="white" opacity="0.2"/>
+  <!-- Venetian arched windows on facade -->
+  <rect x="16" y="58" width="10" height="16" fill="#8A3A00"/>
+  <ellipse cx="21" cy="58" rx="5" ry="4" fill="#8A3A00"/>
+  <rect x="74" y="58" width="10" height="16" fill="#8A3A00"/>
+  <ellipse cx="79" cy="58" rx="5" ry="4" fill="#8A3A00"/>
+  <!-- Base steps -->
+  <rect x="8" y="80" width="84" height="4" fill="white"/>
+</svg>

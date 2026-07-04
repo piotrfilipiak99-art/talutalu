@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#006A40"/>
+  <!-- Independence Monument, Lomé — Togo's national independence arch/monument -->
+  <!-- Tall arch with torch -->
+  <!-- Left leg of arch -->
+  <rect x="18" y="44" width="20" height="42" fill="white"/>
+  <!-- Right leg of arch -->
+  <rect x="62" y="44" width="20" height="42" fill="white"/>
+  <!-- Arch span at top -->
+  <rect x="18" y="36" width="64" height="12" fill="white"/>
+  <!-- Rounded arch (subtle arch shape) -->
+  <ellipse cx="50" cy="44" rx="32" ry="10" fill="white"/>
+  <!-- Relief on arch span (Togo star) -->
+  <polygon points="50,40 51.5,44 55,44 52.5,46 53.5,50 50,48 46.5,50 47.5,46 45,44 48.5,44" fill="#006A40" opacity="0.4"/>
+  <!-- Torch/flame rising from arch centre -->
+  <rect x="47" y="20" width="6" height="20" fill="white"/>
+  <path d="M 47,20 Q 44,12 50,8 Q 56,12 53,20 Z" fill="white"/>
+  <!-- Wide base plinth -->
+  <rect x="12" y="82" width="76" height="5" fill="white"/>
+  <rect x="8" y="87" width="84" height="4" fill="white" opacity="0.4"/>
+  <!-- Gulf of Guinea -->
+  <rect x="8" y="90" width="84" height="5" fill="white" opacity="0.15"/>
+</svg>

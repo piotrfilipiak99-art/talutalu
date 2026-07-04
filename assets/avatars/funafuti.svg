@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#0A7A6A"/>
+  <!-- Funafuti Atoll & Tuvalu Parliament — low atoll nation; the atoll ring is the landmark -->
+  <!-- Tuvalu Parliament (Fale o Palamene o Tuvalu) — traditional open-air meeting house style -->
+  <!-- Traditional open-sided meeting hall (maneapa) -->
+  <!-- Steeply pitched roof -->
+  <polygon points="8,68 50,16 92,68" fill="white"/>
+  <!-- Thatching lines -->
+  <line x1="50" y1="16" x2="22" y2="68" stroke="#0A7A6A" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="16" x2="35" y2="68" stroke="#0A7A6A" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="16" x2="65" y2="68" stroke="#0A7A6A" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="16" x2="78" y2="68" stroke="#0A7A6A" stroke-width="2" opacity="0.15"/>
+  <!-- Horizontal thatching bands -->
+  <line x1="26" y1="48" x2="74" y2="48" stroke="#0A7A6A" stroke-width="2" opacity="0.15"/>
+  <line x1="17" y1="60" x2="83" y2="60" stroke="#0A7A6A" stroke-width="2" opacity="0.15"/>
+  <!-- Open-sided floor platform on posts -->
+  <rect x="8" y="66" width="84" height="6" fill="white"/>
+  <!-- Support posts -->
+  <rect x="12" y="68" width="5" height="16" fill="white"/>
+  <rect x="26" y="68" width="5" height="16" fill="white"/>
+  <rect x="40" y="68" width="5" height="16" fill="white"/>
+  <rect x="55" y="68" width="5" height="16" fill="white"/>
+  <rect x="69" y="68" width="5" height="16" fill="white"/>
+  <rect x="83" y="68" width="5" height="16" fill="white"/>
+  <!-- Atoll coastline at base (flat strip of land) -->
+  <rect x="8" y="84" width="84" height="5" fill="white" opacity="0.35"/>
+  <!-- Lagoon (turquoise) -->
+  <rect x="8" y="89" width="84" height="6" fill="white" opacity="0.15"/>
+  <!-- Ridge pole finial (traditional) -->
+  <polygon points="46,16 50,6 54,16" fill="white"/>
+  <circle cx="50" cy="6" r="3" fill="white"/>
+</svg>

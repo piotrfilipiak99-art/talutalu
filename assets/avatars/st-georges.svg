@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A4A6A"/>
+  <!-- Fort George / St. George's horseshoe harbor, Grenada -->
+  <!-- Horseshoe harbor (characteristic from above) -->
+  <path d="M14,80 Q14,40 50,36 Q86,40 86,80" stroke="white" stroke-width="8" fill="none"/>
+  <path d="M14,80 Q14,50 50,46 Q86,50 86,80" stroke="#1A4A6A" stroke-width="4" fill="none"/>
+  <!-- Fort George on the headland (left) -->
+  <rect x="10" y="44" width="18" height="20" fill="white"/>
+  <!-- Fort battlements -->
+  <rect x="10" y="38" width="4" height="6" fill="white"/>
+  <rect x="16" y="38" width="4" height="6" fill="white"/>
+  <rect x="22" y="38" width="4" height="6" fill="white"/>
+  <!-- Careenage (inner harbor) - boats -->
+  <ellipse cx="50" cy="74" rx="24" ry="10" fill="white" opacity="0.3"/>
+  <!-- Colorful houses on hillside -->
+  <rect x="36" y="56" width="8" height="8" fill="white" opacity="0.6"/>
+  <rect x="48" y="52" width="8" height="10" fill="white" opacity="0.6"/>
+  <rect x="60" y="56" width="8" height="8" fill="white" opacity="0.6"/>
+  <!-- Spice market hint -->
+  <rect x="34" y="64" width="32" height="6" fill="white" opacity="0.5"/>
+  <!-- Caribbean sea -->
+  <rect x="10" y="82" width="80" height="8" fill="white" opacity="0.2"/>
+</svg>

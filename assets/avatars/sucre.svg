@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A5A00"/>
+  <!-- Metropolitan Cathedral / Casa de la Libertad, Sucre - colonial Baroque -->
+  <!-- Twin bell towers -->
+  <rect x="16" y="24" width="16" height="52" fill="white"/>
+  <rect x="68" y="24" width="16" height="52" fill="white"/>
+  <!-- Tower bells (arched openings) -->
+  <rect x="18" y="28" width="6" height="8" fill="#3A5A00"/>
+  <ellipse cx="21" cy="28" rx="3" ry="3" fill="#3A5A00"/>
+  <rect x="76" y="28" width="6" height="8" fill="#3A5A00"/>
+  <ellipse cx="79" cy="28" rx="3" ry="3" fill="#3A5A00"/>
+  <!-- Tower domes (small bulbous) -->
+  <ellipse cx="24" cy="22" rx="8" ry="5" fill="white"/>
+  <ellipse cx="76" cy="22" rx="8" ry="5" fill="white"/>
+  <polygon points="20,22 28,22 24,14" fill="white"/>
+  <polygon points="72,22 80,22 76,14" fill="white"/>
+  <!-- Nave / church body -->
+  <rect x="28" y="44" width="44" height="32" fill="white"/>
+  <!-- Baroque facade between towers -->
+  <rect x="28" y="40" width="44" height="8" fill="white"/>
+  <!-- Carved stone portal -->
+  <ellipse cx="50" cy="56" rx="10" ry="14" fill="#3A5A00"/>
+  <ellipse cx="50" cy="58" rx="7" ry="10" fill="white" opacity="0.1"/>
+  <!-- Entry door -->
+  <rect x="44" y="62" width="12" height="14" fill="#3A5A00"/>
+  <!-- Base / colonial plaza -->
+  <rect x="12" y="76" width="76" height="4" fill="white"/>
+</svg>

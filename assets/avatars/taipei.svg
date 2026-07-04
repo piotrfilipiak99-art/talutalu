@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A8A"/>
+  <!-- Taipei 101 -->
+  <!-- Antenna / spire at top -->
+  <rect x="48" y="6" width="4" height="18" fill="white"/>
+  <!-- Top crown section -->
+  <rect x="42" y="22" width="16" height="8" fill="white"/>
+  <rect x="40" y="28" width="20" height="4" fill="white"/>
+  <!-- 8 main segments (bamboo joints) - widening then narrowing -->
+  <rect x="36" y="32" width="28" height="7" fill="white"/>
+  <rect x="34" y="39" width="32" height="2" fill="#2A5A8A" opacity="0.5"/>
+  <rect x="34" y="41" width="32" height="7" fill="white"/>
+  <rect x="32" y="48" width="36" height="2" fill="#2A5A8A" opacity="0.5"/>
+  <rect x="32" y="50" width="36" height="7" fill="white"/>
+  <rect x="30" y="57" width="40" height="2" fill="#2A5A8A" opacity="0.5"/>
+  <rect x="30" y="59" width="40" height="7" fill="white"/>
+  <rect x="28" y="66" width="44" height="2" fill="#2A5A8A" opacity="0.5"/>
+  <!-- Base podium -->
+  <rect x="24" y="68" width="52" height="10" fill="white"/>
+  <!-- Ground floor -->
+  <rect x="20" y="78" width="60" height="4" fill="white"/>
+</svg>

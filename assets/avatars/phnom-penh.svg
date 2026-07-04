@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A2A00"/>
+  <!-- Royal Palace / Silver Pagoda, Phnom Penh -->
+  <!-- Multi-tiered Khmer roof (characteristic silhouette) -->
+  <!-- Base building -->
+  <rect x="16" y="62" width="68" height="18" fill="white"/>
+  <!-- First roof tier (widest) -->
+  <polygon points="10,62 90,62 80,52 20,52" fill="white"/>
+  <!-- Second roof tier -->
+  <polygon points="20,52 80,52 72,42 28,42" fill="white"/>
+  <!-- Third roof tier -->
+  <polygon points="28,42 72,42 66,34 34,34" fill="white"/>
+  <!-- Top tier -->
+  <polygon points="34,34 66,34 62,26 38,26" fill="white"/>
+  <!-- Central prang/spire above -->
+  <polygon points="38,26 62,26 58,14 42,14" fill="white"/>
+  <polygon points="44,14 56,14 50,6" fill="white"/>
+  <!-- Roof ridge finials -->
+  <rect x="10" y="58" width="4" height="4" fill="white"/>
+  <rect x="86" y="58" width="4" height="4" fill="white"/>
+  <!-- Entrance steps -->
+  <rect x="40" y="80" width="20" height="3" fill="white"/>
+  <rect x="36" y="83" width="28" height="3" fill="white"/>
+</svg>

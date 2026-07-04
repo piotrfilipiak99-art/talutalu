@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A0000"/>
+  <!-- Royal Palace, Nuku'alofa, Tonga — white Victorian wooden palace (1867) -->
+  <!-- One of the few remaining royal palaces in the Pacific -->
+  <!-- Main palace building (two-storey wooden) -->
+  <rect x="12" y="46" width="76" height="34" fill="white"/>
+  <!-- Hip roof -->
+  <polygon points="8,46 50,22 92,46" fill="white"/>
+  <!-- Roof ridge detail -->
+  <rect x="8" y="42" width="84" height="6" fill="white"/>
+  <!-- Upper-floor wrap-around veranda -->
+  <rect x="10" y="60" width="80" height="5" fill="white"/>
+  <!-- Veranda columns upper -->
+  <rect x="14" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="22" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="30" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="38" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="54" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="62" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="70" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <rect x="78" y="46" width="4" height="18" fill="#8A0000" opacity="0.3"/>
+  <!-- Lower-floor veranda columns -->
+  <rect x="14" y="64" width="4" height="16" fill="#8A0000" opacity="0.3"/>
+  <rect x="22" y="64" width="4" height="16" fill="#8A0000" opacity="0.3"/>
+  <rect x="62" y="64" width="4" height="16" fill="#8A0000" opacity="0.3"/>
+  <rect x="78" y="64" width="4" height="16" fill="#8A0000" opacity="0.3"/>
+  <!-- Entrance (central porch) -->
+  <rect x="40" y="64" width="20" height="16" fill="white"/>
+  <polygon points="36,64 50,52 64,64" fill="white"/>
+  <!-- Flagpole -->
+  <rect x="48" y="18" width="4" height="26" fill="white"/>
+  <!-- Steps -->
+  <rect x="36" y="80" width="28" height="3" fill="white"/>
+  <rect x="28" y="83" width="44" height="3" fill="white"/>
+  <!-- Lawn -->
+  <rect x="8" y="88" width="84" height="4" fill="white" opacity="0.2"/>
+</svg>

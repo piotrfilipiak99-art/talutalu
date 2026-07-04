@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A6A1A"/>
+  <!-- Royal Palace of Porto-Novo (now Ethnographic Museum), Benin -->
+  <!-- Ornate Yoruba/Fon-style palace with veranda -->
+  <!-- Main palace block -->
+  <rect x="14" y="44" width="72" height="36" fill="white"/>
+  <!-- Stepped parapet roof -->
+  <rect x="10" y="36" width="80" height="12" fill="white"/>
+  <rect x="14" y="30" width="72" height="10" fill="white"/>
+  <!-- Central decorative gable -->
+  <polygon points="36,30 50,14 64,30" fill="white"/>
+  <!-- Triangular pediment ornament -->
+  <polygon points="44,24 50,16 56,24" fill="#2A6A1A" opacity="0.4"/>
+  <!-- Veranda columns across front -->
+  <rect x="18" y="54" width="4" height="24" fill="#2A6A1A" opacity="0.3"/>
+  <rect x="28" y="54" width="4" height="24" fill="#2A6A1A" opacity="0.3"/>
+  <rect x="38" y="54" width="4" height="24" fill="#2A6A1A" opacity="0.3"/>
+  <rect x="54" y="54" width="4" height="24" fill="#2A6A1A" opacity="0.3"/>
+  <rect x="64" y="54" width="4" height="24" fill="#2A6A1A" opacity="0.3"/>
+  <rect x="74" y="54" width="4" height="24" fill="#2A6A1A" opacity="0.3"/>
+  <!-- Doorway -->
+  <rect x="43" y="62" width="14" height="18" fill="#2A6A1A"/>
+  <ellipse cx="50" cy="62" rx="7" ry="6" fill="#2A6A1A"/>
+  <!-- Windows -->
+  <rect x="20" y="48" width="10" height="8" fill="#2A6A1A" opacity="0.5"/>
+  <rect x="70" y="48" width="10" height="8" fill="#2A6A1A" opacity="0.5"/>
+  <!-- Base steps -->
+  <rect x="10" y="80" width="80" height="3" fill="white"/>
+  <rect x="6" y="83" width="88" height="3" fill="white"/>
+</svg>

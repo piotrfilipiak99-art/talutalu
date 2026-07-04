@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A8A"/>
+  <!-- Union Buildings, Pretoria - two wings + central amphitheatre -->
+  <!-- Left wing -->
+  <rect x="8" y="46" width="34" height="32" fill="white"/>
+  <!-- Left wing tower with dome -->
+  <rect x="12" y="30" width="16" height="20" fill="white"/>
+  <ellipse cx="20" cy="30" rx="10" ry="7" fill="white"/>
+  <polygon points="12,24 28,24 20,12" fill="white"/>
+  <!-- Right wing (mirror) -->
+  <rect x="58" y="46" width="34" height="32" fill="white"/>
+  <!-- Right wing tower with dome -->
+  <rect x="72" y="30" width="16" height="20" fill="white"/>
+  <ellipse cx="80" cy="30" rx="10" ry="7" fill="white"/>
+  <polygon points="72,24 88,24 80,12" fill="white"/>
+  <!-- Central colonnade linking both wings -->
+  <rect x="38" y="52" width="24" height="26" fill="white"/>
+  <!-- Circular amphitheatre/garden between wings (hint) -->
+  <ellipse cx="50" cy="52" rx="14" ry="5" fill="#2A5A8A" opacity="0.4"/>
+  <!-- Colonnades on central section -->
+  <rect x="38" y="52" width="4" height="18" fill="#2A5A8A" opacity="0.3"/>
+  <rect x="44" y="52" width="4" height="18" fill="#2A5A8A" opacity="0.3"/>
+  <rect x="52" y="52" width="4" height="18" fill="#2A5A8A" opacity="0.3"/>
+  <rect x="58" y="52" width="4" height="18" fill="#2A5A8A" opacity="0.3"/>
+  <!-- Terraced gardens going down hillside -->
+  <rect x="12" y="78" width="76" height="3" fill="white"/>
+  <rect x="8" y="81" width="84" height="3" fill="white"/>
+</svg>

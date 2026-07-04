@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A5A00"/>
+  <!-- Tashichho Dzong, Thimphu - Bhutanese fortress monastery -->
+  <!-- Mountain backdrop -->
+  <polygon points="10,70 50,20 90,70" fill="white" opacity="0.15"/>
+  <!-- Main dzong complex walls -->
+  <rect x="12" y="56" width="76" height="26" fill="white"/>
+  <!-- Whitewashed upper stories -->
+  <rect x="16" y="48" width="68" height="12" fill="white"/>
+  <!-- Red band (characteristic Bhutanese stripe) -->
+  <rect x="14" y="60" width="72" height="6" fill="#8A5A00" opacity="0.4"/>
+  <!-- Central tall tower (utse) -->
+  <rect x="36" y="22" width="28" height="38" fill="white"/>
+  <!-- Tower red band -->
+  <rect x="36" y="44" width="28" height="6" fill="#8A5A00" opacity="0.4"/>
+  <!-- Stepped Bhutanese roof (golden) -->
+  <polygon points="32,22 68,22 62,12 38,12" fill="white"/>
+  <polygon points="36,12 64,12 60,4 40,4" fill="white"/>
+  <!-- Roof decorations (finials) -->
+  <rect x="38" y="2" width="4" height="4" fill="white"/>
+  <rect x="58" y="2" width="4" height="4" fill="white"/>
+  <!-- Courtyard gate opening -->
+  <rect x="44" y="68" width="12" height="14" fill="#8A5A00"/>
+  <polygon points="44,68 56,68 50,62" fill="#8A5A00"/>
+  <!-- Windows (small rectangular with white lintels) -->
+  <rect x="20" y="52" width="6" height="8" fill="#8A5A00" opacity="0.6"/>
+  <rect x="74" y="52" width="6" height="8" fill="#8A5A00" opacity="0.6"/>
+  <!-- Base -->
+  <rect x="10" y="82" width="80" height="4" fill="white"/>
+</svg>

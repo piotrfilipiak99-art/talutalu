@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A6A00"/>
+  <!-- Uppatasanti Pagoda (replica of Shwedagon), Naypyidaw -->
+  <!-- Central stupa (bell-shaped) -->
+  <polygon points="28,76 72,76 66,36 34,36" fill="white"/>
+  <!-- Stupa upper rings (narrowing) -->
+  <ellipse cx="50" cy="36" rx="16" ry="4" fill="white"/>
+  <ellipse cx="50" cy="32" rx="12" ry="3" fill="white"/>
+  <ellipse cx="50" cy="28" rx="9" ry="3" fill="white"/>
+  <ellipse cx="50" cy="24" rx="7" ry="2.5" fill="white"/>
+  <ellipse cx="50" cy="20" rx="5" ry="2" fill="white"/>
+  <!-- Htee (tiered top) -->
+  <rect x="46" y="12" width="8" height="10" fill="white"/>
+  <polygon points="46,12 54,12 50,4" fill="white"/>
+  <!-- Diamond bud on very top -->
+  <circle cx="50" cy="4" r="2" fill="white"/>
+  <!-- Three-tiered base terrace -->
+  <rect x="18" y="76" width="64" height="5" fill="white"/>
+  <rect x="12" y="81" width="76" height="4" fill="white"/>
+  <rect x="6" y="85" width="88" height="4" fill="white"/>
+  <!-- Decorative chinthe (lion) guardians at corners (simplified) -->
+  <ellipse cx="16" cy="76" rx="6" ry="5" fill="white"/>
+  <ellipse cx="84" cy="76" rx="6" ry="5" fill="white"/>
+</svg>

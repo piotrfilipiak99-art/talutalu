@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A3A00"/>
+  <!-- St. John's Cathedral / English Harbour (Nelson's Dockyard), Antigua -->
+  <!-- St. John's Cathedral twin towers -->
+  <rect x="20" y="22" width="16" height="54" fill="white"/>
+  <rect x="64" y="22" width="16" height="54" fill="white"/>
+  <!-- Tower baroque/baroque tops (Caribbean colonial baroque) -->
+  <polygon points="20,22 36,22 28,8" fill="white"/>
+  <polygon points="64,22 80,22 72,8" fill="white"/>
+  <!-- Nave pitched Baroque facade -->
+  <rect x="32" y="40" width="36" height="36" fill="white"/>
+  <polygon points="30,40 70,40 50,26" fill="white"/>
+  <!-- Decorative facade detail (West Indian Baroque) -->
+  <rect x="34" y="38" width="32" height="4" fill="white"/>
+  <!-- Circular window -->
+  <circle cx="50" cy="48" r="7" fill="#8A3A00"/>
+  <!-- Main entrance -->
+  <rect x="42" y="60" width="16" height="16" fill="#8A3A00"/>
+  <ellipse cx="50" cy="60" rx="8" ry="6" fill="#8A3A00"/>
+  <!-- English Harbour bay hint -->
+  <path d="M10,84 Q50,76 90,84" stroke="white" stroke-width="3" fill="none" opacity="0.5"/>
+  <!-- Base steps -->
+  <rect x="14" y="76" width="72" height="4" fill="white"/>
+  <rect x="10" y="80" width="80" height="3" fill="white"/>
+</svg>

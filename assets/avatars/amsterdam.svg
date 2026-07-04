@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#B5621B"/>
+  <!-- Dutch windmill -->
+  <!-- Tower body (trapezoid) -->
+  <polygon points="36,78 64,78 58,30 42,30" fill="white"/>
+  <!-- Cap (rotating top) -->
+  <ellipse cx="50" cy="30" rx="10" ry="5" fill="white"/>
+  <!-- 4 sails / blades -->
+  <!-- Top-right sail -->
+  <polygon points="50,28 80,16 76,24" fill="white"/>
+  <!-- Bottom-right sail -->
+  <polygon points="50,32 80,44 76,36" fill="white"/>
+  <!-- Bottom-left sail -->
+  <polygon points="50,32 20,44 24,36" fill="white"/>
+  <!-- Top-left sail -->
+  <polygon points="50,28 20,16 24,24" fill="white"/>
+  <!-- Center hub -->
+  <circle cx="50" cy="30" r="4" fill="#B5621B"/>
+  <!-- Door -->
+  <rect x="44" y="64" width="12" height="14" fill="#B5621B"/>
+  <ellipse cx="50" cy="64" rx="6" ry="4" fill="#B5621B"/>
+  <!-- Base step -->
+  <rect x="30" y="78" width="40" height="4" fill="white"/>
+</svg>

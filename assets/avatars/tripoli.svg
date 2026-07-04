@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A2A"/>
+  <!-- Arch of Marcus Aurelius, Tripoli (best-preserved Roman arch in Libya) -->
+  <!-- Single triumphal arch -->
+  <!-- Left pillar -->
+  <rect x="20" y="36" width="18" height="42" fill="white"/>
+  <!-- Right pillar -->
+  <rect x="62" y="36" width="18" height="42" fill="white"/>
+  <!-- Arch span (connecting arch) -->
+  <ellipse cx="50" cy="38" rx="30" ry="20" fill="white"/>
+  <ellipse cx="50" cy="42" rx="22" ry="14" fill="#2A5A2A"/>
+  <!-- Attic (top rectangular block above arch) -->
+  <rect x="18" y="20" width="64" height="18" fill="white"/>
+  <!-- Inscribed panel on attic -->
+  <rect x="24" y="24" width="52" height="10" fill="#2A5A2A" opacity="0.2"/>
+  <!-- Capital details on top of pillars -->
+  <rect x="18" y="34" width="22" height="4" fill="white"/>
+  <rect x="60" y="34" width="22" height="4" fill="white"/>
+  <!-- Corinthian column details on pillar faces -->
+  <rect x="24" y="38" width="4" height="36" fill="#2A5A2A" opacity="0.2"/>
+  <rect x="72" y="38" width="4" height="36" fill="#2A5A2A" opacity="0.2"/>
+  <!-- Ground / ancient city stone paving -->
+  <rect x="14" y="78" width="72" height="4" fill="white"/>
+  <!-- Mediterranean sea hint -->
+  <rect x="10" y="82" width="80" height="5" fill="white" opacity="0.25"/>
+</svg>

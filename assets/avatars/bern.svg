@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#C04A10"/>
+  <!-- Zytglogge Clock Tower, Bern -->
+  <!-- Main tower -->
+  <rect x="36" y="30" width="28" height="46" fill="white"/>
+  <!-- Pointed spire on top -->
+  <polygon points="36,30 64,30 50,12" fill="white"/>
+  <!-- Clock face -->
+  <circle cx="50" cy="48" r="10" fill="#C04A10"/>
+  <circle cx="50" cy="48" r="8" fill="white" opacity="0.15"/>
+  <!-- Clock hands -->
+  <rect x="49" y="40" width="2" height="8" fill="white"/>
+  <rect x="49" y="48" width="2" height="6" fill="white" transform="rotate(90 50 48)"/>
+  <!-- Corner clock tower small turrets -->
+  <rect x="28" y="44" width="10" height="24" fill="white"/>
+  <polygon points="28,44 38,44 33,34" fill="white"/>
+  <rect x="62" y="44" width="10" height="24" fill="white"/>
+  <polygon points="62,44 72,44 67,34" fill="white"/>
+  <!-- Arcade at base -->
+  <rect x="38" y="64" width="10" height="12" fill="#C04A10"/>
+  <ellipse cx="43" cy="64" rx="5" ry="4" fill="#C04A10"/>
+  <rect x="52" y="64" width="10" height="12" fill="#C04A10"/>
+  <ellipse cx="57" cy="64" rx="5" ry="4" fill="#C04A10"/>
+  <!-- Base -->
+  <rect x="20" y="76" width="60" height="4" fill="white"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A6A2A"/>
+  <!-- Angel of Independence (El Ángel), Mexico City -->
+  <!-- Tall Corinthian column -->
+  <polygon points="44,78 56,78 54,28 46,28" fill="white"/>
+  <!-- Column base (wider) -->
+  <rect x="40" y="76" width="20" height="6" fill="white"/>
+  <!-- Pedestal (3 tiers) -->
+  <rect x="34" y="82" width="32" height="5" fill="white"/>
+  <rect x="28" y="87" width="44" height="4" fill="white"/>
+  <!-- Angel figure at top -->
+  <!-- Robe/body -->
+  <rect x="46" y="14" width="8" height="16" fill="white"/>
+  <!-- Wings (spread wide) -->
+  <polygon points="46,18 22,10 30,22" fill="white"/>
+  <polygon points="54,18 78,10 70,22" fill="white"/>
+  <!-- Head -->
+  <circle cx="50" cy="12" r="5" fill="white"/>
+  <!-- Laurel wreath raised arm -->
+  <rect x="54" y="10" width="10" height="3" fill="white"/>
+  <circle cx="64" cy="8" r="4" fill="white"/>
+  <!-- Broken chain in other hand -->
+  <rect x="36" y="14" width="10" height="3" fill="white"/>
+  <!-- Paseo de la Reforma boulevard hint -->
+  <rect x="10" y="91" width="80" height="3" fill="white" opacity="0.3"/>
+</svg>

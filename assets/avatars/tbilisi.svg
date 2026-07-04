@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#6A1A1A"/>
+  <!-- Narikala Fortress + Kartlis Deda statue, Tbilisi -->
+  <!-- Hill / Mtasminda -->
+  <polygon points="10,80 50,30 90,80" fill="white" opacity="0.25"/>
+  <!-- Narikala fortress ruins on hilltop -->
+  <rect x="28" y="38" width="44" height="26" fill="white"/>
+  <!-- Fortress walls with merlons -->
+  <rect x="28" y="32" width="5" height="6" fill="white"/>
+  <rect x="35" y="32" width="5" height="6" fill="white"/>
+  <rect x="42" y="32" width="5" height="6" fill="white"/>
+  <rect x="49" y="32" width="5" height="6" fill="white"/>
+  <rect x="56" y="32" width="5" height="6" fill="white"/>
+  <rect x="63" y="32" width="5" height="6" fill="white"/>
+  <!-- Church ruin inside fortress -->
+  <rect x="36" y="42" width="18" height="14" fill="#6A1A1A"/>
+  <polygon points="36,42 54,42 45,34" fill="#6A1A1A"/>
+  <!-- Kartlis Deda (Mother Georgia) statue on right hill -->
+  <!-- Female figure silhouette -->
+  <rect x="68" y="46" width="6" height="16" fill="white"/>
+  <circle cx="71" cy="42" r="4" fill="white"/>
+  <!-- Sword raised right arm -->
+  <rect x="72" y="38" width="3" height="14" fill="white" transform="rotate(20 73 44)"/>
+  <!-- Bowl (left arm) -->
+  <rect x="62" y="44" width="10" height="2" fill="white"/>
+  <!-- Cliff base -->
+  <rect x="10" y="64" width="80" height="16" fill="white" opacity="0.3"/>
+  <rect x="10" y="76" width="80" height="4" fill="white"/>
+</svg>

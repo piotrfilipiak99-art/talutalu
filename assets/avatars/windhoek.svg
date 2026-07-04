@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A3A1A"/>
+  <!-- Christuskirche, Windhoek — iconic German colonial Lutheran church (1907) -->
+  <!-- Distinctive combination of Neo-Romanesque and Art Nouveau styles -->
+  <!-- Main tower (tall, square) -->
+  <rect x="34" y="16" width="32" height="66" fill="white"/>
+  <!-- Octagonal spire on tower -->
+  <polygon points="30,16 50,2 70,16" fill="white"/>
+  <!-- Octagonal lantern under spire -->
+  <rect x="38" y="10" width="24" height="10" fill="white"/>
+  <!-- Clock faces on tower -->
+  <circle cx="50" cy="36" r="7" fill="#8A3A1A" opacity="0.4"/>
+  <circle cx="50" cy="36" r="4" fill="white"/>
+  <!-- Nave (lower, to the sides) -->
+  <rect x="10" y="50" width="26" height="32" fill="white"/>
+  <rect x="64" y="50" width="26" height="32" fill="white"/>
+  <!-- Nave gables (transept) -->
+  <polygon points="10,50 23,36 36,50" fill="white"/>
+  <polygon points="64,50 77,36 90,50" fill="white"/>
+  <!-- Romanesque arched windows on nave -->
+  <rect x="14" y="58" width="8" height="14" fill="#8A3A1A" opacity="0.4"/>
+  <ellipse cx="18" cy="58" rx="4" ry="4" fill="#8A3A1A" opacity="0.4"/>
+  <rect x="78" y="58" width="8" height="14" fill="#8A3A1A" opacity="0.4"/>
+  <ellipse cx="82" cy="58" rx="4" ry="4" fill="#8A3A1A" opacity="0.4"/>
+  <!-- Tower arched windows -->
+  <rect x="38" y="44" width="10" height="14" fill="#8A3A1A" opacity="0.4"/>
+  <ellipse cx="43" cy="44" rx="5" ry="5" fill="#8A3A1A" opacity="0.4"/>
+  <rect x="52" y="44" width="10" height="14" fill="#8A3A1A" opacity="0.4"/>
+  <ellipse cx="57" cy="44" rx="5" ry="5" fill="#8A3A1A" opacity="0.4"/>
+  <!-- Main doorway -->
+  <rect x="41" y="66" width="18" height="16" fill="#8A3A1A"/>
+  <ellipse cx="50" cy="66" rx="9" ry="8" fill="#8A3A1A"/>
+  <!-- Steps -->
+  <rect x="36" y="82" width="28" height="3" fill="white"/>
+  <rect x="30" y="85" width="40" height="3" fill="white"/>
+</svg>

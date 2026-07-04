@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A5A8A"/>
+  <!-- Casa Rosada (Pink House), Buenos Aires -->
+  <!-- Main building (long horizontal) -->
+  <rect x="10" y="54" width="80" height="26" fill="white"/>
+  <!-- Main arcade ground floor -->
+  <rect x="10" y="68" width="80" height="12" fill="white"/>
+  <!-- Arcade arches -->
+  <rect x="14" y="70" width="8" height="10" fill="#2A5A8A"/>
+  <ellipse cx="18" cy="70" rx="4" ry="3" fill="#2A5A8A"/>
+  <rect x="28" y="70" width="8" height="10" fill="#2A5A8A"/>
+  <ellipse cx="32" cy="70" rx="4" ry="3" fill="#2A5A8A"/>
+  <rect x="44" y="70" width="8" height="10" fill="#2A5A8A"/>
+  <ellipse cx="48" cy="70" rx="4" ry="3" fill="#2A5A8A"/>
+  <rect x="60" y="70" width="8" height="10" fill="#2A5A8A"/>
+  <ellipse cx="64" cy="70" rx="4" ry="3" fill="#2A5A8A"/>
+  <rect x="76" y="70" width="8" height="10" fill="#2A5A8A"/>
+  <ellipse cx="80" cy="70" rx="4" ry="3" fill="#2A5A8A"/>
+  <!-- Central balcony (where leaders speak) -->
+  <rect x="40" y="58" width="20" height="6" fill="white"/>
+  <rect x="38" y="62" width="24" height="3" fill="white"/>
+  <!-- Towers flanking center -->
+  <rect x="18" y="38" width="16" height="20" fill="white"/>
+  <polygon points="18,38 34,38 26,26" fill="white"/>
+  <rect x="66" y="38" width="16" height="20" fill="white"/>
+  <polygon points="66,38 82,38 74,26" fill="white"/>
+  <!-- Plaza de Mayo ground -->
+  <rect x="8" y="80" width="84" height="4" fill="white"/>
+  <!-- Obelisk-like May Pyramid -->
+  <polygon points="47,80 53,80 50,66" fill="white"/>
+</svg>

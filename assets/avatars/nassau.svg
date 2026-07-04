@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A8A"/>
+  <!-- Government House, Nassau - pink colonial house on hill -->
+  <!-- Hill -->
+  <ellipse cx="50" cy="84" rx="38" ry="10" fill="white" opacity="0.3"/>
+  <!-- Main house (Georgian colonial) -->
+  <rect x="16" y="46" width="68" height="34" fill="white"/>
+  <!-- Hipped roof -->
+  <polygon points="12,46 88,46 82,30 18,30" fill="white"/>
+  <!-- Central pediment dormer -->
+  <rect x="40" y="28" width="20" height="12" fill="white"/>
+  <polygon points="38,28 62,28 50,18" fill="white"/>
+  <!-- 4 columns on porch -->
+  <rect x="22" y="46" width="4" height="24" fill="#1A5A8A" opacity="0.3"/>
+  <rect x="30" y="46" width="4" height="24" fill="#1A5A8A" opacity="0.3"/>
+  <rect x="62" y="46" width="4" height="24" fill="#1A5A8A" opacity="0.3"/>
+  <rect x="70" y="46" width="4" height="24" fill="#1A5A8A" opacity="0.3"/>
+  <!-- Shuttered windows -->
+  <rect x="18" y="54" width="8" height="12" fill="#1A5A8A" opacity="0.5"/>
+  <rect x="74" y="54" width="8" height="12" fill="#1A5A8A" opacity="0.5"/>
+  <!-- Entry door -->
+  <rect x="44" y="60" width="12" height="20" fill="#1A5A8A"/>
+  <!-- Gate at front -->
+  <rect x="30" y="78" width="40" height="2" fill="white"/>
+  <rect x="38" y="72" width="2" height="8" fill="white"/>
+  <rect x="60" y="72" width="2" height="8" fill="white"/>
+  <!-- Caribbean sea hint -->
+  <rect x="10" y="88" width="80" height="4" fill="white" opacity="0.3"/>
+</svg>

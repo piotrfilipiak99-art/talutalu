@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A6A3A"/>
+  <!-- Kigali Genocide Memorial — Rwanda's most significant site of remembrance -->
+  <!-- Modernist memorial building on rolling hills -->
+  <!-- Hills of Rwanda (the "land of a thousand hills") -->
+  <ellipse cx="22" cy="80" rx="24" ry="16" fill="white" opacity="0.25"/>
+  <ellipse cx="50" cy="76" rx="28" ry="18" fill="white" opacity="0.2"/>
+  <ellipse cx="78" cy="80" rx="24" ry="16" fill="white" opacity="0.25"/>
+  <!-- Memorial building (clean modernist block) -->
+  <rect x="20" y="42" width="60" height="30" fill="white"/>
+  <!-- Flat roof with railing -->
+  <rect x="18" y="38" width="64" height="6" fill="white"/>
+  <!-- Pillars in front -->
+  <rect x="24" y="42" width="4" height="28" fill="#1A6A3A" opacity="0.3"/>
+  <rect x="36" y="42" width="4" height="28" fill="#1A6A3A" opacity="0.3"/>
+  <rect x="60" y="42" width="4" height="28" fill="#1A6A3A" opacity="0.3"/>
+  <rect x="72" y="42" width="4" height="28" fill="#1A6A3A" opacity="0.3"/>
+  <!-- Memorial garden wall -->
+  <rect x="16" y="72" width="68" height="6" fill="white"/>
+  <!-- Eternal flame/torch -->
+  <rect x="47" y="22" width="6" height="20" fill="white"/>
+  <path d="M 47,22 Q 44,15 50,12 Q 56,15 53,22 Z" fill="white"/>
+  <!-- Steps -->
+  <rect x="26" y="78" width="48" height="3" fill="white"/>
+  <rect x="20" y="81" width="60" height="3" fill="white"/>
+  <rect x="14" y="84" width="72" height="3" fill="white" opacity="0.5"/>
+</svg>

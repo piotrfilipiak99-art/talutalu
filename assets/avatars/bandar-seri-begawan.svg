@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A4A1A"/>
+  <!-- Omar Ali Saifuddien Mosque, Bandar Seri Begawan -->
+  <!-- Golden dome (main) -->
+  <ellipse cx="50" cy="40" rx="16" ry="18" fill="white"/>
+  <!-- Crescent -->
+  <circle cx="50" cy="22" r="4" fill="#2A4A1A"/>
+  <circle cx="53" cy="20" r="3" fill="white"/>
+  <rect x="49" y="17" width="2" height="5" fill="white"/>
+  <!-- Drum -->
+  <rect x="36" y="48" width="28" height="6" fill="white"/>
+  <!-- Marble columns arcade -->
+  <rect x="18" y="54" width="64" height="16" fill="white"/>
+  <!-- Arcade arches -->
+  <rect x="22" y="58" width="8" height="10" fill="#2A4A1A"/>
+  <ellipse cx="26" cy="58" rx="4" ry="4" fill="#2A4A1A"/>
+  <rect x="46" y="58" width="8" height="10" fill="#2A4A1A"/>
+  <ellipse cx="50" cy="58" rx="4" ry="4" fill="#2A4A1A"/>
+  <rect x="70" y="58" width="8" height="10" fill="#2A4A1A"/>
+  <ellipse cx="74" cy="58" rx="4" ry="4" fill="#2A4A1A"/>
+  <!-- Tall minaret (right) - very slender Brunei style -->
+  <rect x="76" y="20" width="8" height="54" fill="white"/>
+  <polygon points="76,20 84,20 80,6" fill="white"/>
+  <rect x="74" y="36" width="12" height="3" fill="white"/>
+  <!-- Lagoon reflection -->
+  <ellipse cx="50" cy="82" rx="36" ry="8" fill="white" opacity="0.3"/>
+  <rect x="14" y="76" width="72" height="3" fill="white"/>
+  <!-- Floating mosque on lagoon water -->
+  <rect x="10" y="79" width="80" height="6" fill="white" opacity="0.2"/>
+</svg>

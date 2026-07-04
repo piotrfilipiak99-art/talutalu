@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5C94"/>
+  <!-- Parthenon -->
+  <!-- Stepped base (stylobate) -->
+  <rect x="14" y="74" width="72" height="4" fill="white"/>
+  <rect x="18" y="70" width="64" height="4" fill="white"/>
+  <rect x="22" y="66" width="56" height="4" fill="white"/>
+  <!-- 8 columns -->
+  <rect x="22" y="40" width="4" height="26" fill="white"/>
+  <rect x="30" y="40" width="4" height="26" fill="white"/>
+  <rect x="38" y="40" width="4" height="26" fill="white"/>
+  <rect x="46" y="40" width="4" height="26" fill="white"/>
+  <rect x="54" y="40" width="4" height="26" fill="white"/>
+  <rect x="62" y="40" width="4" height="26" fill="white"/>
+  <rect x="70" y="40" width="4" height="26" fill="white"/>
+  <rect x="14" y="40" width="4" height="26" fill="white"/>
+  <!-- Entablature -->
+  <rect x="14" y="34" width="72" height="6" fill="white"/>
+  <!-- Triangular pediment -->
+  <polygon points="14,34 86,34 50,18" fill="white"/>
+</svg>

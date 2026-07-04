@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#0B5C3A"/>
+  <!-- Belém Tower, Lisbon -->
+  <!-- Water base -->
+  <rect x="10" y="76" width="80" height="6" fill="white" opacity="0.5"/>
+  <!-- Main tower body -->
+  <rect x="38" y="36" width="24" height="40" fill="white"/>
+  <!-- Tower battlements (merlons) -->
+  <rect x="38" y="28" width="4" height="8" fill="white"/>
+  <rect x="44" y="28" width="4" height="8" fill="white"/>
+  <rect x="50" y="28" width="4" height="8" fill="white"/>
+  <rect x="56" y="28" width="4" height="8" fill="white"/>
+  <!-- Upper turret -->
+  <rect x="42" y="18" width="16" height="12" fill="white"/>
+  <!-- Turret dome -->
+  <ellipse cx="50" cy="18" rx="8" ry="5" fill="white"/>
+  <!-- Corner turrets -->
+  <rect x="32" y="50" width="8" height="20" fill="white"/>
+  <rect x="60" y="50" width="8" height="20" fill="white"/>
+  <!-- Corner battlements -->
+  <rect x="32" y="44" width="3" height="6" fill="white"/>
+  <rect x="37" y="44" width="3" height="6" fill="white"/>
+  <rect x="60" y="44" width="3" height="6" fill="white"/>
+  <rect x="65" y="44" width="3" height="6" fill="white"/>
+  <!-- Arched windows -->
+  <rect x="45" y="48" width="10" height="14" fill="#0B5C3A"/>
+  <ellipse cx="50" cy="48" rx="5" ry="4" fill="#0B5C3A"/>
+  <!-- Loggia base -->
+  <rect x="28" y="68" width="44" height="8" fill="white"/>
+</svg>

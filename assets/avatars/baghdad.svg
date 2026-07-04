@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#5A3A00"/>
+  <!-- Al-Shaheed Monument (Martyr's Monument), Baghdad - two halves of a dome -->
+  <!-- Tigris River / water at base -->
+  <rect x="10" y="78" width="80" height="10" fill="white" opacity="0.25"/>
+  <!-- Platform / artificial island -->
+  <ellipse cx="50" cy="80" rx="42" ry="8" fill="white" opacity="0.4"/>
+  <!-- Left half dome (turquoise in reality, shown white) -->
+  <path d="M10,68 Q10,30 50,26" stroke="white" stroke-width="10" fill="none"/>
+  <!-- Right half dome -->
+  <path d="M90,68 Q90,30 50,26" stroke="white" stroke-width="10" fill="none"/>
+  <!-- Central gap between the two halves -->
+  <!-- Flame/torch in the gap -->
+  <rect x="47" y="40" width="6" height="36" fill="white"/>
+  <ellipse cx="50" cy="34" rx="8" ry="10" fill="white"/>
+  <!-- Museum base building (cylinder below) -->
+  <ellipse cx="50" cy="72" rx="28" ry="6" fill="white"/>
+  <rect x="22" y="66" width="56" height="8" fill="white"/>
+</svg>

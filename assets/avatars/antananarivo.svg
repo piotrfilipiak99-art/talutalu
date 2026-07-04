@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#8A0040"/>
+  <!-- Rova of Antananarivo (Queen's Palace), Madagascar — hilltop royal palace complex -->
+  <!-- Hill/rock base (city on 12 hills) -->
+  <polygon points="10,88 20,58 50,44 80,58 90,88" fill="white" opacity="0.3"/>
+  <!-- Main Manjakamiadana palace (tall rectangular tower) -->
+  <rect x="38" y="18" width="24" height="60" fill="white"/>
+  <!-- Steep hip roof -->
+  <polygon points="34,22 50,6 66,22" fill="white"/>
+  <polygon points="36,22 50,10 64,22" fill="#8A0040" opacity="0.2"/>
+  <!-- Wooden balcony/veranda rings -->
+  <rect x="34" y="38" width="32" height="4" fill="white"/>
+  <rect x="34" y="52" width="32" height="4" fill="white"/>
+  <rect x="34" y="66" width="32" height="4" fill="white"/>
+  <!-- Balcony columns -->
+  <rect x="36" y="38" width="2" height="14" fill="#8A0040" opacity="0.3"/>
+  <rect x="42" y="38" width="2" height="14" fill="#8A0040" opacity="0.3"/>
+  <rect x="56" y="38" width="2" height="14" fill="#8A0040" opacity="0.3"/>
+  <rect x="62" y="38" width="2" height="14" fill="#8A0040" opacity="0.3"/>
+  <!-- Flagpole with flag -->
+  <rect x="49" y="4" width="2" height="14" fill="white"/>
+  <polygon points="51,4 51,10 58,7" fill="white"/>
+  <!-- Companion palace (Tranovola/Silver Palace) to the right -->
+  <rect x="64" y="40" width="16" height="38" fill="white"/>
+  <polygon points="62,42 72,28 82,42" fill="white"/>
+  <!-- Steps down the hill -->
+  <rect x="30" y="78" width="40" height="4" fill="white"/>
+  <rect x="24" y="82" width="52" height="4" fill="white"/>
+  <rect x="16" y="86" width="68" height="4" fill="white" opacity="0.5"/>
+</svg>

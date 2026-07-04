@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#3A1A6A"/>
+  <!-- St. Peter's Basilica, Vatican -->
+  <!-- Main dome (Michelangelo's) -->
+  <ellipse cx="50" cy="36" rx="18" ry="20" fill="white"/>
+  <!-- Drum below dome -->
+  <rect x="36" y="46" width="28" height="6" fill="white"/>
+  <!-- Lantern on dome -->
+  <rect x="46" y="14" width="8" height="10" fill="white"/>
+  <ellipse cx="50" cy="14" rx="4" ry="3" fill="white"/>
+  <rect x="48" y="8" width="4" height="6" fill="white"/>
+  <!-- Cross on top -->
+  <rect x="49" y="4" width="2" height="4" fill="white"/>
+  <rect x="46" y="6" width="8" height="2" fill="white"/>
+  <!-- Nave with colonnaded arms (Bernini) - suggest with curved colonnades -->
+  <path d="M18,72 Q18,56 36,52" stroke="white" stroke-width="4" fill="none"/>
+  <path d="M82,72 Q82,56 64,52" stroke="white" stroke-width="4" fill="none"/>
+  <!-- Main facade -->
+  <rect x="30" y="52" width="40" height="20" fill="white"/>
+  <!-- Facade columns -->
+  <rect x="30" y="52" width="3" height="16" fill="#3A1A6A" opacity="0.4"/>
+  <rect x="36" y="52" width="3" height="16" fill="#3A1A6A" opacity="0.4"/>
+  <rect x="61" y="52" width="3" height="16" fill="#3A1A6A" opacity="0.4"/>
+  <rect x="67" y="52" width="3" height="16" fill="#3A1A6A" opacity="0.4"/>
+  <!-- Piazza base -->
+  <ellipse cx="50" cy="80" rx="38" ry="6" fill="white" opacity="0.5"/>
+  <!-- Obelisk in piazza -->
+  <polygon points="48,74 52,74 50,56" fill="white"/>
+  <rect x="47" y="74" width="6" height="3" fill="white"/>
+</svg>

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#1A5A7A"/>
+  <!-- Zitouna Mosque, Tunis (Great Mosque) -->
+  <!-- Main prayer hall roof (large flat-roofed) -->
+  <rect x="14" y="52" width="72" height="26" fill="white"/>
+  <!-- Mosque courtyard arcade -->
+  <rect x="18" y="56" width="8" height="16" fill="#1A5A7A"/>
+  <ellipse cx="22" cy="56" rx="4" ry="3" fill="#1A5A7A"/>
+  <rect x="30" y="56" width="8" height="16" fill="#1A5A7A"/>
+  <ellipse cx="34" cy="56" rx="4" ry="3" fill="#1A5A7A"/>
+  <rect x="62" y="56" width="8" height="16" fill="#1A5A7A"/>
+  <ellipse cx="66" cy="56" rx="4" ry="3" fill="#1A5A7A"/>
+  <rect x="74" y="56" width="8" height="16" fill="#1A5A7A"/>
+  <ellipse cx="78" cy="56" rx="4" ry="3" fill="#1A5A7A"/>
+  <!-- Minaret (three-tiered square Maghrebi style) -->
+  <rect x="40" y="16" width="20" height="38" fill="white"/>
+  <rect x="36" y="24" width="28" height="8" fill="white"/>
+  <rect x="38" y="16" width="24" height="8" fill="white"/>
+  <!-- Minaret crown with lantern -->
+  <rect x="42" y="10" width="16" height="8" fill="white"/>
+  <ellipse cx="50" cy="10" rx="8" ry="4" fill="white"/>
+  <!-- Crescent on top -->
+  <rect x="48" y="4" width="4" height="6" fill="white"/>
+  <circle cx="50" cy="3" r="3" fill="#1A5A7A"/>
+  <circle cx="52" cy="2" r="2" fill="white"/>
+  <!-- Medina alley -->
+  <rect x="12" y="78" width="76" height="4" fill="white"/>
+</svg>

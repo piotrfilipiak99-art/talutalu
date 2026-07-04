@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#006A40"/>
+  <!-- Kiribati Maneaba (meeting house), South Tarawa — traditional raised open-air community house -->
+  <!-- The maneaba is the central cultural institution of Kiribati -->
+  <!-- Steep A-frame thatched roof -->
+  <polygon points="10,70 50,14 90,70" fill="white"/>
+  <!-- Inner thatch layer lines -->
+  <line x1="50" y1="14" x2="20" y2="70" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="14" x2="30" y2="70" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="14" x2="40" y2="70" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="14" x2="60" y2="70" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="14" x2="70" y2="70" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <line x1="50" y1="14" x2="80" y2="70" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <!-- Horizontal thatch banding -->
+  <line x1="26" y1="46" x2="74" y2="46" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <line x1="18" y1="58" x2="82" y2="58" stroke="#006A40" stroke-width="2" opacity="0.15"/>
+  <!-- Open platform/floor on stilts (raised platform) -->
+  <rect x="8" y="68" width="84" height="6" fill="white"/>
+  <!-- Support posts below floor -->
+  <rect x="14" y="70" width="5" height="16" fill="white"/>
+  <rect x="26" y="70" width="5" height="16" fill="white"/>
+  <rect x="40" y="70" width="5" height="16" fill="white"/>
+  <rect x="55" y="70" width="5" height="16" fill="white"/>
+  <rect x="69" y="70" width="5" height="16" fill="white"/>
+  <rect x="81" y="70" width="5" height="16" fill="white"/>
+  <!-- Lagoon/Pacific ocean below -->
+  <rect x="8" y="88" width="84" height="6" fill="white" opacity="0.2"/>
+  <!-- Central ridge pole -->
+  <rect x="48" y="14" width="4" height="56" fill="#006A40" opacity="0.1"/>
+</svg>

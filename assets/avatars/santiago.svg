@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="50" fill="#2A4A6A"/>
+  <!-- Cerro Santa Lucía + Metropolitan Cathedral, Santiago -->
+  <!-- Andes mountains (iconic backdrop) -->
+  <polygon points="10,66 30,28 50,48 70,24 90,66" fill="white" opacity="0.2"/>
+  <!-- Cerro Santa Lucía hill -->
+  <polygon points="14,80 40,42 66,80" fill="white" opacity="0.35"/>
+  <!-- Fortín Hidalgo on top -->
+  <rect x="32" y="36" width="16" height="12" fill="white"/>
+  <polygon points="30,36 50,36 40,24" fill="white"/>
+  <!-- Metropolitan Cathedral (left of hill) -->
+  <rect x="60" y="48" width="30" height="30" fill="white"/>
+  <!-- Two neoclassical towers -->
+  <rect x="60" y="30" width="10" height="22" fill="white"/>
+  <rect x="80" y="30" width="10" height="22" fill="white"/>
+  <polygon points="60,30 70,30 65,18" fill="white"/>
+  <polygon points="80,30 90,30 85,18" fill="white"/>
+  <!-- Facade between towers -->
+  <rect x="66" y="44" width="18" height="6" fill="white"/>
+  <!-- Entrance arch -->
+  <rect x="70" y="60" width="10" height="18" fill="#2A4A6A"/>
+  <ellipse cx="75" cy="60" rx="5" ry="4" fill="#2A4A6A"/>
+  <!-- Base / Plaza de Armas -->
+  <rect x="10" y="78" width="80" height="4" fill="white"/>
+</svg>
