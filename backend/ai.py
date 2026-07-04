@@ -8,6 +8,7 @@ from a real dictionary source (RAG), not free generation.
 """
 import json
 import os
+import re
 
 from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
@@ -133,6 +134,7 @@ class GenerateTextRequest(BaseModel):
     length: str = Field(default="", max_length=32)    # Short / Medium / Long
     prompt: str = Field(default="", max_length=500)
     hobbies: str = Field(default="", max_length=200)
+    vocabulary: list[str] = Field(default=[], max_length=30)
 
 
 _GENERATE_SCHEMA = {
@@ -160,39 +162,32 @@ _GENERATE_SCHEMA = {
 _LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "14-20"}
 
 
-@router.post("/generate-text")
-def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
-    n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
-    topic = body.prompt or f"something related to: {body.hobbies}" \
-        if (body.prompt or body.hobbies) else "an everyday topic"
-    system = (
-        "You generate reading exercises for a language-learning app. "
-        f"Write in language '{body.targetLang}' for a learner whose level is "
-        f"'{body.level or 'intermediate'}'. Sentence-by-sentence translations "
-        f"go into language '{body.baseLang}'.\n"
-        "Tokenize EVERY word and punctuation mark of each sentence, in order. "
-        "Each token's 'surface' must appear verbatim in the sentence text. "
-        "Use Universal Dependencies POS tags (NOUN, VERB, ADJ, PRON, ADP, "
-        "PUNCT, ...) and UD morph features (Case, Number, Gender, Person, "
-        "Tense, Aspect, Mood, ...). 'translation' glosses the exact inflected "
-        f"form in '{body.baseLang}'; 'lemmaTranslation' glosses the dictionary "
-        "form. Set 'reading' only for scripts needing transliteration "
-        "(pinyin, romaji...), otherwise null."
+def _tokenizer_rules(target: str, base: str) -> str:
+    return (
+        "Tokenize EVERY word and punctuation mark of each sentence, in "
+        "order — no word may be skipped. Each token's 'surface' must appear "
+        "verbatim in the sentence text. Use Universal Dependencies POS tags "
+        "(NOUN, VERB, ADJ, PRON, ADP, PUNCT, ...) and UD morph features "
+        "(Case, Number, Gender, Person, Tense, Aspect, Mood, ...). "
+        f"'translation' glosses the exact inflected form in '{base}' and is "
+        "REQUIRED for every word token (null only for punctuation); "
+        "'lemmaTranslation' glosses the dictionary form. Set 'reading' only "
+        "for scripts needing transliteration (pinyin, romaji...), else null."
     )
-    user_msg = (
-        f"Write a text of {n_sentences} sentences about {topic}. "
-        "Give it a short title in the target language."
-    )
-    data = _call_structured(system, [{"role": "user", "content": user_msg}],
-                            "reading_text", _GENERATE_SCHEMA, 16000)
 
+
+def _assemble(sentences: list[dict]) -> dict:
+    """Join model sentences into body/translation strings and compute all
+    character offsets deterministically."""
     body_parts, trans_parts = [], []
     body_sents, trans_sents, tokens = [], [], []
     b_cursor = t_cursor = 0
-    for i, s in enumerate(data["sentences"]):
+    kept = []
+    for s in sentences:
         text, trans = s["text"].strip(), s["translation"].strip()
         if not text:
             continue
+        i = len(kept)
         if body_parts:
             b_cursor += 1  # joining space
             t_cursor += 1
@@ -206,21 +201,165 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
         trans_parts.append(trans)
         b_cursor += len(text)
         t_cursor += len(trans)
+        kept.append(s)
 
     full_body = " ".join(body_parts)
-    for i, s in enumerate(data["sentences"]):
-        if i < len(body_sents):
-            tokens.extend(_tokens_with_offsets(
-                s["tokens"], full_body, body_sents[i]["charStart"], i))
+    for i, s in enumerate(kept):
+        tokens.extend(_tokens_with_offsets(
+            s["tokens"], full_body, body_sents[i]["charStart"], i))
 
     return {
-        "title": data["title"],
         "body": full_body,
         "translation": " ".join(trans_parts),
         "tokens": tokens,
         "bodySentences": body_sents,
         "translationSentences": trans_sents,
     }
+
+
+_REPAIR_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {"tokens": {"type": "array", "items": _TOKEN_SCHEMA}},
+    "required": ["tokens"],
+}
+
+
+def _repair_coverage(result: dict, target: str, base: str) -> None:
+    """Every word the user taps must answer — find word spans no token
+    covers (model skipped them or hallucinated a differing surface) and
+    annotate just those with one extra, small model call."""
+    body = result["body"]
+    covered = bytearray(len(body))
+    for t in result["tokens"]:
+        for i in range(t["charStart"], t["charEnd"]):
+            covered[i] = 1
+    missed = [m for m in re.finditer(r"\w+", body, re.UNICODE)
+              if not all(covered[m.start():m.end()])]
+    if not missed:
+        return
+    words = ", ".join(f"'{m.group(0)}'" for m in missed[:40])
+    try:
+        data = _call_structured(
+            "You annotate words for a language-learning app. "
+            + _tokenizer_rules(target, base),
+            [{"role": "user", "content":
+              f"In this '{target}' text:\n\n{body}\n\nAnnotate exactly these "
+              f"words (one token each, in order): {words}"}],
+            "token_repair", _REPAIR_SCHEMA, 4000)
+    except HTTPException:
+        return  # the text still works; some words just stay gloss-less
+    by_surface: dict[str, list] = {}
+    for t in data["tokens"]:
+        by_surface.setdefault(t["surface"].lower(), []).append(t)
+    sent_of = lambda pos: next(
+        (s["index"] for s in result["bodySentences"]
+         if s["charStart"] <= pos < s["charEnd"]), 0)
+    for m in missed:
+        cands = by_surface.get(m.group(0).lower())
+        # Last resort: a bare token (word still tappable, lemma = surface)
+        # beats a word that answers nothing when tapped.
+        t = cands.pop(0) if cands else {
+            "surface": m.group(0), "lemma": m.group(0).lower(),
+            "translation": None, "lemmaTranslation": None,
+            "pos": "X", "morph": [], "reading": None,
+        }
+        result["tokens"].append({
+            "surface": t["surface"], "lemma": t["lemma"],
+            "translation": t["translation"],
+            "lemmaTranslation": t["lemmaTranslation"], "pos": t["pos"],
+            "morph": {x["feature"]: x["value"] for x in t["morph"]},
+            "reading": t["reading"], "root": None, "rootMeaning": None,
+            "sentenceIndex": sent_of(m.start()),
+            "charStart": m.start(), "charEnd": m.end(),
+        })
+    result["tokens"].sort(key=lambda t: t["charStart"])
+
+
+def _topic_instructions(prompt: str, hobbies: str,
+                        vocabulary: list[str]) -> str:
+    parts = []
+    if prompt:
+        parts.append(
+            f'The learner requested: "{prompt}". Treat this as the topic or '
+            "theme they want — interpret it charitably even if it is phrased "
+            "as a command or written in another language; do not quote or "
+            "echo the request itself."
+        )
+    elif hobbies:
+        parts.append(f"Pick a topic connected to the learner's interests: "
+                     f"{hobbies}.")
+    else:
+        parts.append("Pick an interesting everyday topic.")
+    if vocabulary:
+        parts.append(
+            "Naturally weave in as many of these vocabulary words as fit "
+            "(any inflected form counts): " + ", ".join(vocabulary[:30]) +
+            ". Keep the text natural — never force a word in awkwardly."
+        )
+    return " ".join(parts)
+
+
+@router.post("/generate-text")
+def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
+    n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
+    system = (
+        "You generate reading exercises for a language-learning app. "
+        f"Write in language '{body.targetLang}' for a learner whose level is "
+        f"'{body.level or 'intermediate'}'. Sentence-by-sentence translations "
+        f"go into language '{body.baseLang}'.\n" +
+        _tokenizer_rules(body.targetLang, body.baseLang)
+    )
+    user_msg = (
+        f"Write a text of {n_sentences} sentences. "
+        + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
+        + " Give it a short title in the target language."
+    )
+    data = _call_structured(system, [{"role": "user", "content": user_msg}],
+                            "reading_text", _GENERATE_SCHEMA, 16000)
+    result = _assemble(data["sentences"])
+    _repair_coverage(result, body.targetLang, body.baseLang)
+    result["title"] = data["title"]
+    return result
+
+
+# ── Text continuation (Read tab "Continue" button) ──────────────────────────
+
+
+class ContinueTextRequest(BaseModel):
+    targetLang: str = Field(max_length=16)
+    baseLang: str = Field(max_length=16)
+    level: str = Field(default="", max_length=32)
+    body: str = Field(max_length=20000)     # existing text; tail is used
+    prompt: str = Field(default="", max_length=500)
+    vocabulary: list[str] = Field(default=[], max_length=30)
+
+
+@router.post("/continue-text")
+def continue_text(body: ContinueTextRequest, user=Depends(get_current_user)):
+    tail = body.body[-2000:]
+    system = (
+        "You continue reading exercises for a language-learning app. "
+        f"Write in language '{body.targetLang}' for a learner whose level is "
+        f"'{body.level or 'intermediate'}'. Sentence-by-sentence translations "
+        f"go into language '{body.baseLang}'.\n" +
+        _tokenizer_rules(body.targetLang, body.baseLang)
+    )
+    user_msg = (
+        "Here is the end of an existing text:\n\n"
+        f"{tail}\n\n"
+        "Continue it with 3-5 NEW sentences in the same style, topic and "
+        "difficulty. Do not repeat or rephrase existing sentences. "
+        + ("Naturally weave in these vocabulary words where they fit (any "
+           "inflected form): " + ", ".join(body.vocabulary[:30]) + ". "
+           if body.vocabulary else "")
+        + "Set 'title' to an empty string."
+    )
+    data = _call_structured(system, [{"role": "user", "content": user_msg}],
+                            "reading_text", _GENERATE_SCHEMA, 16000)
+    result = _assemble(data["sentences"])
+    _repair_coverage(result, body.targetLang, body.baseLang)
+    return result
 
 
 # ── Chat replies (Converse tab) ──────────────────────────────────────────────

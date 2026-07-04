@@ -640,21 +640,54 @@ class _ReadScreenState extends State<ReadScreen>
 
   // ── Continue text ────────────────────────────────────────────────────────────
 
+  /// Words from the user's flashcards in the given decks, weakest mastery
+  /// first, for the AI to weave into generated/continued texts.
+  List<String> _vocabForDecks(Iterable<String> deckIds) {
+    final ids = deckIds.toSet();
+    if (ids.isEmpty) return const [];
+    final cards = AppStorage.instance.flashcards
+        .where((c) =>
+            c.courseId == _activeCourseId && c.deckIds.any(ids.contains))
+        .toList()
+      ..sort((a, b) => a.masteryLevel.compareTo(b.masteryLevel));
+    return [for (final c in cards.take(15)) c.word];
+  }
+
   Future<void> _continueText() async {
     final text = _openedText!;
     final count = (text['continuationCount'] as int?) ?? 0;
     if (count >= 3 || _generatingContinuation) return;
     setState(() => _generatingContinuation = true);
-    await Future.delayed(const Duration(milliseconds: 1200));
+
+    // Real AI continuation; the mock paragraph stays as offline fallback.
+    Map<String, dynamic>? ai;
+    final course = AppStorage.instance.activeCourse;
+    if (ApiClient.instance.hasSession && course != null) {
+      try {
+        ai = await ApiClient.instance.continueText(
+          targetLang: course['targetCode'] ?? '',
+          baseLang: course['baseCode'] ?? '',
+          level: (text['level'] as String?) ?? '',
+          body: text['body'] as String,
+          vocabulary: _vocabForDecks(
+              List<String>.from(text['deckIds'] as List? ?? const [])),
+        );
+      } on ApiException {
+        ai = null;
+      }
+    } else {
+      await Future.delayed(const Duration(milliseconds: 1200));
+    }
     if (!mounted) return;
     setState(() {
       final oldBody = text['body'] as String;
       final oldTranslation = (text['translation'] as String?) ?? '';
       final existingTokens = _tokensOf(text);
 
-      text['body'] = '$oldBody $_mockPolishText';
+      text['body'] = '$oldBody ${ai?['body'] ?? _mockPolishText}';
       if (oldTranslation.isNotEmpty) {
-        text['translation'] = '$oldTranslation $_mockEnglishText';
+        text['translation'] =
+            '$oldTranslation ${ai?['translation'] ?? _mockEnglishText}';
       }
 
       // Only append annotation for texts that had it (Generate, not Paste —
@@ -662,11 +695,68 @@ class _ReadScreenState extends State<ReadScreen>
       if (existingTokens.isNotEmpty) {
         final existingBodySentences = _bodySentencesOf(text);
         final existingTranslationSentences = _translationSentencesOf(text);
-        final copy = _shiftedMockCopy(
-          bodyOffset: oldBody.length + 1,
-          translationOffset: oldTranslation.length + 1,
-          sentenceOffset: existingBodySentences.length,
-        );
+        final bodyOffset = oldBody.length + 1;
+        final translationOffset = oldTranslation.length + 1;
+        final sentenceOffset = existingBodySentences.length;
+
+        // The continuation's offsets are relative to itself — rebase them
+        // to the end of the existing text (same shifting the mock uses).
+        final ({
+          List<TextSentence> bodySentences,
+          List<TextSentence> translationSentences,
+          List<TextToken> tokens,
+        }) copy;
+        if (ai != null) {
+          copy = (
+            bodySentences: [
+              for (final e in ai['bodySentences'] as List)
+                TextSentence.fromJson(Map<String, dynamic>.from(e as Map)),
+            ]
+                .map((s) => TextSentence(
+                      index: s.index + sentenceOffset,
+                      charStart: s.charStart + bodyOffset,
+                      charEnd: s.charEnd + bodyOffset,
+                    ))
+                .toList(),
+            translationSentences: [
+              for (final e in ai['translationSentences'] as List)
+                TextSentence.fromJson(Map<String, dynamic>.from(e as Map)),
+            ]
+                .map((s) => TextSentence(
+                      index: s.index + sentenceOffset,
+                      charStart: s.charStart + translationOffset,
+                      charEnd: s.charEnd + translationOffset,
+                      alignsToIndex:
+                          (s.alignsToIndex ?? s.index) + sentenceOffset,
+                    ))
+                .toList(),
+            tokens: [
+              for (final e in ai['tokens'] as List)
+                TextToken.fromJson(Map<String, dynamic>.from(e as Map)),
+            ]
+                .map((t) => TextToken(
+                      surface: t.surface,
+                      lemma: t.lemma,
+                      translation: t.translation,
+                      lemmaTranslation: t.lemmaTranslation,
+                      pos: t.pos,
+                      morph: t.morph,
+                      reading: t.reading,
+                      root: t.root,
+                      rootMeaning: t.rootMeaning,
+                      sentenceIndex: t.sentenceIndex + sentenceOffset,
+                      charStart: t.charStart + bodyOffset,
+                      charEnd: t.charEnd + bodyOffset,
+                    ))
+                .toList(),
+          );
+        } else {
+          copy = _shiftedMockCopy(
+            bodyOffset: bodyOffset,
+            translationOffset: translationOffset,
+            sentenceOffset: sentenceOffset,
+          );
+        }
         text['tokens'] =
             [...existingTokens, ...copy.tokens].map((t) => t.toJson()).toList();
         text['bodySentences'] = [...existingBodySentences, ...copy.bodySentences]
@@ -1250,6 +1340,7 @@ class _ReadScreenState extends State<ReadScreen>
                                   prompt:
                                       selectedIdea ?? _promptCtrl.text.trim(),
                                   hobbies: AppStorage.instance.userHobby,
+                                  vocabulary: _vocabForDecks(sheetDeckIds),
                                 );
                               } on ApiException {
                                 ai = null;
