@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: talutalu
+    runtime: static
+    buildCommand: |
+      git clone https://github.com/flutter/flutter.git --depth 1 -b stable flutter-sdk
+      ./flutter-sdk/bin/flutter --version
+      ./flutter-sdk/bin/flutter build web --release
+    staticPublishPath: build/web
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
