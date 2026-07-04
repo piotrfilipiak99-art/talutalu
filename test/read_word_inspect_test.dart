@@ -69,6 +69,17 @@ void main() {
     // The bar shows the word's gloss inline, without opening the sheet.
     expect(find.text('Warsaw').hitTestable(), findsOneWidget);
 
+    // One-tap add to flashcards straight from the bar.
+    expect(AppStorage.instance.flashcards, isEmpty);
+    await tester.tap(find.byIcon(Icons.style_rounded).hitTestable());
+    await tester.pumpAndSettle();
+    expect(
+        AppStorage.instance.flashcards.any((c) => c.word == 'Warszawa'), isTrue,
+        reason: 'the flashcard stores the lemma of the inspected word');
+    // Let the confirmation snackbar (which floats over the bar) expire.
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+
     // The book button opens the word sheet for the highlighted word.
     await tester.tap(find.byIcon(Icons.menu_book_rounded));
     await tester.pumpAndSettle();

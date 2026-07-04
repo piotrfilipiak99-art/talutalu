@@ -874,6 +874,10 @@ class _ChatViewState extends State<_ChatView> {
           _inspectBarButton(
               Icons.menu_book_rounded, () => _showWordSheet(token)),
           const SizedBox(width: 10),
+          // One-tap add to flashcards.
+          _inspectBarButton(
+              Icons.style_rounded, () => _quickAddToFlashcards(token)),
+          const SizedBox(width: 10),
           _inspectBarButton(
               Icons.chevron_right_rounded, () => _inspectStep(1)),
         ],
@@ -881,9 +885,14 @@ class _ChatViewState extends State<_ChatView> {
     );
   }
 
+  /// Sheet variant: closes the sheet, then adds.
   void _addToFlashcards(TextToken token) {
-    final courseId = widget.state._courseId;
     Navigator.pop(context);
+    _quickAddToFlashcards(token);
+  }
+
+  void _quickAddToFlashcards(TextToken token) {
+    final courseId = widget.state._courseId;
     if (courseId == null) return;
     final storage = AppStorage.instance;
     final existing = storage.flashcards;

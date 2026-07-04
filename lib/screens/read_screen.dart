@@ -1752,6 +1752,65 @@ class _ReadScreenState extends State<ReadScreen>
     return (segStart, segEnd);
   }
 
+  /// One-tap add from the inspect bar: creates the flashcard right away
+  /// (General deck); if the word already has a card, offers extending it to
+  /// more decks — same rules as the word sheet's add flow.
+  void _quickAddToFlashcards(TextToken token) {
+    final courseId = _activeCourseId;
+    if (courseId == null || token.translation == null) return;
+    final storage = AppStorage.instance;
+    final existing = storage.flashcards;
+    final word = token.lemma;
+    Flashcard? existingCard;
+    for (final c in existing) {
+      if (c.courseId == courseId && c.word == word) {
+        existingCard = c;
+        break;
+      }
+    }
+    if (existingCard != null) {
+      final userDecks = AppStorage.instance.decks
+          .where((d) => d.courseId == courseId && !d.isVirtual)
+          .toList();
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (_) => _ExtendDecksSheet(
+          card: existingCard!,
+          userDecks: userDecks,
+        ),
+      ).then((addedCount) {
+        if (addedCount is int && addedCount > 0) {
+          storage.saveFlashcards(existing);
+          storage.flashcardsChanged.value++;
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(_flashcardSnack(
+              '"$word" added to $addedCount more deck${addedCount == 1 ? '' : 's'}'));
+        }
+      });
+      return;
+    }
+    final card = Flashcard(
+      id: '${DateTime.now().millisecondsSinceEpoch}',
+      word: word,
+      translation: token.lemmaTranslation ?? token.translation!,
+      wordType: _posLabel(token.pos),
+      courseId: courseId,
+      fromTexts: true,
+      morph: (token.pos == 'NOUN' || token.pos == 'PROPN') &&
+              token.morph.containsKey('Gender')
+          ? {'Gender': token.morph['Gender']!}
+          : null,
+      root: token.root,
+      rootMeaning: token.rootMeaning,
+    );
+    storage.saveFlashcards([...existing, card]);
+    storage.flashcardsChanged.value++;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(_flashcardSnack('"$word" added to flashcards'));
+  }
+
   /// Word tokens the inspect arrows step through, in text order.
   List<TextToken> _navigableTokens() {
     final text = _openedText;
@@ -2342,15 +2401,6 @@ class _ReadScreenState extends State<ReadScreen>
     return Stack(
       children: [
         _buildReaderColumn(text, body, words, wordStarts),
-        // Floating playback panel — slides up above the content when
-        // playback is active, anchored bottom-right for thumb reach.
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          bottom: _playbackMode ? 24 : -100,
-          right: 20,
-          child: _buildPlaybackPanel(),
-        ),
         // Floating selection panel — appears bottom-left whenever a word
         // range is selected (base text or translation), offering a Converse
         // walkthrough of the selection plus a translations list.
@@ -2365,7 +2415,8 @@ class _ReadScreenState extends State<ReadScreen>
     );
   }
 
-  Widget _inspectBarButton(IconData icon, VoidCallback? onTap) {
+  Widget _inspectBarButton(IconData icon, VoidCallback? onTap,
+      {bool active = false}) {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -2373,13 +2424,18 @@ class _ReadScreenState extends State<ReadScreen>
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: active ? AppColors.primaryGlow : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
+          border:
+              Border.all(color: active ? AppColors.primary : AppColors.border),
         ),
         child: Icon(icon,
             size: 24,
-            color: onTap == null ? AppColors.text3 : AppColors.text),
+            color: active
+                ? AppColors.primary
+                : onTap == null
+                    ? AppColors.text3
+                    : AppColors.text),
       ),
     );
   }
@@ -2438,8 +2494,12 @@ class _ReadScreenState extends State<ReadScreen>
             ),
           ),
           const SizedBox(width: 10),
-          // Full word sheet: details + add to flashcards.
+          // Full word sheet: details + deck-aware add to flashcards.
           _inspectBarButton(Icons.menu_book_rounded, openSheet),
+          const SizedBox(width: 10),
+          // One-tap add to flashcards.
+          _inspectBarButton(
+              Icons.style_rounded, () => _quickAddToFlashcards(token)),
           const SizedBox(width: 10),
           _inspectBarButton(Icons.chevron_right_rounded,
               () => _inspectStep(1)),
@@ -2699,7 +2759,7 @@ class _ReadScreenState extends State<ReadScreen>
               : SingleChildScrollView(
             controller: _bodyScrollCtrl,
             padding: EdgeInsets.fromLTRB(
-                20, 0, 20, _playbackMode || _hasSelection ? 110 : 32),
+                20, 0, 20, _hasSelection ? 110 : 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2731,9 +2791,46 @@ class _ReadScreenState extends State<ReadScreen>
             ),
           ),
         ),
-        if (_inspectTokenStart != null && !_hasSelection && !_playbackMode)
+        if (_playbackMode)
+          _buildPlaybackBar()
+        else if (_inspectTokenStart != null && !_hasSelection)
           _buildInspectBar(),
       ],
+    );
+  }
+
+  /// Docked playback bar — same style as the inspect bar: pacing toggle,
+  /// skip prev, play/pause, skip next.
+  Widget _buildPlaybackBar() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Tooltip(
+            message: _stepMode
+                ? 'Step mode: pauses after every sentence'
+                : 'Auto mode: reads straight through',
+            child: _inspectBarButton(
+              _stepMode
+                  ? Icons.pause_circle_outline_rounded
+                  : Icons.fast_forward_rounded,
+              () => setState(() => _stepMode = !_stepMode),
+              active: _stepMode,
+            ),
+          ),
+          _inspectBarButton(Icons.skip_previous_rounded, _skipPrev),
+          _inspectBarButton(
+            _speaking ? Icons.pause_rounded : Icons.play_arrow_rounded,
+            _speaking ? _pausePlayback : _playCurrent,
+          ),
+          _inspectBarButton(Icons.skip_next_rounded, _skipNext),
+        ],
+      ),
     );
   }
 
@@ -2741,7 +2838,7 @@ class _ReadScreenState extends State<ReadScreen>
   /// positions mirrored so both show the same relative fragment.
   Widget _buildSplitView(Map<String, dynamic> text, String body,
       List<String> words, List<int> wordStarts) {
-    final bottomPad = _playbackMode || _hasSelection ? 110.0 : 24.0;
+    final bottomPad = _hasSelection ? 110.0 : 24.0;
     return Column(
       children: [
         Expanded(
@@ -2868,64 +2965,6 @@ class _ReadScreenState extends State<ReadScreen>
                       ),
                     );
                   }),
-    );
-  }
-
-  // Floating control cluster shown while playback is active: pacing toggle,
-  // skip prev/next, and play-pause, within thumb reach at the bottom-right
-  // of the screen. Stop lives in the top action bar as the Listen button.
-  Widget _buildPlaybackPanel() {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: _speaking ? AppColors.primary : AppColors.border,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Tooltip(
-            message: _stepMode
-                ? 'Step mode: pauses after every sentence'
-                : 'Auto mode: reads straight through',
-            child: _PlayCtrlBtn(
-              icon: _stepMode
-                  ? Icons.pause_circle_outline_rounded
-                  : Icons.fast_forward_rounded,
-              active: _stepMode,
-              onTap: () => setState(() => _stepMode = !_stepMode),
-            ),
-          ),
-          _panelDivider(),
-          _PlayCtrlBtn(
-            icon: Icons.skip_previous_rounded,
-            active: true,
-            onTap: _skipPrev,
-          ),
-          _panelDivider(),
-          _PlayCtrlBtn(
-            icon: _speaking ? Icons.pause_rounded : Icons.play_arrow_rounded,
-            active: true,
-            onTap: _speaking ? _pausePlayback : _playCurrent,
-          ),
-          _panelDivider(),
-          _PlayCtrlBtn(
-            icon: Icons.skip_next_rounded,
-            active: true,
-            onTap: _skipNext,
-          ),
-        ],
-      ),
     );
   }
 
