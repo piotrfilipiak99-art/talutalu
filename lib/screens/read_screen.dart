@@ -1217,6 +1217,7 @@ class _ReadScreenState extends State<ReadScreen>
                             if (text.isEmpty) return;
                             setState(() {
                               _texts.insert(0, {
+                                'id': 't${DateTime.now().microsecondsSinceEpoch}',
                                 'courseId': _activeCourseId ?? '',
                                 'title': _mockTitles[
                                     _texts.length % _mockTitles.length],
@@ -1241,6 +1242,7 @@ class _ReadScreenState extends State<ReadScreen>
                               _length = sheetLength;
                               _level = sheetLevel;
                               _texts.insert(0, {
+                                'id': 't${DateTime.now().microsecondsSinceEpoch}',
                                 'courseId': _activeCourseId ?? '',
                                 'title': _mockTitles[
                                     _texts.length % _mockTitles.length],

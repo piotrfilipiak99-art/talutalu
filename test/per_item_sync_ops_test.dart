@@ -59,4 +59,19 @@ void main() {
     expect(stored.length, 1);
     expect(stored.single.translation, 'cat (updated)');
   });
+
+  test('texts saved before per-item sync get ids assigned at startup',
+      () async {
+    SharedPreferences.setMockInitialValues({
+      'texts': jsonEncode([
+        {'courseId': 'c1', 'title': 'Old text', 'body': 'abc'},
+        {'id': 't-existing', 'courseId': 'c1', 'title': 'New', 'body': 'x'},
+      ]),
+    });
+    await AppStorage.instance.init();
+
+    final texts = AppStorage.instance.texts;
+    expect(texts[0]['id'], isNotNull, reason: 'legacy text must get an id');
+    expect(texts[1]['id'], 't-existing', reason: 'existing ids are kept');
+  });
 }

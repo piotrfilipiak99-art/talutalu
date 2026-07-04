@@ -9,7 +9,14 @@ from sqlalchemy.orm import Session
 
 from auth import create_token, get_current_user, hash_password, verify_password
 from database import Base, engine, get_db
-from models import DeckRow, FlashcardRow, User, UserData
+from models import (
+    ConversationRow,
+    DeckRow,
+    FlashcardRow,
+    TextRow,
+    User,
+    UserData,
+)
 
 Base.metadata.create_all(engine)
 
@@ -176,6 +183,34 @@ def sync_decks(
         row.name = str(p.get("name", ""))[:128]
 
     return _merge_collection(db, DeckRow, user.id, body.items, set_columns)
+
+
+@app.put("/sync/texts")
+def sync_texts(
+    body: CollectionPush,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    def set_columns(row, p):
+        row.course_id = str(p.get("courseId", ""))[:64]
+        row.title = str(p.get("title", ""))[:256]
+        row.level = str(p.get("level", ""))[:32]
+
+    return _merge_collection(db, TextRow, user.id, body.items, set_columns)
+
+
+@app.put("/sync/conversations")
+def sync_conversations(
+    body: CollectionPush,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    def set_columns(row, p):
+        row.course_id = str(p.get("courseId", ""))[:64]
+        row.title = str(p.get("title") or "")[:256]
+        row.starred = bool(p.get("starred", False))
+
+    return _merge_collection(db, ConversationRow, user.id, body.items, set_columns)
 
 
 @app.put("/sync")

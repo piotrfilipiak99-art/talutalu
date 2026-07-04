@@ -37,6 +37,7 @@ class AppStorage {
   Future<void> init() async {
     _p = await SharedPreferences.getInstance();
     ApiClient.instance.init(_p);
+    _migrateTextIds();
     final storedDark = _p.getBool('darkMode') ?? true;
     AppColors.setDark(storedDark);
     darkMode.value = storedDark;
@@ -56,12 +57,19 @@ class AppStorage {
   // the merged state, which is applied back here.
 
   /// Keys whose SharedPreferences value is a JSON-encoded string.
-  /// Flashcards and decks are NOT here — they sync per item through
-  /// /sync/flashcards and /sync/decks (see _syncCollection below).
+  /// Flashcards, decks, texts and conversations are NOT here — they sync
+  /// per item through /sync/<collection> (see _syncCollection below).
   static const _jsonKeys = {
-    'bases', 'courses', 'activeCourse', 'texts',
-    'deck_settings', 'conversations',
+    'bases', 'courses', 'activeCourse', 'deck_settings',
   };
+
+  /// (endpoint path, pending-ops key, local storage key) per collection.
+  static const _collections = [
+    ('/sync/flashcards', 'card_ops', 'flashcards'),
+    ('/sync/decks', 'deck_ops', 'decks'),
+    ('/sync/texts', 'text_ops', 'texts'),
+    ('/sync/conversations', 'conv_ops', 'conversations'),
+  ];
   static const _boolKeys = {'darkMode', 'notificationsEnabled', 'reminderEnabled'};
   static const _intKeys = {'reminderHour', 'reminderMinute', 'selectedAvatar'};
   static const _stringKeys = {
@@ -123,11 +131,13 @@ class AppStorage {
           ];
     final ops = _pendingOps(opsKey);
     final beforeById = {
-      for (final e in before) e['id'] as String: jsonEncode(e),
+      for (final e in before)
+        if (e['id'] is String) e['id'] as String: jsonEncode(e),
     };
     final afterIds = <String>{};
     for (final e in after) {
-      final id = e['id'] as String;
+      final id = e['id'] as String?;
+      if (id == null) continue; // pre-migration item; synced after restart
       afterIds.add(id);
       if (beforeById[id] != jsonEncode(e)) {
         ops[id] = {'payload': e, 'updatedAt': now, 'deleted': false};
@@ -187,11 +197,8 @@ class AppStorage {
   /// One-time seeding: data created before per-item sync existed (or while
   /// logged out) becomes a full set of upsert ops on the first sync.
   void _seedCollectionOps() {
-    if (_p.getBool('rel_seeded') ?? false) return;
-    for (final (opsKey, storageKey) in [
-      ('card_ops', 'flashcards'),
-      ('deck_ops', 'decks'),
-    ]) {
+    if (_p.getBool('rel_seeded_v2') ?? false) return;
+    for (final (_, opsKey, storageKey) in _collections) {
       final raw = _p.getString(storageKey);
       if (raw == null) continue;
       final now = DateTime.now().millisecondsSinceEpoch;
@@ -203,6 +210,25 @@ class AppStorage {
       }
       _p.setString(opsKey, jsonEncode(ops));
     }
+  }
+
+  /// Texts created before per-item sync had no id — assign one so they can
+  /// be addressed as sync items. Runs once per install at startup.
+  void _migrateTextIds() {
+    final raw = _p.getString('texts');
+    if (raw == null) return;
+    final list = [
+      for (final e in jsonDecode(raw) as List)
+        Map<String, dynamic>.from(e as Map),
+    ];
+    var changed = false;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i]['id'] == null) {
+        list[i]['id'] = 't${DateTime.now().microsecondsSinceEpoch}_$i';
+        changed = true;
+      }
+    }
+    if (changed) _p.setString('texts', jsonEncode(list));
   }
 
   Object? _readForPush(String key) {
@@ -232,18 +258,19 @@ class AppStorage {
     if (!ApiClient.instance.hasSession) return;
     _seedCollectionOps();
     try {
-      final cardsChanged = await _syncCollection(
-        path: '/sync/flashcards',
-        opsKey: 'card_ops',
-        storageKey: 'flashcards',
-      );
-      final decksChanged = await _syncCollection(
-        path: '/sync/decks',
-        opsKey: 'deck_ops',
-        storageKey: 'decks',
-      );
-      await _p.setBool('rel_seeded', true);
-      if (cardsChanged || decksChanged) flashcardsChanged.value++;
+      var cardsOrDecksChanged = false;
+      for (final (path, opsKey, storageKey) in _collections) {
+        final changed = await _syncCollection(
+          path: path,
+          opsKey: opsKey,
+          storageKey: storageKey,
+        );
+        if (changed && (storageKey == 'flashcards' || storageKey == 'decks')) {
+          cardsOrDecksChanged = true;
+        }
+      }
+      await _p.setBool('rel_seeded_v2', true);
+      if (cardsOrDecksChanged) flashcardsChanged.value++;
     } on ApiException catch (e) {
       syncError.value = e.message;
       rethrow;
@@ -401,8 +428,8 @@ class AppStorage {
   }
 
   Future<void> saveTexts(List<Map<String, dynamic>> texts) async {
+    _recordListOps('text_ops', 'texts', texts);
     await _p.setString('texts', jsonEncode(texts));
-    _touch('texts');
   }
 
   // ── Avatar ──────────────────────────────────────────────────────────────────
@@ -469,9 +496,9 @@ class AppStorage {
   }
 
   Future<void> saveConversations(List<Conversation> list) async {
-    await _p.setString(
-        'conversations', jsonEncode(list.map((c) => c.toJson()).toList()));
-    _touch('conversations');
+    final maps = list.map((c) => c.toJson()).toList();
+    _recordListOps('conv_ops', 'conversations', maps);
+    await _p.setString('conversations', jsonEncode(maps));
   }
 
   // ── Clear ───────────────────────────────────────────────────────────────────
