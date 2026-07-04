@@ -54,14 +54,15 @@ class ApiClient {
     return Map<String, dynamic>.from(body as Map);
   }
 
-  Future<Map<String, dynamic>> _post(String path, Object payload) async {
+  Future<Map<String, dynamic>> _post(String path, Object payload,
+      {Duration timeout = const Duration(seconds: 75)}) async {
     try {
-      // Generous timeout: Render's free tier spins the server down when idle
-      // and a cold start can take close to a minute.
+      // Default timeout is generous: Render's free tier spins the server
+      // down when idle and a cold start can take close to a minute.
       final res = await http
           .post(Uri.parse('$baseUrl$path'),
               headers: _jsonHeaders, body: jsonEncode(payload))
-          .timeout(const Duration(seconds: 75));
+          .timeout(timeout);
       return _decode(res);
     } on ApiException {
       rethrow;
@@ -86,6 +87,42 @@ class ApiClient {
         'email': email,
         'password': password,
       }));
+
+  // ── AI ────────────────────────────────────────────────────────────────────
+
+  /// Server-side gpt-5-nano text generation. Returns the annotated-text map
+  /// (title/body/translation/tokens/bodySentences/translationSentences)
+  /// ready to merge into a Read-tab text entry.
+  Future<Map<String, dynamic>> generateText({
+    required String targetLang,
+    required String baseLang,
+    String level = '',
+    String length = '',
+    String prompt = '',
+    String hobbies = '',
+  }) =>
+      _post('/ai/generate-text', {
+        'targetLang': targetLang,
+        'baseLang': baseLang,
+        'level': level,
+        'length': length,
+        'prompt': prompt,
+        'hobbies': hobbies,
+      }, timeout: const Duration(seconds: 120));
+
+  /// Converse reply: {text, tokens} for the last user turn given history.
+  Future<Map<String, dynamic>> chatReply({
+    required String targetLang,
+    required String baseLang,
+    String level = '',
+    required List<Map<String, dynamic>> messages,
+  }) =>
+      _post('/ai/chat', {
+        'targetLang': targetLang,
+        'baseLang': baseLang,
+        'level': level,
+        'messages': messages,
+      }, timeout: const Duration(seconds: 120));
 
   // ── Sync ──────────────────────────────────────────────────────────────────
 

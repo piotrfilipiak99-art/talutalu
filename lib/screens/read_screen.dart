@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/api_client.dart';
 import '../services/app_storage.dart';
 import '../models/flashcard.dart';
 import '../models/deck.dart';
@@ -1233,31 +1234,64 @@ class _ReadScreenState extends State<ReadScreen>
                             if (ctx.mounted) Navigator.pop(ctx);
                           } else {
                             setSheet(() => generating = true);
-                            await Future.delayed(
-                                const Duration(milliseconds: 1200));
+                            // Real AI generation through the backend; the
+                            // offline mock stays as a fallback so the app
+                            // keeps working without a session or network.
+                            Map<String, dynamic>? ai;
+                            final course = AppStorage.instance.activeCourse;
+                            if (ApiClient.instance.hasSession &&
+                                course != null) {
+                              try {
+                                ai = await ApiClient.instance.generateText(
+                                  targetLang: course['targetCode'] ?? '',
+                                  baseLang: course['baseCode'] ?? '',
+                                  level: _levels[sheetLevel],
+                                  length: _lengths[sheetLength],
+                                  prompt:
+                                      selectedIdea ?? _promptCtrl.text.trim(),
+                                  hobbies: AppStorage.instance.userHobby,
+                                );
+                              } on ApiException {
+                                ai = null;
+                              }
+                            } else {
+                              await Future.delayed(
+                                  const Duration(milliseconds: 1200));
+                            }
                             if (!mounted) return;
                             final multiplier = sheetLength + 1;
-                            final annotated = _buildMockAnnotatedText(multiplier);
+                            final annotated = ai == null
+                                ? _buildMockAnnotatedText(multiplier)
+                                : null;
                             setState(() {
                               _length = sheetLength;
                               _level = sheetLevel;
                               _texts.insert(0, {
                                 'id': 't${DateTime.now().microsecondsSinceEpoch}',
                                 'courseId': _activeCourseId ?? '',
-                                'title': _mockTitles[
-                                    _texts.length % _mockTitles.length],
-                                'body': annotated.body,
-                                'translation': annotated.translation,
+                                'title': ai?['title'] ??
+                                    _mockTitles[
+                                        _texts.length % _mockTitles.length],
+                                'body': ai?['body'] ?? annotated!.body,
+                                'translation': ai?['translation'] ??
+                                    annotated!.translation,
                                 'length': _lengths[sheetLength],
                                 'level': _levels[sheetLevel],
                                 'prompt': selectedIdea ?? _promptCtrl.text.trim(),
                                 'deckIds': sheetDeckIds.toList(),
-                                'tokens': annotated.tokens.map((t) => t.toJson()).toList(),
-                                'bodySentences':
-                                    annotated.bodySentences.map((s) => s.toJson()).toList(),
-                                'translationSentences': annotated.translationSentences
-                                    .map((s) => s.toJson())
-                                    .toList(),
+                                'tokens': ai?['tokens'] ??
+                                    annotated!.tokens
+                                        .map((t) => t.toJson())
+                                        .toList(),
+                                'bodySentences': ai?['bodySentences'] ??
+                                    annotated!.bodySentences
+                                        .map((s) => s.toJson())
+                                        .toList(),
+                                'translationSentences':
+                                    ai?['translationSentences'] ??
+                                        annotated!.translationSentences
+                                            .map((s) => s.toJson())
+                                            .toList(),
                               });
                             });
                             AppStorage.instance.saveTexts(_texts);

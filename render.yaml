@@ -18,6 +18,8 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false # set manually in the Render dashboard
       - key: PYTHON_VERSION
         value: 3.13.4
 

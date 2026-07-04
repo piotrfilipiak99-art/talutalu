@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/api_client.dart';
 import '../services/app_storage.dart';
 import '../models/conversation.dart';
 import '../models/chat_message.dart';
@@ -647,16 +648,49 @@ class _ChatViewState extends State<_ChatView> {
     widget.state._persist();
     _scrollToBottom();
 
-    // Mock reply — placeholder for a real AI call (see class comment above).
-    await Future.delayed(const Duration(milliseconds: 700));
-    final reply = _mockReplies[_replyCursor % _mockReplies.length];
-    _replyCursor++;
-    final aiMsg = ChatMessage(
-      id: '${DateTime.now().millisecondsSinceEpoch}_ai',
-      fromUser: false,
-      text: reply.text,
-      tokens: _mockTokensFor(reply),
-    );
+    // Real AI reply through the backend; the canned replies remain as an
+    // offline/no-session fallback.
+    ChatMessage aiMsg;
+    final course = widget.state._activeCourse;
+    Map<String, dynamic>? res;
+    if (ApiClient.instance.hasSession && course != null) {
+      try {
+        res = await ApiClient.instance.chatReply(
+          targetLang: course['targetCode'] ?? '',
+          baseLang: course['baseCode'] ?? '',
+          messages: [
+            for (final m in widget.conversation.messages.length > 20
+                ? widget.conversation.messages
+                    .sublist(widget.conversation.messages.length - 20)
+                : widget.conversation.messages)
+              {'fromUser': m.fromUser, 'text': m.text},
+          ],
+        );
+      } on ApiException {
+        res = null;
+      }
+    }
+    if (res != null) {
+      aiMsg = ChatMessage(
+        id: '${DateTime.now().millisecondsSinceEpoch}_ai',
+        fromUser: false,
+        text: res['text'] as String,
+        tokens: [
+          for (final t in res['tokens'] as List)
+            TextToken.fromJson(Map<String, dynamic>.from(t as Map)),
+        ],
+      );
+    } else {
+      await Future.delayed(const Duration(milliseconds: 700));
+      final reply = _mockReplies[_replyCursor % _mockReplies.length];
+      _replyCursor++;
+      aiMsg = ChatMessage(
+        id: '${DateTime.now().millisecondsSinceEpoch}_ai',
+        fromUser: false,
+        text: reply.text,
+        tokens: _mockTokensFor(reply),
+      );
+    }
     if (!mounted) return;
     setState(() {
       widget.conversation.messages.add(aiMsg);

@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ai import router as ai_router
 from auth import create_token, get_current_user, hash_password, verify_password
 from database import Base, engine, get_db
 from models import (
@@ -21,6 +22,7 @@ from models import (
 Base.metadata.create_all(engine)
 
 app = FastAPI(title="Talutalu API")
+app.include_router(ai_router)
 
 # The Flutter web demo runs on other origins (GitHub Pages, Render, localhost).
 app.add_middleware(
