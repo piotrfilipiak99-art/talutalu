@@ -1277,28 +1277,6 @@ class _DeckHubView extends StatelessWidget {
                           overflow: TextOverflow.ellipsis),
                     ),
                     const SizedBox(width: 8),
-                    if (!deck.isVirtual) ...[
-                      Tooltip(
-                        message: deck.isPhrases
-                            ? 'Generate phrases with AI'
-                            : 'Generate vocabulary with AI',
-                        child: GestureDetector(
-                          onTap: () =>
-                              state._showDeckGenerationSheet(context, deck),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.card,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Icon(Icons.auto_awesome_rounded,
-                                size: 18, color: AppColors.primary),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
                     if (deck.isBabel)
                       GestureDetector(
                         onTap: () => state._showBabelBaseSheet(context),
@@ -1412,7 +1390,8 @@ class _DeckHubView extends StatelessWidget {
                   ),
                 ),
               ),
-            // Activities grid
+            // Activities grid — user decks additionally get an AI
+            // generation tile (topic -> words/phrases, per deck type).
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
               sliver: SliverGrid(
@@ -1425,26 +1404,42 @@ class _DeckHubView extends StatelessWidget {
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (ctx, i) {
-                    final activities = deck.isAlphabet
-                        ? _activities.where((a) => a.key != 'write').toList()
-                        : deck.isBabel
-                            ? _activities
-                                .where((a) => a.key == 'review' || a.key == 'learn')
-                                .toList()
-                            : _activities;
+                    final activities = [
+                      ...(deck.isAlphabet
+                          ? _activities.where((a) => a.key != 'write')
+                          : deck.isBabel
+                              ? _activities.where((a) =>
+                                  a.key == 'review' || a.key == 'learn')
+                              : _activities),
+                      if (!deck.isVirtual)
+                        _Activity(
+                          key: 'generate',
+                          label: 'Generate',
+                          sublabel: deck.isPhrases
+                              ? 'AI phrases on a topic'
+                              : 'AI words on a topic',
+                          icon: Icons.auto_fix_high_rounded,
+                          color: const Color(0xFF66BB6A),
+                        ),
+                    ];
                     final act = activities[i];
                     return _ActivityTile(
                       activity: act,
-                      disabled: !hasCards && act.key != 'review',
+                      disabled: !hasCards &&
+                          act.key != 'review' &&
+                          act.key != 'generate',
                       dueCount: act.key == 'review' ? due : null,
-                      onTap: () => state._openActivity(act.key),
+                      onTap: act.key == 'generate'
+                          ? () => state._showDeckGenerationSheet(ctx, deck)
+                          : () => state._openActivity(act.key),
                     );
                   },
-                  childCount: deck.isAlphabet
-                      ? _activities.where((a) => a.key != 'write').length
-                      : deck.isBabel
-                          ? 2
-                          : _activities.length,
+                  childCount: (deck.isAlphabet
+                          ? _activities.length - 1
+                          : deck.isBabel
+                              ? 2
+                              : _activities.length) +
+                      (deck.isVirtual ? 0 : 1),
                 ),
               ),
             ),

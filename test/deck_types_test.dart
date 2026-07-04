@@ -78,5 +78,19 @@ void main() {
     // …and its tile shows the phrases icon.
     expect(find.text('Idiomy'), findsOneWidget);
     expect(find.byIcon(Icons.format_quote_rounded), findsWidgets);
+
+    // Inside a user deck the activities grid has a Generate tile with the
+    // type-specific sublabel.
+    await tester.tap(find.text('Idiomy'));
+    await tester.pumpAndSettle();
+    expect(find.text('Generate'), findsOneWidget);
+    expect(find.text('AI phrases on a topic'), findsOneWidget);
+
+    // Virtual decks (General) do not offer generation.
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('General'));
+    await tester.pumpAndSettle();
+    expect(find.text('Generate'), findsNothing);
   });
 }
