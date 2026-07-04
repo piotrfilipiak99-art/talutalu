@@ -107,11 +107,20 @@ def _tokens_with_offsets(sentence_tokens, text: str, sent_start: int,
         if pos == -1:
             continue
         cursor = pos + len(surface)
+        # The model occasionally echoes the target-language lemma into
+        # lemmaTranslation instead of glossing it (seen in the wild:
+        # lemma "zajęcie", lemmaTranslation "zajęcie"). A gloss identical
+        # to the word it glosses is never useful — drop it so clients fall
+        # back to the inflected-form translation.
+        lemma_gloss = t["lemmaTranslation"]
+        if lemma_gloss and lemma_gloss.strip().lower() in (
+                t["lemma"].strip().lower(), surface.strip().lower()):
+            lemma_gloss = None
         out.append({
             "surface": surface,
             "lemma": t["lemma"],
             "translation": t["translation"],
-            "lemmaTranslation": t["lemmaTranslation"],
+            "lemmaTranslation": lemma_gloss,
             "pos": t["pos"],
             "morph": {m["feature"]: m["value"] for m in t["morph"]},
             "reading": t["reading"],
@@ -171,8 +180,10 @@ def _tokenizer_rules(target: str, base: str) -> str:
         "(Case, Number, Gender, Person, Tense, Aspect, Mood, ...). "
         f"'translation' glosses the exact inflected form in '{base}' and is "
         "REQUIRED for every word token (null only for punctuation); "
-        "'lemmaTranslation' glosses the dictionary form. Set 'reading' only "
-        "for scripts needing transliteration (pinyin, romaji...), else null."
+        f"'lemmaTranslation' glosses the dictionary form, also in '{base}' — "
+        f"it must NEVER contain a '{target}' word or repeat the lemma. "
+        "Set 'reading' only for scripts needing transliteration "
+        "(pinyin, romaji...), else null."
     )
 
 
