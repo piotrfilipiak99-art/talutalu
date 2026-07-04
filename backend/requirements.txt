@@ -7,3 +7,4 @@ email-validator==2.2.*
 dnspython==2.7.*
 psycopg[binary]==3.2.*
 openai==1.*
+ufal.udpipe==1.*

@@ -7,6 +7,7 @@ rootMeaning are deliberately left null — per project policy they must come
 from a real dictionary source (RAG), not free generation.
 """
 import json
+import logging
 import os
 import re
 
@@ -14,9 +15,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
 from pydantic import BaseModel, Field
 
+import annotate
 from auth import get_current_user
 
+log = logging.getLogger("talutalu.ai")
+
 router = APIRouter(prefix="/ai")
+
+# 'udpipe' = hybrid pipeline (LLM writes prose + glosses, UDPipe does the
+# morphology deterministically); anything else = legacy all-LLM path.
+# The hybrid path falls back to legacy per-request on any failure.
+ANNOTATE_MODE = os.environ.get("ANNOTATE_MODE", "udpipe")
 
 # Per-task models: prose quality matters most where the output is durable
 # (reading texts) or user-facing (chat), so those default to gpt-5-mini.
@@ -97,6 +106,10 @@ def _call_structured(model: str, system: str, messages: list[dict],
     content = res.choices[0].message.content
     if not content:
         raise HTTPException(status_code=502, detail="AI returned no content")
+    if res.usage:
+        log.info("ai call model=%s schema=%s in=%s out=%s", model,
+                 schema_name, res.usage.prompt_tokens,
+                 res.usage.completion_tokens)
     return json.loads(content)
 
 
@@ -251,7 +264,7 @@ def _assemble(sentences: list[dict]) -> dict:
     full_body = " ".join(body_parts)
     for i, s in enumerate(kept):
         tokens.extend(_tokens_with_offsets(
-            s["tokens"], full_body, body_sents[i]["charStart"], i))
+            s.get("tokens", []), full_body, body_sents[i]["charStart"], i))
 
     return {
         "body": full_body,
@@ -346,8 +359,119 @@ def _topic_instructions(prompt: str, hobbies: str,
     return " ".join(parts)
 
 
-@router.post("/generate-text")
-def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
+# ── Hybrid path: LLM prose + UDPipe morphology + batched LLM glosses ────────
+
+_PROSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "title": {"type": "string"},
+        "sentences": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "text": {"type": "string"},
+                    "translation": {"type": "string"},
+                },
+                "required": ["text", "translation"],
+            },
+        },
+    },
+    "required": ["title", "sentences"],
+}
+
+_GLOSS_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "glosses": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "translation": {"type": "string"},
+                    "lemmaTranslation": {"type": "string"},
+                },
+                "required": ["translation", "lemmaTranslation"],
+            },
+        },
+    },
+    "required": ["glosses"],
+}
+
+
+def _fill_glosses(result: dict, target: str, base: str) -> None:
+    """One cheap batched LLM call glosses every word token in context:
+    'translation' for the exact inflected form, 'lemmaTranslation' for the
+    dictionary form. Punctuation tokens are skipped."""
+    word_tokens = [t for t in result["tokens"]
+                   if re.search(r"\w", t["surface"])]
+    if not word_tokens:
+        return
+    sents = result["bodySentences"]
+    listing = "\n".join(
+        f"{i+1}. {t['surface']} (lemma: {t['lemma']}, sentence: "
+        f"\"{result['body'][sents[t['sentenceIndex']]['charStart']:sents[t['sentenceIndex']]['charEnd']]}\")"
+        for i, t in enumerate(word_tokens))
+    system = (
+        f"You are a bilingual dictionary: you TRANSLATE '{target}' words "
+        f"into language '{base}'. Both output fields must be written in "
+        f"'{base}' — never repeat the '{target}' word itself. For every "
+        "numbered word return exactly one pair: 'translation' = meaning of "
+        "the exact inflected form as used in its sentence; "
+        "'lemmaTranslation' = meaning of the dictionary (lemma) form. "
+        "Example for target 'pl', base 'en': word 'Poszedłem' (lemma "
+        "'pójść') -> translation 'I went', lemmaTranslation 'to go'. "
+        "Same order as the input, one pair per numbered word, no extras."
+    )
+    data = _call_structured(
+        GENERATE_MODEL, system,
+        [{"role": "user", "content":
+          f"Translate these '{target}' words into '{base}':\n{listing}"}],
+        "word_glosses", _GLOSS_SCHEMA, 8000)
+    glosses = data["glosses"]
+    if len(glosses) != len(word_tokens):
+        raise HTTPException(status_code=502,
+                            detail="gloss count mismatch")
+    for t, g in zip(word_tokens, glosses):
+        t["translation"] = g["translation"] or None
+        gloss = (g["lemmaTranslation"] or "").strip()
+        # Same sanitizer as the legacy path: a gloss echoing the lemma or
+        # surface is useless and must not reach flashcards.
+        if gloss.lower() in (t["lemma"].strip().lower(),
+                             t["surface"].strip().lower()):
+            gloss = ""
+        t["lemmaTranslation"] = gloss or None
+
+
+def _generate_hybrid(body: GenerateTextRequest) -> dict:
+    n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
+    system = (
+        "You generate reading exercises for a language-learning app. "
+        f"Write in language '{body.targetLang}' for "
+        f"{_level_line(body.level)}. Give each sentence a translation "
+        f"into language '{body.baseLang}'."
+    )
+    user_msg = (
+        f"Write a text of {n_sentences} sentences. "
+        + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
+        + " Give it a short title in the target language."
+    )
+    data = _call_structured(GENERATE_MODEL, system,
+                            [{"role": "user", "content": user_msg}],
+                            "reading_prose", _PROSE_SCHEMA, 4000)
+    result = _assemble(data["sentences"])  # sentences carry no tokens here
+    result["tokens"] = annotate.annotate_sentences(
+        result["body"], result["bodySentences"], body.targetLang)
+    _fill_glosses(result, body.targetLang, body.baseLang)
+    result["title"] = data["title"]
+    return result
+
+
+def _generate_legacy(body: GenerateTextRequest) -> dict:
     n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
     system = (
         "You generate reading exercises for a language-learning app. "
@@ -367,6 +491,22 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
     result = _assemble(data["sentences"])
     _repair_coverage(result, body.targetLang, body.baseLang)
     result["title"] = data["title"]
+    return result
+
+
+@router.post("/generate-text")
+def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
+    if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
+        try:
+            result = _generate_hybrid(body)
+            result["annotation"] = "udpipe"
+            return result
+        except HTTPException:
+            raise  # AI/auth errors are meaningful — don't mask them
+        except Exception:
+            log.exception("hybrid annotation failed; falling back to legacy")
+    result = _generate_legacy(body)
+    result["annotation"] = "llm"
     return result
 
 
