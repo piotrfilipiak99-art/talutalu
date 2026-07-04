@@ -3,24 +3,22 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:talutalu/services/app_storage.dart';
-import 'package:talutalu/models/deck.dart';
-import 'package:talutalu/models/flashcard.dart';
 import 'package:talutalu/screens/read_screen.dart';
 
 void main() {
   testWidgets(
-      'adding an already-flashcarded word offers to extend it to more '
-      'decks instead of silently rejecting it or creating a duplicate',
-      (tester) async {
+      'tapping a word highlights it and shows the inspect panel; arrows step '
+      'between words and the book button opens the word sheet', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    // Same google_fonts test-harness caveat as read_screen_token_test.dart.
     final originalOnError = FlutterError.onError;
     FlutterError.onError = (details) {
-      if (details.exception.toString().contains('RenderFlex overflowed')) return;
+      if (details.exception.toString().contains('RenderFlex overflowed')) {
+        return;
+      }
       originalOnError?.call(details);
     };
     addTearDown(() => FlutterError.onError = originalOnError);
@@ -44,23 +42,6 @@ void main() {
       activeCourse: course,
     );
 
-    // Two user decks; the word is already filed under "Travel".
-    await AppStorage.instance.saveDecks(const [
-      Deck(id: 'travel', name: 'Travel', courseId: 'en_pl'),
-      Deck(id: 'nature', name: 'Nature', courseId: 'en_pl'),
-    ]);
-    await AppStorage.instance.saveFlashcards([
-      Flashcard(
-        id: 'existing-1',
-        word: 'Warszawa',
-        translation: 'Warsaw',
-        wordType: 'proper noun',
-        courseId: 'en_pl',
-        fromTexts: true,
-        deckIds: {'travel'},
-      ),
-    ]);
-
     await tester.pumpWidget(const MaterialApp(home: ReadScreen()));
     await tester.pumpAndSettle();
 
@@ -69,34 +50,43 @@ void main() {
     await tester.tap(find.text('Generate').last);
     await tester.pump(const Duration(milliseconds: 1300));
     await tester.pumpAndSettle();
-
     await tester.tap(find.text('Warsaw — Poland\'s Resilient Capital'));
     await tester.pumpAndSettle();
 
+    // No panel and no sheet before any tap (the panel widget lives in the
+    // tree but sits off-screen, so hit-testability is the real signal).
+    expect(find.byIcon(Icons.menu_book_rounded).hitTestable(), findsNothing);
+
+    // Tapping a word does NOT open the sheet anymore — it highlights the
+    // word and reveals the inspect panel.
     await tester.tap(find.text('Warszawa').first);
     await tester.pumpAndSettle();
-    // New inspect flow: the tap highlights the word; the sheet opens from
-    // the floating panel's book button.
+    expect(find.text('proper noun'), findsNothing,
+        reason: 'word sheet must not open on plain tap');
+    expect(find.byIcon(Icons.menu_book_rounded).hitTestable(), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_left_rounded).hitTestable(), findsOneWidget);
+    expect(find.byIcon(Icons.chevron_right_rounded).hitTestable(), findsOneWidget);
+
+    // The book button opens the word sheet for the highlighted word.
     await tester.tap(find.byIcon(Icons.menu_book_rounded));
     await tester.pumpAndSettle();
-
-    // Trigger add-to-flashcards without picking any extra deck in the word
-    // sheet itself — the duplicate should still be detected.
-    await tester.tap(find.text('Add to flashcards'));
+    expect(find.text('proper noun'), findsOneWidget);
+    await tester.tapAt(const Offset(195, 60)); // dismiss the sheet
     await tester.pumpAndSettle();
 
-    expect(find.text('Already in your flashcards'), findsOneWidget);
-    expect(find.textContaining('Travel'), findsOneWidget);
-
-    await tester.tap(find.text('Nature'));
+    // The right arrow moves the highlight to the next word — opening the
+    // sheet now shows a different word ("jest" -> verb, not proper noun).
+    await tester.tap(find.byIcon(Icons.chevron_right_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Add to selected decks'));
+    await tester.tap(find.byIcon(Icons.menu_book_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('proper noun'), findsNothing);
+    await tester.tapAt(const Offset(195, 60));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('added to 1 more deck'), findsOneWidget);
-
-    final saved = AppStorage.instance.flashcards
-        .firstWhere((c) => c.word == 'Warszawa');
-    expect(saved.deckIds, {'travel', 'nature'});
+    // Tapping the same word again clears the highlight and hides the panel.
+    await tester.tap(find.text('jest').first);
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.menu_book_rounded).hitTestable(), findsNothing);
   });
 }

@@ -129,6 +129,13 @@ class _ReadScreenState extends State<ReadScreen>
   // Reader state
   bool _showTranslation = false;
   String? _tappedWord;
+  // Single-word inspection: tapping a word highlights it here and (via the
+  // sentence alignment data) its gloss in the translation, instead of
+  // opening the word sheet right away. A floating bottom panel steps
+  // through words and opens the sheet on demand.
+  int? _inspectTokenStart; // charStart of the inspected body token
+  int? _transHlStart; // highlighted char range in the translation
+  int? _transHlEnd;
   late AnimationController _translateCtrl;
   late Animation<double> _translateAnim;
   // Split view: text on top, translation below, scroll positions mirrored
@@ -280,6 +287,7 @@ class _ReadScreenState extends State<ReadScreen>
         _openedText = null;
         _showTranslation = false;
         _tappedWord = null;
+        _clearInspection();
         _translateCtrl.reset();
       }
     });
@@ -784,6 +792,7 @@ class _ReadScreenState extends State<ReadScreen>
                         _openedText = null;
                         _showTranslation = false;
                         _tappedWord = null;
+                        _clearInspection();
                         _translateCtrl.reset();
                       }
                     });
@@ -1655,8 +1664,83 @@ class _ReadScreenState extends State<ReadScreen>
 
   void _onWordTap(TextToken token) {
     if (token.translation == null) return;
-    setState(() => _tappedWord = token.surface);
-    _showWordSheet(token);
+    setState(() {
+      if (_inspectTokenStart == token.charStart) {
+        _clearInspection();
+      } else {
+        _inspectToken(token);
+      }
+    });
+  }
+
+  void _inspectToken(TextToken token) {
+    _inspectTokenStart = token.charStart;
+    final range = _translationHighlightFor(token);
+    _transHlStart = range?.$1;
+    _transHlEnd = range?.$2;
+  }
+
+  void _clearInspection() {
+    _inspectTokenStart = null;
+    _transHlStart = null;
+    _transHlEnd = null;
+  }
+
+  /// Char range to highlight in the translation for [token]: its gloss
+  /// located inside the aligned translation sentence when it appears there
+  /// verbatim, otherwise the whole aligned sentence.
+  (int, int)? _translationHighlightFor(TextToken token) {
+    final text = _openedText;
+    if (text == null) return null;
+    final translation = (text['translation'] as String?) ?? '';
+    if (translation.isEmpty) return null;
+    TextSentence? sent;
+    for (final s in _translationSentencesOf(text)) {
+      if ((s.alignsToIndex ?? s.index) == token.sentenceIndex) {
+        sent = s;
+        break;
+      }
+    }
+    if (sent == null) return null;
+    final segStart = sent.charStart.clamp(0, translation.length);
+    final segEnd = sent.charEnd.clamp(segStart, translation.length);
+    final gloss = splitTrailingPunct((token.translation ?? '').trim()).core;
+    if (gloss.isNotEmpty) {
+      final idx = translation
+          .substring(segStart, segEnd)
+          .toLowerCase()
+          .indexOf(gloss.toLowerCase());
+      if (idx >= 0) return (segStart + idx, segStart + idx + gloss.length);
+    }
+    return (segStart, segEnd);
+  }
+
+  /// Word tokens the inspect arrows step through, in text order.
+  List<TextToken> _navigableTokens() {
+    final text = _openedText;
+    if (text == null) return const [];
+    return [
+      for (final t in _tokensOf(text))
+        if (t.pos != 'PUNCT' && t.translation != null) t,
+    ];
+  }
+
+  void _inspectStep(int direction) {
+    final tokens = _navigableTokens();
+    if (tokens.isEmpty) return;
+    final current =
+        tokens.indexWhere((t) => t.charStart == _inspectTokenStart);
+    final next = (current + direction).clamp(0, tokens.length - 1);
+    setState(() => _inspectToken(tokens[next]));
+  }
+
+  TextToken? _inspectedToken() {
+    final text = _openedText;
+    if (text == null || _inspectTokenStart == null) return null;
+    for (final t in _tokensOf(text)) {
+      if (t.charStart == _inspectTokenStart) return t;
+    }
+    return null;
   }
 
   void _showWordSheet(TextToken token) {
@@ -1767,6 +1851,7 @@ class _ReadScreenState extends State<ReadScreen>
       _openedText = text;
       _showTranslation = false;
       _tappedWord = null;
+      _clearInspection();
       _selectMode = false;
       _selStart = null;
       _selEnd = null;
@@ -1809,6 +1894,11 @@ class _ReadScreenState extends State<ReadScreen>
             _selInTranslation &&
             i >= (_selStart! <= _selEnd! ? _selStart! : _selEnd!) &&
             i <= (_selStart! <= _selEnd! ? _selEnd! : _selStart!);
+        // Mirror of the inspected body word: its gloss (or, when the gloss
+        // can't be located verbatim, the whole aligned sentence).
+        final isInspected = _transHlStart != null &&
+            wordStarts[i] < _transHlEnd! &&
+            wordStarts[i] + word.length > _transHlStart!;
         return GestureDetector(
           onTap:
               _selectMode ? () => _onWordSelectTap(i, true) : null,
@@ -1821,15 +1911,21 @@ class _ReadScreenState extends State<ReadScreen>
             decoration: BoxDecoration(
               color: isSelected
                   ? AppColors.primary.withValues(alpha: 0.3)
-                  : isSpeaking
-                      ? AppColors.primary.withValues(alpha: 0.18)
-                      : Colors.transparent,
+                  : isInspected
+                      ? AppColors.primaryGlow
+                      : isSpeaking
+                          ? AppColors.primary.withValues(alpha: 0.18)
+                          : Colors.transparent,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
               word,
               style: GoogleFonts.dmSans(
-                color: isSpeaking ? AppColors.primary : AppColors.text2,
+                color: isInspected
+                    ? AppColors.primarySoft
+                    : isSpeaking
+                        ? AppColors.primary
+                        : AppColors.text2,
                 fontSize: 15,
                 height: 1.75,
                 fontWeight: FontWeight.w400,
@@ -1848,6 +1944,7 @@ class _ReadScreenState extends State<ReadScreen>
       _openedText = null;
       _showTranslation = false;
       _tappedWord = null;
+      _clearInspection();
       _selectMode = false;
       _selStart = null;
       _selEnd = null;
@@ -2227,7 +2324,69 @@ class _ReadScreenState extends State<ReadScreen>
           left: 20,
           child: _buildSelectionPanel(),
         ),
+        // Floating inspect panel — bottom-center while a single word is
+        // highlighted: step to the previous/next word, or open the word
+        // sheet (translation + add to flashcards) for the current one.
+        AnimatedPositioned(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          bottom: _inspectTokenStart != null &&
+                  !_hasSelection &&
+                  !_playbackMode
+              ? 24
+              : -100,
+          left: 0,
+          right: 0,
+          child: Center(child: _buildInspectPanel()),
+        ),
       ],
+    );
+  }
+
+  Widget _buildInspectPanel() {
+    final token = _inspectedToken();
+    return Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.primary),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PlayCtrlBtn(
+            icon: Icons.chevron_left_rounded,
+            active: true,
+            onTap: () => _inspectStep(-1),
+          ),
+          _panelDivider(),
+          // Word sheet: full translation card + add to flashcards.
+          _PlayCtrlBtn(
+            icon: Icons.menu_book_rounded,
+            active: token != null,
+            onTap: token == null
+                ? null
+                : () {
+                    setState(() => _tappedWord = token.surface);
+                    _showWordSheet(token);
+                  },
+          ),
+          _panelDivider(),
+          _PlayCtrlBtn(
+            icon: Icons.chevron_right_rounded,
+            active: true,
+            onTap: () => _inspectStep(1),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2562,7 +2721,9 @@ class _ReadScreenState extends State<ReadScreen>
                     final split = splitTrailingPunct(word);
                     final token = tokens.isEmpty ? null : _tokenAt(tokens, wordStarts[i]);
                     final hasTranslation = token?.translation != null;
-                    final isTapped = token != null && _tappedWord == token.surface;
+                    final isTapped = token != null &&
+                        (_tappedWord == token.surface ||
+                            _inspectTokenStart == token.charStart);
                     final isSelected = _hasSelection &&
                         !_selInTranslation &&
                         i >= (_selStart! <= _selEnd! ? _selStart! : _selEnd!) &&

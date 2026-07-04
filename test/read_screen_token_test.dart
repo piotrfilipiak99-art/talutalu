@@ -69,6 +69,10 @@ void main() {
     // schema (charStart/charEnd -> TextToken), not the old dictionary.
     await tester.tap(find.text('Warszawa').first);
     await tester.pumpAndSettle();
+    // New inspect flow: the tap highlights the word; the sheet opens from
+    // the floating panel's book button.
+    await tester.tap(find.byIcon(Icons.menu_book_rounded));
+    await tester.pumpAndSettle();
 
     // Word sheet should show the token's translation and POS-derived type.
     // "Warsaw" also appears in the (still-mounted-but-collapsed) translation
@@ -136,6 +140,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Warszawa').first);
     await tester.pumpAndSettle();
+    // New inspect flow: the tap highlights the word; the sheet opens from
+    // the floating panel's book button.
+    await tester.tap(find.byIcon(Icons.menu_book_rounded));
+    await tester.pumpAndSettle();
 
     expect(find.text('Warsaw'), findsWidgets);
     expect(find.text('proper noun'), findsOneWidget);
@@ -189,6 +197,10 @@ void main() {
     // the tapped surface form, a root, and a lemma translation that differs
     // from the contextual one ("of Poland" vs "Poland").
     await tester.tap(find.text('Polski').first);
+    await tester.pumpAndSettle();
+    // New inspect flow: the tap highlights the word; the sheet opens from
+    // the floating panel's book button.
+    await tester.tap(find.byIcon(Icons.menu_book_rounded));
     await tester.pumpAndSettle();
 
     expect(find.text('Polski'), findsWidgets); // headline = tapped surface form

@@ -53,6 +53,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Warszawa').first);
     await tester.pumpAndSettle();
+    // New inspect flow: the tap highlights the word; the sheet opens from
+    // the floating panel's book button.
+    await tester.tap(find.byIcon(Icons.menu_book_rounded));
+    await tester.pumpAndSettle();
 
     expect(AppStorage.instance.decks, isEmpty);
     await tester.ensureVisible(find.text('New deck'));
