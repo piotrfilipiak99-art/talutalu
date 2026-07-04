@@ -113,10 +113,16 @@ void main() {
     expect(saved.messages.every((m) => !m.fromUser), isTrue);
     expect(AppStorage.instance.explainRequest.value, isNull);
 
-    // Tapping a word in the sentence bubble opens the word sheet, like any
-    // AI message.
+    // Tapping a word in the sentence bubble highlights it and shows the
+    // inspect bar with the gloss inline; the book button opens the sheet.
     await tester.tap(find.text('pije'));
     await tester.pumpAndSettle();
-    expect(find.text('to drink'), findsOneWidget);
+    expect(find.text('drinks'), findsOneWidget); // inflected gloss in bar
+    // Two hittable menu_book icons exist here: the inspect bar's button and
+    // the Read tab's icon in the bottom navigation (which comes later in
+    // the tree) — take the first, the bar's.
+    await tester.tap(find.byIcon(Icons.menu_book_rounded).hitTestable().first);
+    await tester.pumpAndSettle();
+    expect(find.text('to drink'), findsOneWidget); // lemma gloss in sheet
   });
 }

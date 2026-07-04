@@ -64,7 +64,12 @@ void main() {
     // the tappable word itself is just "poznać".
     await tester.tap(find.text('poznać'));
     await tester.pumpAndSettle();
-    expect(find.text('to meet'), findsOneWidget);
+    // Inspect flow (same as Read): the tap highlights the word and shows
+    // the docked bar with the inline gloss; the book button opens the sheet.
+    expect(find.text('to meet'), findsOneWidget); // gloss in the bar
+    await tester.tap(find.byIcon(Icons.menu_book_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('to meet'), findsWidgets); // bar + sheet
     expect(find.text('poznać'), findsWidgets); // sheet header + base form
     await tester.tap(find.text('Add to flashcards'));
     await tester.pumpAndSettle();

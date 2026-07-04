@@ -642,6 +642,11 @@ class _ChatViewState extends State<_ChatView> {
   // Identifies one tapped token instance (message id + its char offset) so
   // only that exact word highlights — same affordance as Read's word tap.
   String? _tappedKey;
+  // Inspect mode (same interaction as Read): the tapped word stays
+  // highlighted and a docked bar below the chat steps through the words of
+  // that message and opens the word sheet on demand.
+  String? _inspectMsgId;
+  int? _inspectStart;
 
   @override
   void dispose() {
@@ -732,9 +737,62 @@ class _ChatViewState extends State<_ChatView> {
     _scrollToBottom();
   }
 
-  void _showWordSheet(String messageId, TextToken token) {
+  void _onWordTap(String messageId, TextToken token) {
+    setState(() {
+      final key = '$messageId:${token.charStart}';
+      if (_tappedKey == key) {
+        _clearInspection();
+      } else {
+        _inspectMsgId = messageId;
+        _inspectStart = token.charStart;
+        _tappedKey = key;
+      }
+    });
+  }
+
+  void _clearInspection() {
+    _inspectMsgId = null;
+    _inspectStart = null;
+    _tappedKey = null;
+  }
+
+  ChatMessage? _inspectMessage() {
+    if (_inspectMsgId == null) return null;
+    for (final m in widget.conversation.messages) {
+      if (m.id == _inspectMsgId) return m;
+    }
+    return null;
+  }
+
+  List<TextToken> _navigableTokens(ChatMessage message) => [
+        for (final t in message.tokens)
+          if (!_isPunctSurface(t.surface) && t.translation != null) t,
+      ];
+
+  TextToken? _inspectedToken() {
+    final message = _inspectMessage();
+    if (message == null || _inspectStart == null) return null;
+    for (final t in message.tokens) {
+      if (t.charStart == _inspectStart) return t;
+    }
+    return null;
+  }
+
+  void _inspectStep(int direction) {
+    final message = _inspectMessage();
+    if (message == null) return;
+    final tokens = _navigableTokens(message);
+    if (tokens.isEmpty) return;
+    final current = tokens.indexWhere((t) => t.charStart == _inspectStart);
+    final next = (current + direction).clamp(0, tokens.length - 1);
+    setState(() {
+      _inspectStart = tokens[next].charStart;
+      _tappedKey = '${message.id}:${tokens[next].charStart}';
+    });
+  }
+
+  void _showWordSheet(TextToken token) {
     final targetCode = widget.state._activeCourse?['targetCode'] ?? '';
-    setState(() => _tappedKey = '$messageId:${token.charStart}');
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -746,7 +804,81 @@ class _ChatViewState extends State<_ChatView> {
         onSpeakLemma: () => _speak(token.lemma, targetCode),
         onAddToFlashcards: () => _addToFlashcards(token),
       ),
-    ).whenComplete(() => setState(() => _tappedKey = null));
+    );
+  }
+
+  Widget _inspectBarButton(IconData icon, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Icon(icon,
+            size: 24,
+            color: onTap == null ? AppColors.text3 : AppColors.text),
+      ),
+    );
+  }
+
+  /// Same docked inspect bar as the reader: arrows step through the words
+  /// of the inspected message, the middle shows the gloss inline, and the
+  /// book button (or tapping the gloss) opens the word sheet.
+  Widget _buildInspectBar(TextToken token) {
+    final gloss = splitTrailingPunct((token.translation ?? '').trim()).core;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: Row(
+        children: [
+          _inspectBarButton(
+              Icons.chevron_left_rounded, () => _inspectStep(-1)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _showWordSheet(token),
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    splitTrailingPunct(token.surface).core,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                        color: AppColors.text,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    gloss.isEmpty ? '—' : gloss,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                        color: AppColors.primarySoft, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          _inspectBarButton(
+              Icons.menu_book_rounded, () => _showWordSheet(token)),
+          const SizedBox(width: 10),
+          _inspectBarButton(
+              Icons.chevron_right_rounded, () => _inspectStep(1)),
+        ],
+      ),
+    );
   }
 
   void _addToFlashcards(TextToken token) {
@@ -827,7 +959,7 @@ class _ChatViewState extends State<_ChatView> {
                         message: conversation.messages[i],
                         tappedKey: _tappedKey,
                         onWordTap: (token) =>
-                            _showWordSheet(conversation.messages[i].id, token),
+                            _onWordTap(conversation.messages[i].id, token),
                         onSpeak: () =>
                             _speak(conversation.messages[i].text, targetCode),
                       ),
@@ -851,6 +983,12 @@ class _ChatViewState extends State<_ChatView> {
                   ],
                 ),
               ),
+            Builder(builder: (_) {
+              final inspected = _inspectedToken();
+              return inspected == null
+                  ? const SizedBox.shrink()
+                  : _buildInspectBar(inspected);
+            }),
             _ChatInputBar(controller: _ctrl, onSend: _send),
           ],
         ),

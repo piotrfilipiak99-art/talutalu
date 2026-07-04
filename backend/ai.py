@@ -18,7 +18,13 @@ from auth import get_current_user
 
 router = APIRouter(prefix="/ai")
 
-MODEL = "gpt-5-nano"
+# Per-task models: prose quality matters most where the output is durable
+# (reading texts) or user-facing (chat), so those default to gpt-5-mini.
+# The token-repair pass is a mechanical dictionary task — nano is enough.
+# All overridable per environment without a code change.
+GENERATE_MODEL = os.environ.get("AI_GENERATE_MODEL", "gpt-5-mini")
+CHAT_MODEL = os.environ.get("AI_CHAT_MODEL", "gpt-5-mini")
+REPAIR_MODEL = os.environ.get("AI_REPAIR_MODEL", "gpt-5-nano")
 
 _client: OpenAI | None = None
 
@@ -67,11 +73,11 @@ _TOKEN_SCHEMA = {
 }
 
 
-def _call_structured(system: str, messages: list[dict], schema_name: str,
-                     schema: dict, max_tokens: int) -> dict:
+def _call_structured(model: str, system: str, messages: list[dict],
+                     schema_name: str, schema: dict, max_tokens: int) -> dict:
     try:
         res = _openai().chat.completions.create(
-            model=MODEL,
+            model=model,
             reasoning_effort="minimal",
             max_completion_tokens=max_tokens,
             messages=[{"role": "system", "content": system}, *messages],
@@ -280,6 +286,7 @@ def _repair_coverage(result: dict, target: str, base: str) -> None:
     words = ", ".join(f"'{m.group(0)}'" for m in missed[:40])
     try:
         data = _call_structured(
+            REPAIR_MODEL,
             "You annotate words for a language-learning app. "
             + _tokenizer_rules(target, base),
             [{"role": "user", "content":
@@ -354,7 +361,8 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
         + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
         + " Give it a short title in the target language."
     )
-    data = _call_structured(system, [{"role": "user", "content": user_msg}],
+    data = _call_structured(GENERATE_MODEL, system,
+                            [{"role": "user", "content": user_msg}],
                             "reading_text", _GENERATE_SCHEMA, 16000)
     result = _assemble(data["sentences"])
     _repair_coverage(result, body.targetLang, body.baseLang)
@@ -408,7 +416,8 @@ def chat(body: ChatRequest, user=Depends(get_current_user)):
         {"role": "user" if m.fromUser else "assistant", "content": m.text}
         for m in body.messages[-20:]
     ]
-    data = _call_structured(system, convo, "chat_reply", _CHAT_SCHEMA, 8000)
+    data = _call_structured(CHAT_MODEL, system, convo, "chat_reply",
+                            _CHAT_SCHEMA, 8000)
 
     text = data["text"]
     return {
