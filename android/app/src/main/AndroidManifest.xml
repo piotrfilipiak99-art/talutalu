@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Talks to the Talutalu API (auth + sync) in all build types. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Talutalu"
         android:name="${applicationName}"
