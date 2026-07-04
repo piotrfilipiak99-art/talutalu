@@ -1,8 +1,4 @@
-"""AI endpoints backed by Groq (OpenAI-compatible API).
-
-Default model is openai/gpt-oss-120b — one of the two Groq models that
-support STRICT structured outputs (the other is gpt-oss-20b), which this
-contract relies on. Override with the AI_MODEL env var.
+"""AI endpoints backed by OpenAI gpt-5-nano.
 
 The model returns *structure* (sentences -> tokens with lemma/POS/morph/
 glosses); character offsets are computed here by walking the assembled
@@ -21,21 +17,20 @@ from auth import get_current_user
 
 router = APIRouter(prefix="/ai")
 
-MODEL = os.environ.get("AI_MODEL", "openai/gpt-oss-120b")
+MODEL = "gpt-5-nano"
 
 _client: OpenAI | None = None
 
 
 def _openai() -> OpenAI:
     global _client
-    key = os.environ.get("GROQ_API_KEY")
-    if key is None:
+    if os.environ.get("OPENAI_API_KEY") is None:
         raise HTTPException(
             status_code=503,
-            detail="AI is not configured on the server (missing GROQ_API_KEY)",
+            detail="AI is not configured on the server (missing OPENAI_API_KEY)",
         )
     if _client is None:
-        _client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=key)
+        _client = OpenAI()
     return _client
 
 
@@ -76,7 +71,7 @@ def _call_structured(system: str, messages: list[dict], schema_name: str,
     try:
         res = _openai().chat.completions.create(
             model=MODEL,
-            reasoning_effort="low",
+            reasoning_effort="minimal",
             max_completion_tokens=max_tokens,
             messages=[{"role": "system", "content": system}, *messages],
             response_format={
