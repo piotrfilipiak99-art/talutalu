@@ -206,7 +206,8 @@ void main() {
     expect(find.text('Polski'), findsWidgets); // headline = tapped surface form
     expect(find.text('Case: Genitive'), findsOneWidget); // attribute chip
     expect(find.text('Gender: Feminine'), findsOneWidget);
-    expect(find.text('of Poland'), findsOneWidget); // translation of this form
+    // Shown in the sheet AND in the inspect bar beneath it — hence widgets.
+    expect(find.text('of Poland'), findsWidgets); // translation of this form
     expect(find.text('Polska'), findsOneWidget); // base form
     // "Poland" also appears in the (still-mounted-but-collapsed) translation
     // panel, same as "Warsaw" in the other tests — check presence, not count.

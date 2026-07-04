@@ -66,6 +66,8 @@ void main() {
     expect(find.byIcon(Icons.menu_book_rounded).hitTestable(), findsOneWidget);
     expect(find.byIcon(Icons.chevron_left_rounded).hitTestable(), findsOneWidget);
     expect(find.byIcon(Icons.chevron_right_rounded).hitTestable(), findsOneWidget);
+    // The bar shows the word's gloss inline, without opening the sheet.
+    expect(find.text('Warsaw').hitTestable(), findsOneWidget);
 
     // The book button opens the word sheet for the highlighted word.
     await tester.tap(find.byIcon(Icons.menu_book_rounded));

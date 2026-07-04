@@ -1686,9 +1686,35 @@ class _ReadScreenState extends State<ReadScreen>
     _transHlEnd = null;
   }
 
+  static final _letterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
+
+  bool _isWordChar(String s, int index) =>
+      index >= 0 && index < s.length && _letterOrDigit.hasMatch(s[index]);
+
+  /// Index of the [n]-th whole-word occurrence of [needle] in [haystack]
+  /// (both already lowercased), or -1. Word boundaries stop "and" from
+  /// matching inside "band".
+  int _nthWordMatch(String haystack, String needle, int n) {
+    var from = 0, count = 0;
+    while (true) {
+      final idx = haystack.indexOf(needle, from);
+      if (idx < 0) return -1;
+      final boundaryOk = !_isWordChar(haystack, idx - 1) &&
+          !_isWordChar(haystack, idx + needle.length);
+      if (boundaryOk) {
+        if (count == n) return idx;
+        count++;
+      }
+      from = idx + 1;
+    }
+  }
+
   /// Char range to highlight in the translation for [token]: its gloss
-  /// located inside the aligned translation sentence when it appears there
-  /// verbatim, otherwise the whole aligned sentence.
+  /// located inside the aligned translation sentence, otherwise the whole
+  /// aligned sentence. Repeated words ("i ... i" -> "and ... and") map to
+  /// the matching occurrence, not always the first one: the token's
+  /// occurrence number among same-glossed tokens of its sentence picks the
+  /// same-numbered occurrence of the gloss in the translation.
   (int, int)? _translationHighlightFor(TextToken token) {
     final text = _openedText;
     if (text == null) return null;
@@ -1704,12 +1730,23 @@ class _ReadScreenState extends State<ReadScreen>
     if (sent == null) return null;
     final segStart = sent.charStart.clamp(0, translation.length);
     final segEnd = sent.charEnd.clamp(segStart, translation.length);
-    final gloss = splitTrailingPunct((token.translation ?? '').trim()).core;
+    final gloss = splitTrailingPunct((token.translation ?? '').trim())
+        .core
+        .toLowerCase();
     if (gloss.isNotEmpty) {
-      final idx = translation
-          .substring(segStart, segEnd)
-          .toLowerCase()
-          .indexOf(gloss.toLowerCase());
+      var occurrence = 0;
+      for (final t in _tokensOf(text)) {
+        if (t.sentenceIndex != token.sentenceIndex) continue;
+        if (t.charStart >= token.charStart) break;
+        final other = splitTrailingPunct((t.translation ?? '').trim())
+            .core
+            .toLowerCase();
+        if (other == gloss) occurrence++;
+      }
+      final segment = translation.substring(segStart, segEnd).toLowerCase();
+      var idx = _nthWordMatch(segment, gloss, occurrence);
+      // More repeats in the body than in the translation — reuse the first.
+      if (idx < 0 && occurrence > 0) idx = _nthWordMatch(segment, gloss, 0);
       if (idx >= 0) return (segStart + idx, segStart + idx + gloss.length);
     }
     return (segStart, segEnd);
@@ -2324,67 +2361,88 @@ class _ReadScreenState extends State<ReadScreen>
           left: 20,
           child: _buildSelectionPanel(),
         ),
-        // Floating inspect panel — bottom-center while a single word is
-        // highlighted: step to the previous/next word, or open the word
-        // sheet (translation + add to flashcards) for the current one.
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          bottom: _inspectTokenStart != null &&
-                  !_hasSelection &&
-                  !_playbackMode
-              ? 24
-              : -100,
-          left: 0,
-          right: 0,
-          child: Center(child: _buildInspectPanel()),
-        ),
       ],
     );
   }
 
-  Widget _buildInspectPanel() {
+  Widget _inspectBarButton(IconData icon, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Icon(icon,
+            size: 24,
+            color: onTap == null ? AppColors.text3 : AppColors.text),
+      ),
+    );
+  }
+
+  /// Docked bottom bar shown while a word is inspected: prev/next arrows,
+  /// the word's gloss in the middle (tap it — or the book button — for the
+  /// full word sheet with add-to-flashcards). A solid bar instead of a
+  /// floating overlay, so mis-taps can't land on the text underneath.
+  Widget _buildInspectBar() {
     final token = _inspectedToken();
+    if (token == null) return const SizedBox.shrink();
+    final gloss = splitTrailingPunct((token.translation ?? '').trim()).core;
+    void openSheet() {
+      setState(() => _tappedWord = token.surface);
+      _showWordSheet(token);
+    }
+
     return Container(
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primary),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _PlayCtrlBtn(
-            icon: Icons.chevron_left_rounded,
-            active: true,
-            onTap: () => _inspectStep(-1),
+          _inspectBarButton(Icons.chevron_left_rounded,
+              () => _inspectStep(-1)),
+          const SizedBox(width: 10),
+          // Inline translation — no sheet needed for a quick check.
+          Expanded(
+            child: GestureDetector(
+              onTap: openSheet,
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    splitTrailingPunct(token.surface).core,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                        color: AppColors.text,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    gloss.isEmpty ? '—' : gloss,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.dmSans(
+                        color: AppColors.primarySoft, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
           ),
-          _panelDivider(),
-          // Word sheet: full translation card + add to flashcards.
-          _PlayCtrlBtn(
-            icon: Icons.menu_book_rounded,
-            active: token != null,
-            onTap: token == null
-                ? null
-                : () {
-                    setState(() => _tappedWord = token.surface);
-                    _showWordSheet(token);
-                  },
-          ),
-          _panelDivider(),
-          _PlayCtrlBtn(
-            icon: Icons.chevron_right_rounded,
-            active: true,
-            onTap: () => _inspectStep(1),
-          ),
+          const SizedBox(width: 10),
+          // Full word sheet: details + add to flashcards.
+          _inspectBarButton(Icons.menu_book_rounded, openSheet),
+          const SizedBox(width: 10),
+          _inspectBarButton(Icons.chevron_right_rounded,
+              () => _inspectStep(1)),
         ],
       ),
     );
@@ -2673,6 +2731,8 @@ class _ReadScreenState extends State<ReadScreen>
             ),
           ),
         ),
+        if (_inspectTokenStart != null && !_hasSelection && !_playbackMode)
+          _buildInspectBar(),
       ],
     );
   }
