@@ -334,45 +334,6 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
     return result
 
 
-# ── Text continuation (Read tab "Continue" button) ──────────────────────────
-
-
-class ContinueTextRequest(BaseModel):
-    targetLang: str = Field(max_length=16)
-    baseLang: str = Field(max_length=16)
-    level: str = Field(default="", max_length=32)
-    body: str = Field(max_length=20000)     # existing text; tail is used
-    prompt: str = Field(default="", max_length=500)
-    vocabulary: list[str] = Field(default=[], max_length=30)
-
-
-@router.post("/continue-text")
-def continue_text(body: ContinueTextRequest, user=Depends(get_current_user)):
-    tail = body.body[-2000:]
-    system = (
-        "You continue reading exercises for a language-learning app. "
-        f"Write in language '{body.targetLang}' for a learner whose level is "
-        f"'{body.level or 'intermediate'}'. Sentence-by-sentence translations "
-        f"go into language '{body.baseLang}'.\n" +
-        _tokenizer_rules(body.targetLang, body.baseLang)
-    )
-    user_msg = (
-        "Here is the end of an existing text:\n\n"
-        f"{tail}\n\n"
-        "Continue it with 3-5 NEW sentences in the same style, topic and "
-        "difficulty. Do not repeat or rephrase existing sentences. "
-        + ("Naturally weave in these vocabulary words where they fit (any "
-           "inflected form): " + ", ".join(body.vocabulary[:30]) + ". "
-           if body.vocabulary else "")
-        + "Set 'title' to an empty string."
-    )
-    data = _call_structured(system, [{"role": "user", "content": user_msg}],
-                            "reading_text", _GENERATE_SCHEMA, 16000)
-    result = _assemble(data["sentences"])
-    _repair_coverage(result, body.targetLang, body.baseLang)
-    return result
-
-
 # ── Chat replies (Converse tab) ──────────────────────────────────────────────
 
 

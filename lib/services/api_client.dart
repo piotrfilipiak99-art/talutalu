@@ -112,24 +112,6 @@ class ApiClient {
         'vocabulary': vocabulary,
       }, timeout: const Duration(seconds: 120));
 
-  /// Continues an existing Read text: returns the same annotated-text map
-  /// as [generateText] but holding only the new sentences (offsets are
-  /// relative to the returned continuation, not the full text).
-  Future<Map<String, dynamic>> continueText({
-    required String targetLang,
-    required String baseLang,
-    String level = '',
-    required String body,
-    List<String> vocabulary = const [],
-  }) =>
-      _post('/ai/continue-text', {
-        'targetLang': targetLang,
-        'baseLang': baseLang,
-        'level': level,
-        'body': body,
-        'vocabulary': vocabulary,
-      }, timeout: const Duration(seconds: 120));
-
   /// Converse reply: {text, tokens} for the last user turn given history.
   Future<Map<String, dynamic>> chatReply({
     required String targetLang,

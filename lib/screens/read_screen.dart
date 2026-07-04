@@ -131,6 +131,12 @@ class _ReadScreenState extends State<ReadScreen>
   String? _tappedWord;
   late AnimationController _translateCtrl;
   late Animation<double> _translateAnim;
+  // Split view: text on top, translation below, scroll positions mirrored
+  // proportionally so both panes show roughly the same fragment.
+  bool _splitView = false;
+  final ScrollController _bodyScrollCtrl = ScrollController();
+  final ScrollController _transScrollCtrl = ScrollController();
+  bool _syncingScroll = false;
   // Word-range selection (base text or translation), entered via the
   // "Select" toggle button. A drag/long-press gesture would collide with the
   // existing long-press-to-jump-playback and the page's vertical scroll, so
@@ -172,9 +178,6 @@ class _ReadScreenState extends State<ReadScreen>
   // Word-level highlight (filled by setProgressHandler when platform supports it)
   int? _speakWordStart; // body-absolute start of word being spoken
   int? _speakWordEnd;
-
-  // Continue generation
-  bool _generatingContinuation = false;
 
   // Selection mode
   bool _selectionMode = false;
@@ -228,10 +231,30 @@ class _ReadScreenState extends State<ReadScreen>
         _speakWordEnd = sentBase + end;
       });
     });
+    // Split view: mirror scroll positions both ways, proportionally.
+    _bodyScrollCtrl.addListener(
+        () => _mirrorScroll(_bodyScrollCtrl, _transScrollCtrl));
+    _transScrollCtrl.addListener(
+        () => _mirrorScroll(_transScrollCtrl, _bodyScrollCtrl));
     _loadFromStorage();
     // Course selection is global — reload when another tab (e.g. Flashcards)
     // changes it, since IndexedStack keeps this screen's state alive.
     AppStorage.instance.courseChanged.addListener(_reloadActiveCourse);
+  }
+
+  /// Keeps the two split-view panes showing the same relative fragment: the
+  /// pane being scrolled drives the other to the same fraction of its own
+  /// scroll range. The [_syncingScroll] latch stops the mirrored jump from
+  /// echoing back as a new scroll event.
+  void _mirrorScroll(ScrollController from, ScrollController to) {
+    if (!_splitView || _syncingScroll) return;
+    if (!from.hasClients || !to.hasClients) return;
+    final fromMax = from.position.maxScrollExtent;
+    if (fromMax <= 0) return;
+    _syncingScroll = true;
+    final ratio = (from.offset / fromMax).clamp(0.0, 1.0);
+    to.jumpTo(ratio * to.position.maxScrollExtent);
+    _syncingScroll = false;
   }
 
   void _loadFromStorage() {
@@ -269,6 +292,8 @@ class _ReadScreenState extends State<ReadScreen>
     _tts.stop();
     _translateCtrl.dispose();
     _promptCtrl.dispose();
+    _bodyScrollCtrl.dispose();
+    _transScrollCtrl.dispose();
     super.dispose();
   }
 
@@ -651,127 +676,6 @@ class _ReadScreenState extends State<ReadScreen>
         .toList()
       ..sort((a, b) => a.masteryLevel.compareTo(b.masteryLevel));
     return [for (final c in cards.take(15)) c.word];
-  }
-
-  Future<void> _continueText() async {
-    final text = _openedText!;
-    final count = (text['continuationCount'] as int?) ?? 0;
-    if (count >= 3 || _generatingContinuation) return;
-    setState(() => _generatingContinuation = true);
-
-    // Real AI continuation; the mock paragraph stays as offline fallback.
-    Map<String, dynamic>? ai;
-    final course = AppStorage.instance.activeCourse;
-    if (ApiClient.instance.hasSession && course != null) {
-      try {
-        ai = await ApiClient.instance.continueText(
-          targetLang: course['targetCode'] ?? '',
-          baseLang: course['baseCode'] ?? '',
-          level: (text['level'] as String?) ?? '',
-          body: text['body'] as String,
-          vocabulary: _vocabForDecks(
-              List<String>.from(text['deckIds'] as List? ?? const [])),
-        );
-      } on ApiException {
-        ai = null;
-      }
-    } else {
-      await Future.delayed(const Duration(milliseconds: 1200));
-    }
-    if (!mounted) return;
-    setState(() {
-      final oldBody = text['body'] as String;
-      final oldTranslation = (text['translation'] as String?) ?? '';
-      final existingTokens = _tokensOf(text);
-
-      text['body'] = '$oldBody ${ai?['body'] ?? _mockPolishText}';
-      if (oldTranslation.isNotEmpty) {
-        text['translation'] =
-            '$oldTranslation ${ai?['translation'] ?? _mockEnglishText}';
-      }
-
-      // Only append annotation for texts that had it (Generate, not Paste —
-      // there's no analysis to run on arbitrary pasted text).
-      if (existingTokens.isNotEmpty) {
-        final existingBodySentences = _bodySentencesOf(text);
-        final existingTranslationSentences = _translationSentencesOf(text);
-        final bodyOffset = oldBody.length + 1;
-        final translationOffset = oldTranslation.length + 1;
-        final sentenceOffset = existingBodySentences.length;
-
-        // The continuation's offsets are relative to itself — rebase them
-        // to the end of the existing text (same shifting the mock uses).
-        final ({
-          List<TextSentence> bodySentences,
-          List<TextSentence> translationSentences,
-          List<TextToken> tokens,
-        }) copy;
-        if (ai != null) {
-          copy = (
-            bodySentences: [
-              for (final e in ai['bodySentences'] as List)
-                TextSentence.fromJson(Map<String, dynamic>.from(e as Map)),
-            ]
-                .map((s) => TextSentence(
-                      index: s.index + sentenceOffset,
-                      charStart: s.charStart + bodyOffset,
-                      charEnd: s.charEnd + bodyOffset,
-                    ))
-                .toList(),
-            translationSentences: [
-              for (final e in ai['translationSentences'] as List)
-                TextSentence.fromJson(Map<String, dynamic>.from(e as Map)),
-            ]
-                .map((s) => TextSentence(
-                      index: s.index + sentenceOffset,
-                      charStart: s.charStart + translationOffset,
-                      charEnd: s.charEnd + translationOffset,
-                      alignsToIndex:
-                          (s.alignsToIndex ?? s.index) + sentenceOffset,
-                    ))
-                .toList(),
-            tokens: [
-              for (final e in ai['tokens'] as List)
-                TextToken.fromJson(Map<String, dynamic>.from(e as Map)),
-            ]
-                .map((t) => TextToken(
-                      surface: t.surface,
-                      lemma: t.lemma,
-                      translation: t.translation,
-                      lemmaTranslation: t.lemmaTranslation,
-                      pos: t.pos,
-                      morph: t.morph,
-                      reading: t.reading,
-                      root: t.root,
-                      rootMeaning: t.rootMeaning,
-                      sentenceIndex: t.sentenceIndex + sentenceOffset,
-                      charStart: t.charStart + bodyOffset,
-                      charEnd: t.charEnd + bodyOffset,
-                    ))
-                .toList(),
-          );
-        } else {
-          copy = _shiftedMockCopy(
-            bodyOffset: bodyOffset,
-            translationOffset: translationOffset,
-            sentenceOffset: sentenceOffset,
-          );
-        }
-        text['tokens'] =
-            [...existingTokens, ...copy.tokens].map((t) => t.toJson()).toList();
-        text['bodySentences'] = [...existingBodySentences, ...copy.bodySentences]
-            .map((s) => s.toJson())
-            .toList();
-        text['translationSentences'] =
-            [...existingTranslationSentences, ...copy.translationSentences]
-                .map((s) => s.toJson())
-                .toList();
-      }
-
-      text['continuationCount'] = count + 1;
-      _generatingContinuation = false;
-    });
-    AppStorage.instance.saveTexts(_texts);
   }
 
   // ── Selection mode ──────────────────────────────────────────────────────────
@@ -1444,12 +1348,25 @@ class _ReadScreenState extends State<ReadScreen>
   // ── Reader actions ──────────────────────────────────────────────────────────
 
   void _toggleTranslation() {
-    setState(() => _showTranslation = !_showTranslation);
+    setState(() {
+      _showTranslation = !_showTranslation;
+      _splitView = false; // the two translation modes are mutually exclusive
+    });
     if (_showTranslation) {
       _translateCtrl.forward();
     } else {
       _translateCtrl.reverse();
     }
+  }
+
+  void _toggleSplitView() {
+    setState(() {
+      _splitView = !_splitView;
+      if (_splitView) {
+        _showTranslation = false;
+        _translateCtrl.reset();
+      }
+    });
   }
 
   // ── Long-press to jump playback ─────────────────────────────────────────────
@@ -2483,40 +2400,65 @@ class _ReadScreenState extends State<ReadScreen>
                 ),
               ),
               const Spacer(),
-              GestureDetector(
-                onTap: _toggleTranslation,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: _showTranslation
-                        ? AppColors.primaryGlow
-                        : AppColors.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
+              // Inline translation toggle — icon-only (with the split-view
+              // button beside it, the labelled version no longer fits on
+              // narrow phones).
+              Tooltip(
+                message: _showTranslation
+                    ? 'Hide translation'
+                    : 'Show translation under the text',
+                child: GestureDetector(
+                  onTap: _toggleTranslation,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
                       color: _showTranslation
-                          ? AppColors.primary
-                          : AppColors.border,
+                          ? AppColors.primaryGlow
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: _showTranslation
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
                     ),
+                    child: Icon(Icons.translate_rounded,
+                        color: _showTranslation
+                            ? AppColors.primary
+                            : AppColors.text2,
+                        size: 16),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.translate_rounded,
-                          color: _showTranslation
-                              ? AppColors.primary
-                              : AppColors.text2,
-                          size: 16),
-                      const SizedBox(width: 6),
-                      Text('Translation',
-                          style: GoogleFonts.dmSans(
-                              color: _showTranslation
-                                  ? AppColors.primarySoft
-                                  : AppColors.text2,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500)),
-                    ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              // Split view — text on top, translation below, synced scroll.
+              Tooltip(
+                message: _splitView
+                    ? 'Exit split view'
+                    : 'Split view: text and translation together',
+                child: GestureDetector(
+                  onTap: _toggleSplitView,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _splitView
+                          ? AppColors.primaryGlow
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color:
+                            _splitView ? AppColors.primary : AppColors.border,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.splitscreen_rounded,
+                      size: 16,
+                      color: _splitView ? AppColors.primary : AppColors.text2,
+                    ),
                   ),
                 ),
               ),
@@ -2524,17 +2466,101 @@ class _ReadScreenState extends State<ReadScreen>
           ),
         ),
         const SizedBox(height: 16),
-        // Text content
+        // Text content — normal reader (inline translation expands under
+        // the text) or split view (text top / translation bottom, scroll
+        // positions mirrored).
         Expanded(
-          child: SingleChildScrollView(
+          child: _splitView &&
+                  ((text['translation'] as String?) ?? '').isNotEmpty
+              ? _buildSplitView(text, body, words, wordStarts)
+              : SingleChildScrollView(
+            controller: _bodyScrollCtrl,
             padding: EdgeInsets.fromLTRB(
                 20, 0, 20, _playbackMode || _hasSelection ? 110 : 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Builder(builder: (_) {
-                  final tokens = _tokensOf(text);
-                  return Wrap(
+                _buildBodyWrap(text, body, words, wordStarts),
+                SizeTransition(
+                  sizeFactor: _translateAnim,
+                  child: FadeTransition(
+                    opacity: _translateAnim,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 24),
+                        Container(height: 1, color: AppColors.border),
+                        const SizedBox(height: 20),
+                        Text('TRANSLATION',
+                            style: GoogleFonts.dmSans(
+                                color: AppColors.text3,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.2)),
+                        const SizedBox(height: 10),
+                        _buildTranslationText(
+                            body, text['translation'] as String),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Split view: text pane on top, translation pane below, scroll
+  /// positions mirrored so both show the same relative fragment.
+  Widget _buildSplitView(Map<String, dynamic> text, String body,
+      List<String> words, List<int> wordStarts) {
+    final bottomPad = _playbackMode || _hasSelection ? 110.0 : 24.0;
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _bodyScrollCtrl,
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: _buildBodyWrap(text, body, words, wordStarts),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          height: 1,
+          color: AppColors.border,
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text('TRANSLATION',
+                style: GoogleFonts.dmSans(
+                    color: AppColors.text3,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.2)),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            controller: _transScrollCtrl,
+            padding: EdgeInsets.fromLTRB(20, 10, 20, bottomPad),
+            child:
+                _buildTranslationText(body, text['translation'] as String),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The reading text as a tappable word cloud — used by both the normal
+  /// reader and the split view's top pane.
+  Widget _buildBodyWrap(Map<String, dynamic> text, String body,
+      List<String> words, List<int> wordStarts) {
+    final tokens = _tokensOf(text);
+    return Wrap(
                   spacing: 4,
                   runSpacing: 2,
                   children: List.generate(words.length, (i) {
@@ -2627,87 +2653,6 @@ class _ReadScreenState extends State<ReadScreen>
                       ),
                     );
                   }),
-                  );
-                }),
-                SizeTransition(
-                  sizeFactor: _translateAnim,
-                  child: FadeTransition(
-                    opacity: _translateAnim,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 24),
-                        Container(height: 1, color: AppColors.border),
-                        const SizedBox(height: 20),
-                        Text('TRANSLATION',
-                            style: GoogleFonts.dmSans(
-                                color: AppColors.text3,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 1.2)),
-                        const SizedBox(height: 10),
-                        _buildTranslationText(
-                            body, text['translation'] as String),
-                      ],
-                    ),
-                  ),
-                ),
-                // Continue button
-                Builder(builder: (_) {
-                  final isGenerated =
-                      ((text['level'] as String?) ?? '').isNotEmpty;
-                  final count =
-                      (text['continuationCount'] as int?) ?? 0;
-                  if (!isGenerated || count >= 3) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 28),
-                    child: GestureDetector(
-                      onTap: _generatingContinuation ? null : _continueText,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        alignment: Alignment.center,
-                        child: _generatingContinuation
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.primary),
-                              )
-                            : Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                      Icons.expand_more_rounded,
-                                      color: AppColors.text2,
-                                      size: 18),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Continue  ${count + 1}/3',
-                                    style: GoogleFonts.dmSans(
-                                        color: AppColors.text2,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 
