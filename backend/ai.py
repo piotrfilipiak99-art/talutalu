@@ -170,6 +170,34 @@ _GENERATE_SCHEMA = {
 
 _LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "14-20"}
 
+# A bare label like "B1" barely changes what a small model writes — spell
+# out what each CEFR band means so the difficulty knob actually turns.
+_LEVEL_GUIDANCE = {
+    "A1": "absolute beginner: use ONLY the most common everyday words, very "
+          "short simple sentences (4-8 words), present tense, no subordinate "
+          "clauses",
+    "A2": "elementary: high-frequency vocabulary, short sentences, simple "
+          "past and future allowed, at most one subordinate clause per "
+          "sentence",
+    "B1": "intermediate: everyday vocabulary, medium-length sentences, "
+          "common connectors, occasional subordinate clauses",
+    "B2": "upper-intermediate: broader vocabulary including some abstract "
+          "terms, complex sentences with multiple clauses, full range of "
+          "tenses and aspect",
+    "C1": "advanced: rich, precise, idiomatic vocabulary, long complex "
+          "sentences, nuanced grammar and varied register",
+    "C2": "near-native: sophisticated literary or academic language, idioms, "
+          "rare vocabulary, elaborate syntax",
+}
+
+
+def _level_line(level: str) -> str:
+    guidance = _LEVEL_GUIDANCE.get(level)
+    if guidance is None:
+        return f"a learner whose level is '{level or 'intermediate'}'"
+    return (f"a learner at CEFR {level} — {guidance}. Matching this "
+            "difficulty is the most important constraint")
+
 
 def _tokenizer_rules(target: str, base: str) -> str:
     return (
@@ -316,8 +344,8 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
     n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
     system = (
         "You generate reading exercises for a language-learning app. "
-        f"Write in language '{body.targetLang}' for a learner whose level is "
-        f"'{body.level or 'intermediate'}'. Sentence-by-sentence translations "
+        f"Write in language '{body.targetLang}' for "
+        f"{_level_line(body.level)}. Sentence-by-sentence translations "
         f"go into language '{body.baseLang}'.\n" +
         _tokenizer_rules(body.targetLang, body.baseLang)
     )
@@ -365,8 +393,8 @@ def chat(body: ChatRequest, user=Depends(get_current_user)):
     system = (
         "You are a friendly, encouraging language tutor inside a language-"
         f"learning app. The learner is studying '{body.targetLang}' "
-        f"(their own language is '{body.baseLang}', level "
-        f"'{body.level or 'intermediate'}').\n"
+        f"(their own language is '{body.baseLang}') and is "
+        f"{_level_line(body.level)}.\n"
         f"Chat naturally in '{body.targetLang}', keeping replies short "
         "(1-3 sentences) and matched to the learner's level. When the "
         f"learner asks for an explanation, explain in '{body.baseLang}'.\n"
