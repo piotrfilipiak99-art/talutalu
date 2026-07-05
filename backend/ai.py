@@ -121,6 +121,16 @@ def _call_structured(model: str, system: str, messages: list[dict],
                     },
                 },
             )
+            # Some providers occasionally return an empty choice — treat
+            # it like any other transient failure.
+            if not res.choices[0].message.content:
+                last_error = RuntimeError("empty AI response")
+                if attempt < 2:
+                    res = None
+                    time.sleep(2 * (attempt + 1))
+                    continue
+                raise HTTPException(status_code=502,
+                                    detail="AI returned no content")
             break
         except HTTPException:
             raise
@@ -135,8 +145,6 @@ def _call_structured(model: str, system: str, messages: list[dict],
         raise HTTPException(status_code=502,
                             detail=f"AI call failed: {last_error}")
     content = res.choices[0].message.content
-    if not content:
-        raise HTTPException(status_code=502, detail="AI returned no content")
     if res.usage:
         log.info("ai call model=%s schema=%s in=%s out=%s", model,
                  schema_name, res.usage.prompt_tokens,
