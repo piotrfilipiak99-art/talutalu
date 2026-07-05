@@ -502,20 +502,31 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
                               else f" (lemma: {t['lemma']})")
                 parts.append(f"{i}. {t['surface']}{lemma_note}")
         listing = "\n".join(parts)
-        try:
-            data = _call_structured(
-                GENERATE_MODEL, system,
-                [{"role": "user", "content":
-                  f"Translate these '{target}' words into '{base}':\n"
-                  f"{listing}"}],
-                # Budget is a ceiling, not spend — keep generous headroom
-                # so the model never truncates a chunk mid-list.
-                "word_glosses", _GLOSS_SCHEMA,
-                max(2500, len(chunk) * 80))
+        glosses = None
+        # A syntactically valid response can still be uselessly short (the
+        # model bailing after a few items) - retry that like an error.
+        for chunk_attempt in range(2):
+            try:
+                data = _call_structured(
+                    GENERATE_MODEL, system,
+                    [{"role": "user", "content":
+                      f"Translate these '{target}' words into '{base}':\n"
+                      f"{listing}"}],
+                    # Budget is a ceiling, not spend - generous headroom
+                    # so the model never truncates a chunk mid-list.
+                    "word_glosses", _GLOSS_SCHEMA,
+                    max(2500, len(chunk) * 80))
+            except HTTPException as e:
+                log.warning("gloss chunk %s failed (%s)",
+                            chunk_start, e.detail)
+                break
             glosses = data["g"]
-        except HTTPException as e:
-            log.warning("gloss chunk %s failed (%s); words left unglossed",
-                        chunk_start, e.detail)
+            if len(glosses) >= len(chunk) * 0.9:
+                break
+            log.warning("gloss chunk %s badly short (%s vs %s), attempt %s",
+                        chunk_start, len(glosses), len(chunk),
+                        chunk_attempt + 1)
+        if glosses is None:
             continue
         if len(glosses) != len(chunk):
             log.warning("gloss chunk %s count mismatch (%s vs %s)",
