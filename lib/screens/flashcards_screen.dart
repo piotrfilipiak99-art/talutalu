@@ -131,6 +131,17 @@ String _ttsLocaleFor(String code) =>
       _ => null,
     };
 
+/// Every word type the app can actually put on a card, in display order:
+/// the parser (Read/Converse) labels UD POS tags as noun/proper noun/verb/
+/// adjective/adverb/numeral/pronoun/preposition/conjunction/particle/
+/// determiner/interjection, AI deck generation adds phrase/other, and
+/// manual entry may pick any of these.
+const kWordTypes = [
+  'noun', 'verb', 'adjective', 'adverb', 'phrase',
+  'pronoun', 'preposition', 'conjunction', 'numeral', 'particle',
+  'determiner', 'interjection', 'proper noun', 'other',
+];
+
 const _activities = [
   _Activity(
     key: 'review',
@@ -1255,8 +1266,8 @@ class _DeckHubView extends StatelessWidget {
     final filters = state._activeTypeFilters;
     final isFiltered = filters.isNotEmpty;
 
-    // Predefined order first, then any extra types from text imports, untyped last
-    const typeOrder = ['noun', 'verb', 'adjective', 'phrase', 'other'];
+    // Canonical order first, then any leftover labels, untyped last
+    const typeOrder = kWordTypes;
     final orderedTypes = [
       ...typeOrder.where((t) => availableTypes.contains(t)),
       ...availableTypes.where((t) =>
@@ -1928,7 +1939,7 @@ class _AddCardViewState extends State<_AddCardView> {
   String? _wordType;
   final Set<String> _selectedDeckIds = {};
 
-  static const _types = ['noun', 'verb', 'adjective', 'phrase', 'other'];
+  static const _types = kWordTypes;
 
   @override
   void initState() {
@@ -3345,7 +3356,7 @@ class _CardDetailSheet extends StatefulWidget {
 }
 
 class _CardDetailSheetState extends State<_CardDetailSheet> {
-  static const _types = ['noun', 'verb', 'adjective', 'phrase', 'other'];
+  static const _types = kWordTypes;
 
   late final TextEditingController _wordCtrl;
   late final TextEditingController _transCtrl;
