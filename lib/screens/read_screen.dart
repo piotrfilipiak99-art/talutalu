@@ -1250,8 +1250,24 @@ class _ReadScreenState extends State<ReadScreen>
                                   hobbies: AppStorage.instance.userHobby,
                                   vocabulary: _vocabForDecks(sheetDeckIds),
                                 );
-                              } on ApiException {
-                                ai = null;
+                              } on ApiException catch (e) {
+                                // A signed-in user asked for a real text —
+                                // silently substituting the built-in sample
+                                // reads like broken generation. Surface the
+                                // error and keep their setup instead.
+                                if (!ctx.mounted) return;
+                                setSheet(() => generating = false);
+                                ScaffoldMessenger.of(ctx)
+                                    .showSnackBar(SnackBar(
+                                  content: Text(
+                                      'Generation failed: ${e.message}',
+                                      style: GoogleFonts.dmSans(
+                                          color: AppColors.text,
+                                          fontSize: 13)),
+                                  backgroundColor: AppColors.card,
+                                  behavior: SnackBarBehavior.floating,
+                                ));
+                                return;
                               }
                             } else {
                               await Future.delayed(

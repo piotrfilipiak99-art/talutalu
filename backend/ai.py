@@ -403,48 +403,64 @@ _GLOSS_SCHEMA = {
 }
 
 
+_GLOSS_CHUNK = 50
+
+
 def _fill_glosses(result: dict, target: str, base: str) -> None:
-    """One cheap batched LLM call glosses every word token in context:
-    'translation' for the exact inflected form, 'lemmaTranslation' for the
-    dictionary form. Punctuation tokens are skipped."""
+    """Batched LLM glossing of every word token: 'translation' for the
+    exact inflected form, 'lemmaTranslation' for the dictionary form.
+    Long texts are glossed in chunks of _GLOSS_CHUNK words so no single
+    call can overrun its output budget (the old all-at-once call did on
+    C1/C2 Long texts and failed whole generations with a count mismatch).
+    A failed or short chunk degrades to gloss-less tokens instead of
+    failing the request - the text is still fully usable."""
     word_tokens = [t for t in result["tokens"]
                    if re.search(r"\w", t["surface"])]
     if not word_tokens:
         return
     sents = result["bodySentences"]
-    listing = "\n".join(
-        f"{i+1}. {t['surface']} (lemma: {t['lemma']}, sentence: "
-        f"\"{result['body'][sents[t['sentenceIndex']]['charStart']:sents[t['sentenceIndex']]['charEnd']]}\")"
-        for i, t in enumerate(word_tokens))
     system = (
         f"You are a bilingual dictionary: you TRANSLATE '{target}' words "
         f"into language '{base}'. Both output fields must be written in "
-        f"'{base}' — never repeat the '{target}' word itself. For every "
+        f"'{base}' - never repeat the '{target}' word itself. For every "
         "numbered word return exactly one pair: 'translation' = meaning of "
         "the exact inflected form as used in its sentence; "
         "'lemmaTranslation' = meaning of the dictionary (lemma) form. "
-        "Example for target 'pl', base 'en': word 'Poszedłem' (lemma "
-        "'pójść') -> translation 'I went', lemmaTranslation 'to go'. "
+        "Example for target 'pl', base 'en': word 'Poszedlem' (lemma "
+        "'pojsc') -> translation 'I went', lemmaTranslation 'to go'. "
         "Same order as the input, one pair per numbered word, no extras."
     )
-    data = _call_structured(
-        GENERATE_MODEL, system,
-        [{"role": "user", "content":
-          f"Translate these '{target}' words into '{base}':\n{listing}"}],
-        "word_glosses", _GLOSS_SCHEMA, 8000)
-    glosses = data["glosses"]
-    if len(glosses) != len(word_tokens):
-        raise HTTPException(status_code=502,
-                            detail="gloss count mismatch")
-    for t, g in zip(word_tokens, glosses):
-        t["translation"] = g["translation"] or None
-        gloss = (g["lemmaTranslation"] or "").strip()
-        # Same sanitizer as the legacy path: a gloss echoing the lemma or
-        # surface is useless and must not reach flashcards.
-        if gloss.lower() in (t["lemma"].strip().lower(),
-                             t["surface"].strip().lower()):
-            gloss = ""
-        t["lemmaTranslation"] = gloss or None
+    for chunk_start in range(0, len(word_tokens), _GLOSS_CHUNK):
+        chunk = word_tokens[chunk_start:chunk_start + _GLOSS_CHUNK]
+        listing = "\n".join(
+            f"{i+1}. {t['surface']} (lemma: {t['lemma']}, sentence: "
+            f"\"{result['body'][sents[t['sentenceIndex']]['charStart']:sents[t['sentenceIndex']]['charEnd']]}\")"
+            for i, t in enumerate(chunk))
+        try:
+            data = _call_structured(
+                GENERATE_MODEL, system,
+                [{"role": "user", "content":
+                  f"Translate these '{target}' words into '{base}':\n"
+                  f"{listing}"}],
+                "word_glosses", _GLOSS_SCHEMA,
+                max(2000, len(chunk) * 60))
+            glosses = data["glosses"]
+        except HTTPException:
+            log.warning("gloss chunk %s failed; words left unglossed",
+                        chunk_start)
+            continue
+        if len(glosses) != len(chunk):
+            log.warning("gloss chunk %s count mismatch (%s vs %s)",
+                        chunk_start, len(glosses), len(chunk))
+        for t, g in zip(chunk, glosses):
+            t["translation"] = g["translation"] or None
+            gloss = (g["lemmaTranslation"] or "").strip()
+            # A gloss echoing the lemma or surface is useless and must not
+            # reach flashcards.
+            if gloss.lower() in (t["lemma"].strip().lower(),
+                                 t["surface"].strip().lower()):
+                gloss = ""
+            t["lemmaTranslation"] = gloss or None
 
 
 def _generate_hybrid(body: GenerateTextRequest) -> dict:
