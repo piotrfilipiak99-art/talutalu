@@ -92,5 +92,19 @@ void main() {
     await tester.tap(find.text('General'));
     await tester.pumpAndSettle();
     expect(find.text('Generate'), findsNothing);
+
+    // Duplicate deck names are rejected: trying to create another
+    // "idiomy" (case-insensitive) leaves the deck list unchanged.
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded).first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New deck'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'idiomy');
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+    expect(
+        AppStorage.instance.decks.where((d) =>
+            d.name.toLowerCase() == 'idiomy').length,
+        1);
   });
 }

@@ -501,9 +501,27 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
     _saveCards();
   }
 
+  /// True when [name] clashes with an existing deck of this course —
+  /// user decks and the virtual ones alike (case-insensitive).
+  bool _deckNameTaken(String name) {
+    final n = name.trim().toLowerCase();
+    if (const ['general', 'from texts', 'babel'].contains(n)) return true;
+    return _decks.any((d) =>
+        d.courseId == _courseId && d.name.trim().toLowerCase() == n);
+  }
+
   Deck? _addDeck(String name, {String type = Deck.typeVocab}) {
     final id = _courseId;
     if (id == null) return null;
+    if (_deckNameTaken(name)) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('A deck named "$name" already exists',
+            style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 13)),
+        backgroundColor: AppColors.card,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return null;
+    }
     final deck = Deck(
         id: '${DateTime.now().millisecondsSinceEpoch}',
         name: name,
@@ -771,23 +789,10 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> {
               child: Text('Cancel',
                   style: GoogleFonts.dmSans(color: AppColors.text2)),
             ),
-            // Create the deck and immediately open AI generation for it.
-            TextButton(
-              onPressed: () {
-                if (ctrl.text.trim().isEmpty) return;
-                final deck = _addDeck(ctrl.text.trim(), type: type);
-                Navigator.pop(ctx);
-                if (deck != null) _showDeckGenerationSheet(context, deck);
-              },
-              child: Text('Create & generate',
-                  style: GoogleFonts.dmSans(
-                      color: AppColors.primarySoft,
-                      fontWeight: FontWeight.w600)),
-            ),
             FilledButton(
               onPressed: () {
-                if (ctrl.text.trim().isNotEmpty) {
-                  _addDeck(ctrl.text.trim(), type: type);
+                if (ctrl.text.trim().isEmpty) return;
+                if (_addDeck(ctrl.text.trim(), type: type) != null) {
                   Navigator.pop(ctx);
                 }
               },
@@ -1706,6 +1711,8 @@ class _CardListViewState extends State<_CardListView> {
                         card: cards[i],
                         reversed: reversed,
                         isNew: _newOnOpen.contains(cards[i].id),
+                        phrasesLayout:
+                            widget.state._selectedDeck?.isPhrases ?? false,
                         onTap: () => _showCardDetail(cards[i]),
                         onLongPress: () => _showCardDetail(cards[i]),
                         onDelete: () => widget.state._deleteCard(cards[i]),
@@ -3113,6 +3120,9 @@ class _CardListItem extends StatelessWidget {
   final Flashcard card;
   final bool reversed;
   final bool isNew;
+  // Phrase decks lay the (long) phrase across the full card width with the
+  // badges underneath; vocabulary decks keep them stacked on the right.
+  final bool phrasesLayout;
   final VoidCallback? onTap;
   final VoidCallback onLongPress;
   final VoidCallback onDelete;
@@ -3120,9 +3130,55 @@ class _CardListItem extends StatelessWidget {
       {required this.card,
       this.reversed = false,
       this.isNew = false,
+      this.phrasesLayout = false,
       this.onTap,
       required this.onLongPress,
       required this.onDelete});
+
+  List<Widget> _badges() {
+    Widget chip(Widget child, {Color? border, Color? bg}) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: bg ?? AppColors.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: border ?? AppColors.border),
+          ),
+          child: child,
+        );
+    final badge = _sourceBadge(card);
+    return [
+      if (isNew)
+        chip(
+          Text('NEW',
+              style: GoogleFonts.dmSans(
+                  color: AppColors.primary,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5)),
+          border: AppColors.primary,
+          bg: AppColors.primaryGlow,
+        ),
+      if (card.wordType != null)
+        chip(Text(card.wordType!,
+            style: GoogleFonts.dmSans(
+                color: AppColors.text3,
+                fontSize: 11,
+                fontWeight: FontWeight.w500))),
+      if (badge != null)
+        chip(Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(badge.icon, size: 11, color: AppColors.text3),
+            const SizedBox(width: 3),
+            Text(badge.label,
+                style: GoogleFonts.dmSans(
+                    color: AppColors.text3,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500)),
+          ],
+        )),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -3153,100 +3209,102 @@ class _CardListItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 4,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: card.masteryColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
+          child: phrasesLayout
+              ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(reversed ? card.translation : card.word,
+                    Container(
+                      width: 4,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: card.masteryColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    // The phrase runs across the full card width; its
+                    // details sit underneath the content.
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(reversed ? card.translation : card.word,
+                              style: GoogleFonts.dmSans(
+                                  color: AppColors.text,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 3),
+                          Text(reversed ? card.word : card.translation,
+                              style: GoogleFonts.dmSans(
+                                  color: AppColors.text2, fontSize: 13)),
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              ..._badges(),
+                              Text('${card.masteryLevel}/10',
+                                  style: GoogleFonts.dmSans(
+                                      color: card.masteryColor,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: card.masteryColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(reversed ? card.translation : card.word,
+                              style: GoogleFonts.dmSans(
+                                  color: AppColors.text,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 3),
+                          Text(reversed ? card.word : card.translation,
+                              style: GoogleFonts.dmSans(
+                                  color: AppColors.text2, fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    // Badges stack vertically (NEW / type / origin).
+                    if (_badges().isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          for (final (i, b) in _badges().indexed) ...[
+                            if (i > 0) const SizedBox(height: 4),
+                            b,
+                          ],
+                        ],
+                      ),
+                    ],
+                    const SizedBox(width: 8),
+                    Text('${card.masteryLevel}/10',
                         style: GoogleFonts.dmSans(
-                            color: AppColors.text,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500)),
-                    const SizedBox(height: 3),
-                    Text(reversed ? card.word : card.translation,
-                        style: GoogleFonts.dmSans(
-                            color: AppColors.text2, fontSize: 13)),
+                            color: card.masteryColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
                   ],
                 ),
-              ),
-              if (isNew) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGlow,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primary),
-                  ),
-                  child: Text('NEW',
-                      style: GoogleFonts.dmSans(
-                          color: AppColors.primary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5)),
-                ),
-              ],
-              if (card.wordType != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Text(card.wordType!,
-                      style: GoogleFonts.dmSans(
-                          color: AppColors.text3,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500)),
-                ),
-              ],
-              if (_sourceBadge(card) case final badge?) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(badge.icon, size: 11, color: AppColors.text3),
-                      const SizedBox(width: 3),
-                      Text(badge.label,
-                          style: GoogleFonts.dmSans(
-                              color: AppColors.text3,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(width: 8),
-              Text('${card.masteryLevel}/10',
-                  style: GoogleFonts.dmSans(
-                      color: card.masteryColor,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600)),
-            ],
-          ),
         ),
       ),
     );
@@ -3295,7 +3353,7 @@ class _CardDetailSheetState extends State<_CardDetailSheet> {
   late Set<String> _deckIds;
   late List<Deck> _decks;
 
-  bool get _locked => widget.card.fromTexts;
+  bool get _locked => widget.card.isLocked;
 
   @override
   void initState() {
@@ -3349,6 +3407,21 @@ class _CardDetailSheetState extends State<_CardDetailSheet> {
       ),
     );
     if (name == null || name.isEmpty) return;
+    final taken = const ['general', 'from texts', 'babel']
+            .contains(name.trim().toLowerCase()) ||
+        AppStorage.instance.decks.any((d) =>
+            d.courseId == courseId &&
+            d.name.trim().toLowerCase() == name.trim().toLowerCase());
+    if (taken) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('A deck named "$name" already exists',
+            style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 13)),
+        backgroundColor: AppColors.card,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
     final deck = Deck(
         id: '${DateTime.now().millisecondsSinceEpoch}', name: name, courseId: courseId);
     await AppStorage.instance.saveDecks([...AppStorage.instance.decks, deck]);
@@ -3594,7 +3667,7 @@ class _CardDetailSheetState extends State<_CardDetailSheet> {
                           color: Deck.general('').accentColor,
                           locked: true,
                         ),
-                        if (card.fromTexts)
+                        if (card.isLocked)
                           _Chip(
                             label: 'From Texts',
                             selected: true,

@@ -110,6 +110,11 @@ class Flashcard {
         nextReview = nextReview ?? DateTime.now(),
         createdAt = createdAt ?? DateTime.now();
 
+  /// Locked cards can't have their word/type edited: the content is
+  /// grounded in a source (analyzed text or AI generation), not
+  /// user-authored — only the translation may be corrected.
+  bool get isLocked => fromTexts || source == sourceAi;
+
   int get total => correctCount + incorrectCount;
   double get masteryPercent => total == 0 ? 0 : correctCount / total * 100;
   bool get isDue => !DateTime.now().isBefore(nextReview);

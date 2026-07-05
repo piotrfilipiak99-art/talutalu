@@ -36,6 +36,12 @@ void main() {
         courseId: 'en_pl',
         source: Flashcard.sourceAi);
     expect(Flashcard.fromJson(ai.toJson()).source, Flashcard.sourceAi);
+
+    // AI-generated and text-sourced cards are locked for editing;
+    // manual and converse ones are not.
+    expect(ai.isLocked, isTrue);
+    expect(legacyText.isLocked, isTrue);
+    expect(legacyManual.isLocked, isFalse);
   });
 
   testWidgets('Review rows show where each card came from', (tester) async {

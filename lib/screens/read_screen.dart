@@ -3038,6 +3038,21 @@ class _WordSheetState extends State<_WordSheet> {
       ),
     );
     if (name == null || name.isEmpty) return;
+    final taken = const ['general', 'from texts', 'babel']
+            .contains(name.trim().toLowerCase()) ||
+        AppStorage.instance.decks.any((d) =>
+            d.courseId == courseId &&
+            d.name.trim().toLowerCase() == name.trim().toLowerCase());
+    if (taken) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('A deck named "$name" already exists',
+            style: GoogleFonts.dmSans(color: AppColors.text, fontSize: 13)),
+        backgroundColor: AppColors.card,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
     final deck = Deck(
         id: '${DateTime.now().millisecondsSinceEpoch}', name: name, courseId: courseId);
     await AppStorage.instance.saveDecks([...AppStorage.instance.decks, deck]);
