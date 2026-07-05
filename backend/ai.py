@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import time
 
 from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
@@ -27,26 +28,34 @@ router = APIRouter(prefix="/ai")
 # The hybrid path falls back to legacy per-request on any failure.
 ANNOTATE_MODE = os.environ.get("ANNOTATE_MODE", "udpipe")
 
-# Per-task models: prose quality matters most where the output is durable
-# (reading texts) or user-facing (chat), so those default to gpt-5-mini.
-# The token-repair pass is a mechanical dictionary task — nano is enough.
-# All overridable per environment without a code change.
-GENERATE_MODEL = os.environ.get("AI_GENERATE_MODEL", "gpt-5-mini")
-CHAT_MODEL = os.environ.get("AI_CHAT_MODEL", "gpt-5-mini")
-REPAIR_MODEL = os.environ.get("AI_REPAIR_MODEL", "gpt-5-nano")
+# Provider-agnostic AI config. Any OpenAI-compatible endpoint works:
+#   AI_API_KEY   — the key (falls back to OPENAI_API_KEY)
+#   AI_BASE_URL  — endpoint base; unset = api.openai.com
+#   AI_*_MODEL   — model names per task
+# reasoning_effort is an OpenAI-only knob and is sent only when talking
+# to api.openai.com.
+AI_BASE_URL = os.environ.get("AI_BASE_URL") or None
+IS_OPENAI = AI_BASE_URL is None
+GENERATE_MODEL = os.environ.get(
+    "AI_GENERATE_MODEL", "gpt-5-mini" if IS_OPENAI else "gemini-2.5-flash-lite")
+CHAT_MODEL = os.environ.get(
+    "AI_CHAT_MODEL", "gpt-5-mini" if IS_OPENAI else "gemini-2.5-flash-lite")
+REPAIR_MODEL = os.environ.get(
+    "AI_REPAIR_MODEL", "gpt-5-nano" if IS_OPENAI else "gemini-2.5-flash-lite")
 
 _client: OpenAI | None = None
 
 
 def _openai() -> OpenAI:
     global _client
-    if os.environ.get("OPENAI_API_KEY") is None:
+    key = os.environ.get("AI_API_KEY") or os.environ.get("OPENAI_API_KEY")
+    if key is None:
         raise HTTPException(
             status_code=503,
-            detail="AI is not configured on the server (missing OPENAI_API_KEY)",
+            detail="AI is not configured on the server (missing AI_API_KEY)",
         )
     if _client is None:
-        _client = OpenAI()
+        _client = OpenAI(api_key=key, base_url=AI_BASE_URL)
     return _client
 
 
@@ -82,27 +91,49 @@ _TOKEN_SCHEMA = {
 }
 
 
+_TRANSIENT_MARKERS = ("429", "500", "503", "UNAVAILABLE", "overloaded",
+                      "timeout", "Timeout")
+
+
 def _call_structured(model: str, system: str, messages: list[dict],
                      schema_name: str, schema: dict, max_tokens: int) -> dict:
-    try:
-        res = _openai().chat.completions.create(
-            model=model,
-            reasoning_effort="minimal",
-            max_completion_tokens=max_tokens,
-            messages=[{"role": "system", "content": system}, *messages],
-            response_format={
-                "type": "json_schema",
-                "json_schema": {
-                    "name": schema_name,
-                    "strict": True,
-                    "schema": schema,
+    kwargs = {}
+    if IS_OPENAI:
+        kwargs["reasoning_effort"] = "minimal"
+    res = None
+    last_error = None
+    # Transient upstream hiccups (rate limits, brief overloads) get two
+    # quick retries before we give up — without this, a single blip could
+    # degrade a whole generation.
+    for attempt in range(3):
+        try:
+            res = _openai().chat.completions.create(
+                model=model,
+                max_completion_tokens=max_tokens,
+                **kwargs,
+                messages=[{"role": "system", "content": system}, *messages],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": schema_name,
+                        "strict": True,
+                        "schema": schema,
+                    },
                 },
-            },
-        )
-    except HTTPException:
-        raise
-    except Exception as e:  # network, quota, auth — surface a readable error
-        raise HTTPException(status_code=502, detail=f"AI call failed: {e}")
+            )
+            break
+        except HTTPException:
+            raise
+        except Exception as e:
+            last_error = e
+            if attempt < 2 and any(m in str(e) for m in _TRANSIENT_MARKERS):
+                time.sleep(2 * (attempt + 1))
+                continue
+            raise HTTPException(status_code=502,
+                                detail=f"AI call failed: {e}")
+    if res is None:
+        raise HTTPException(status_code=502,
+                            detail=f"AI call failed: {last_error}")
     content = res.choices[0].message.content
     if not content:
         raise HTTPException(status_code=502, detail="AI returned no content")
@@ -445,9 +476,9 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
                 "word_glosses", _GLOSS_SCHEMA,
                 max(2000, len(chunk) * 60))
             glosses = data["glosses"]
-        except HTTPException:
-            log.warning("gloss chunk %s failed; words left unglossed",
-                        chunk_start)
+        except HTTPException as e:
+            log.warning("gloss chunk %s failed (%s); words left unglossed",
+                        chunk_start, e.detail)
             continue
         if len(glosses) != len(chunk):
             log.warning("gloss chunk %s count mismatch (%s vs %s)",
@@ -634,6 +665,58 @@ _CHAT_SCHEMA = {
 
 @router.post("/chat")
 def chat(body: ChatRequest, user=Depends(get_current_user)):
+    if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
+        try:
+            result = _chat_hybrid(body)
+            result["annotation"] = "udpipe"
+            return result
+        except HTTPException:
+            raise
+        except Exception:
+            log.exception("hybrid chat failed; falling back to legacy")
+    result = _chat_legacy(body)
+    result["annotation"] = "llm"
+    return result
+
+
+_CHAT_PROSE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {"text": {"type": "string"}},
+    "required": ["text"],
+}
+
+
+def _chat_hybrid(body: ChatRequest) -> dict:
+    system = (
+        "You are a friendly, encouraging language tutor inside a language-"
+        f"learning app. The learner is studying '{body.targetLang}' "
+        f"(their own language is '{body.baseLang}') and is "
+        f"{_level_line(body.level)}.\n"
+        f"Chat naturally in '{body.targetLang}', keeping replies short "
+        "(1-3 sentences) and matched to the learner's level. When the "
+        f"learner asks for an explanation, explain in '{body.baseLang}'."
+    )
+    convo = [
+        {"role": "user" if m.fromUser else "assistant", "content": m.text}
+        for m in body.messages[-20:]
+    ]
+    data = _call_structured(CHAT_MODEL, system, convo, "chat_prose",
+                            _CHAT_PROSE_SCHEMA, 2000)
+    text = data["text"].strip()
+    # One virtual sentence spanning the whole reply: ChatMessage tokens
+    # don't use sentence indices, and the gloss context is the full reply.
+    spans = [{"index": 0, "charStart": 0, "charEnd": len(text)}]
+    result = {
+        "body": text,
+        "bodySentences": spans,
+        "tokens": annotate.annotate_sentences(text, spans, body.targetLang),
+    }
+    _fill_glosses(result, body.targetLang, body.baseLang)
+    return {"text": text, "tokens": result["tokens"]}
+
+
+def _chat_legacy(body: ChatRequest) -> dict:
     system = (
         "You are a friendly, encouraging language tutor inside a language-"
         f"learning app. The learner is studying '{body.targetLang}' "

@@ -18,8 +18,15 @@ services:
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
+      # AI provider (any OpenAI-compatible endpoint). Current: Gemini.
+      # Rollback to OpenAI = clear AI_BASE_URL and AI_API_KEY (the code
+      # then falls back to OPENAI_API_KEY and gpt-5 model defaults).
+      - key: AI_API_KEY
+        sync: false # set manually in the Render dashboard (Gemini key)
+      - key: AI_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai/
       - key: OPENAI_API_KEY
-        sync: false # set manually in the Render dashboard
+        sync: false # kept as rollback provider
       - key: PYTHON_VERSION
         value: 3.13.4
 
