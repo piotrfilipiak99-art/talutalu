@@ -102,10 +102,11 @@ def _call_structured(model: str, system: str, messages: list[dict],
         kwargs["reasoning_effort"] = "minimal"
     res = None
     last_error = None
-    # Transient upstream hiccups (rate limits, brief overloads) get two
-    # quick retries before we give up — without this, a single blip could
-    # degrade a whole generation.
-    for attempt in range(3):
+    # Transient upstream hiccups get retried with growing waits — Gemini's
+    # "high demand" spikes can last tens of seconds, so short retries alone
+    # were observed to still lose gloss chunks.
+    delays = [3, 8, 20]
+    for attempt in range(4):
         try:
             res = _openai().chat.completions.create(
                 model=model,
@@ -125,9 +126,9 @@ def _call_structured(model: str, system: str, messages: list[dict],
             # it like any other transient failure.
             if not res.choices[0].message.content:
                 last_error = RuntimeError("empty AI response")
-                if attempt < 2:
+                if attempt < len(delays):
                     res = None
-                    time.sleep(2 * (attempt + 1))
+                    time.sleep(delays[attempt])
                     continue
                 raise HTTPException(status_code=502,
                                     detail="AI returned no content")
@@ -136,8 +137,9 @@ def _call_structured(model: str, system: str, messages: list[dict],
             raise
         except Exception as e:
             last_error = e
-            if attempt < 2 and any(m in str(e) for m in _TRANSIENT_MARKERS):
-                time.sleep(2 * (attempt + 1))
+            if attempt < len(delays) and any(
+                    m in str(e) for m in _TRANSIENT_MARKERS):
+                time.sleep(delays[attempt])
                 continue
             raise HTTPException(status_code=502,
                                 detail=f"AI call failed: {e}")
