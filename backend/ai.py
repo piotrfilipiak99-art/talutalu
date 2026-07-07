@@ -228,7 +228,9 @@ _GENERATE_SCHEMA = {
     "required": ["title", "sentences"],
 }
 
-_LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "14-20"}
+# Long is 10-16 (not 14-20): at C1/C2 sentence lengths, 14-20 sentences
+# contradicts the 220-word soft cap and the model overruns it.
+_LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "10-16"}
 
 # Soft word ceilings per requested length - stated in the prompt only;
 # slight overruns are accepted rather than trimmed. Overridable per env.
@@ -522,8 +524,10 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
                 data = _call_structured(
                     GENERATE_MODEL, system,
                     [{"role": "user", "content":
-                      f"Translate these '{target}' words into '{base}':\n"
-                      f"{listing}"}],
+                      f"Translate ALL {len(chunk)} numbered '{target}' "
+                      f"words below into '{base}' - return exactly "
+                      f"{len(chunk)} pairs, covering every sentence "
+                      f"group:\n{listing}"}],
                     # Budget is a ceiling, not spend - generous headroom
                     # so the model never truncates a chunk mid-list.
                     "word_glosses", _GLOSS_SCHEMA,
