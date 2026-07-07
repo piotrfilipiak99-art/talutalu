@@ -230,9 +230,17 @@ _GENERATE_SCHEMA = {
 
 _LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "14-20"}
 
-# Soft ceiling on generated text size (whole words) - stated in the
-# prompt only; slight overruns are accepted rather than trimmed.
-MAX_TEXT_WORDS = int(os.environ.get("AI_MAX_TEXT_WORDS", "140"))
+# Soft word ceilings per requested length - stated in the prompt only;
+# slight overruns are accepted rather than trimmed. Overridable per env.
+MAX_TEXT_WORDS = {
+    "Short": int(os.environ.get("AI_MAX_WORDS_SHORT", "80")),
+    "Medium": int(os.environ.get("AI_MAX_WORDS_MEDIUM", "140")),
+    "Long": int(os.environ.get("AI_MAX_WORDS_LONG", "220")),
+}
+
+
+def _word_cap(length: str) -> int:
+    return MAX_TEXT_WORDS.get(length, MAX_TEXT_WORDS["Medium"])
 
 # A bare label like "B1" barely changes what a small model writes — spell
 # out what each CEFR band means so the difficulty knob actually turns.
@@ -559,7 +567,7 @@ def _generate_hybrid(body: GenerateTextRequest) -> dict:
     )
     user_msg = (
         f"Write a text of {n_sentences} sentences, no more than "
-        f"{MAX_TEXT_WORDS} words in total. "
+        f"{_word_cap(body.length)} words in total. "
         + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
         + " Give it a short title in the target language."
     )
@@ -585,7 +593,7 @@ def _generate_legacy(body: GenerateTextRequest) -> dict:
     )
     user_msg = (
         f"Write a text of {n_sentences} sentences, no more than "
-        f"{MAX_TEXT_WORDS} words in total. "
+        f"{_word_cap(body.length)} words in total. "
         + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
         + " Give it a short title in the target language."
     )
