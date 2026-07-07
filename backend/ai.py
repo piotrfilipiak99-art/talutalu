@@ -230,6 +230,22 @@ _GENERATE_SCHEMA = {
 
 _LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "14-20"}
 
+# Hard ceiling on generated text size (whole words). The prompt asks for
+# it and the server trims whole trailing sentences if the model overruns
+# anyway - keeping body/translation/tokens consistent.
+MAX_TEXT_WORDS = int(os.environ.get("AI_MAX_TEXT_WORDS", "140"))
+
+
+def _cap_sentences(sentences: list[dict]) -> list[dict]:
+    kept, words = [], 0
+    for s in sentences:
+        n = len(s["text"].split())
+        if kept and words + n > MAX_TEXT_WORDS:
+            break
+        kept.append(s)
+        words += n
+    return kept
+
 # A bare label like "B1" barely changes what a small model writes — spell
 # out what each CEFR band means so the difficulty knob actually turns.
 _LEVEL_GUIDANCE = {
@@ -554,13 +570,15 @@ def _generate_hybrid(body: GenerateTextRequest) -> dict:
         f"into language '{body.baseLang}'."
     )
     user_msg = (
-        f"Write a text of {n_sentences} sentences. "
+        f"Write a text of {n_sentences} sentences, no more than "
+        f"{MAX_TEXT_WORDS} words in total. "
         + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
         + " Give it a short title in the target language."
     )
     data = _call_structured(GENERATE_MODEL, system,
                             [{"role": "user", "content": user_msg}],
                             "reading_prose", _PROSE_SCHEMA, 4000)
+    data["sentences"] = _cap_sentences(data["sentences"])
     result = _assemble(data["sentences"])  # sentences carry no tokens here
     result["tokens"] = annotate.annotate_sentences(
         result["body"], result["bodySentences"], body.targetLang)
@@ -579,13 +597,15 @@ def _generate_legacy(body: GenerateTextRequest) -> dict:
         _tokenizer_rules(body.targetLang, body.baseLang)
     )
     user_msg = (
-        f"Write a text of {n_sentences} sentences. "
+        f"Write a text of {n_sentences} sentences, no more than "
+        f"{MAX_TEXT_WORDS} words in total. "
         + _topic_instructions(body.prompt, body.hobbies, body.vocabulary)
         + " Give it a short title in the target language."
     )
     data = _call_structured(GENERATE_MODEL, system,
                             [{"role": "user", "content": user_msg}],
                             "reading_text", _GENERATE_SCHEMA, 16000)
+    data["sentences"] = _cap_sentences(data["sentences"])
     result = _assemble(data["sentences"])
     _repair_coverage(result, body.targetLang, body.baseLang)
     result["title"] = data["title"]
