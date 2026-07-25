@@ -17,6 +17,8 @@ from collections import OrderedDict
 import httpx
 from ufal.udpipe import Model, Pipeline
 
+import dictionary
+
 # Our language codes -> UD 2.5 treebank names (one canonical pick each).
 TREEBANKS = {
     'pl': 'polish-pdb', 'en': 'english-ewt', 'es': 'spanish-gsd',
@@ -164,26 +166,58 @@ def annotate_sentence(text: str, lang: str) -> list[dict]:
     return tokens
 
 
-def annotate_sentences(body: str, sentence_spans: list[dict],
-                       lang: str) -> list[dict]:
+# POS classes where the inflected-form gloss rarely diverges enough from
+# the lemma gloss to matter - safe to auto-fill 'translation' from the
+# dictionary too. VERB is deliberately excluded: Polish tense/person/aspect
+# changes the English translation too much (e.g. "poszedlem" != "to go"),
+# so verbs keep 'translation' on the LLM path even when lemmaTranslation
+# and root are already grounded.
+_TRANSLATION_SAFE_POS = {
+    'NOUN', 'ADJ', 'ADV', 'PROPN', 'NUM', 'DET', 'ADP', 'CCONJ', 'SCONJ',
+    'PRON',
+}
+
+
+def annotate_sentences(body: str, sentence_spans: list[dict], lang: str,
+                       base_lang: str | None = None) -> list[dict]:
     """App-shaped tokens (charStart/charEnd absolute in [body],
-    sentenceIndex from the given spans), glosses left as None for the LLM
-    to fill in. root/rootMeaning stay None per project policy (dictionary
-    grounding pending)."""
+    sentenceIndex from the given spans). Words with an unambiguous
+    (single-sense) dictionary.lookup() hit get lemmaTranslation/root/
+    rootMeaning filled here, deterministically - everything else is left
+    None for ai.py's LLM gloss pass to fill in."""
+    dict_supported = base_lang is not None and dictionary.supported(lang, base_lang)
+    cache: dict[tuple, dictionary.DictEntry | None] = {}
+
     out = []
     for span in sentence_spans:
         seg = body[span['charStart']:span['charEnd']]
         for t in annotate_sentence(seg, lang):
+            translation = None
+            lemma_translation = None
+            root = None
+            root_meaning = None
+            if dict_supported:
+                key = (t['lemma'].lower(), t['pos'])
+                if key not in cache:
+                    cache[key] = dictionary.lookup(
+                        t['lemma'], t['pos'], lang, base_lang)
+                entry = cache[key]
+                if entry is not None and len(entry['senses']) == 1:
+                    lemma_translation = entry['senses'][0]
+                    root = entry['root']
+                    root_meaning = entry['rootMeaning']
+                    if t['pos'] in _TRANSLATION_SAFE_POS:
+                        translation = lemma_translation
             out.append({
                 'surface': t['surface'],
                 'lemma': t['lemma'],
-                'translation': None,
-                'lemmaTranslation': None,
+                'translation': translation,
+                'lemmaTranslation': lemma_translation,
                 'pos': t['pos'],
                 'morph': t['morph'],
                 'reading': None,
-                'root': None,
-                'rootMeaning': None,
+                'root': root,
+                'rootMeaning': root_meaning,
                 'sentenceIndex': span['index'],
                 'charStart': span['charStart'] + t['start'],
                 'charEnd': span['charStart'] + t['end'],

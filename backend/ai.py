@@ -487,7 +487,10 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
             groups[key] = []
             order.append(key)
         groups[key].append(t)
-    unique = [groups[k][0] for k in order]
+    # Words already grounded by dictionary.py (see annotate.py) need no
+    # LLM call - this is the entire cost-saving mechanism of Phase 3.
+    unique = [groups[k][0] for k in order
+             if groups[k][0]["lemmaTranslation"] is None]
 
     system = (
         f"You are a bilingual dictionary: you TRANSLATE '{target}' words "
@@ -580,7 +583,8 @@ def _generate_hybrid(body: GenerateTextRequest) -> dict:
                             "reading_prose", _PROSE_SCHEMA, 4000)
     result = _assemble(data["sentences"])  # sentences carry no tokens here
     result["tokens"] = annotate.annotate_sentences(
-        result["body"], result["bodySentences"], body.targetLang)
+        result["body"], result["bodySentences"], body.targetLang,
+        body.baseLang)
     _fill_glosses(result, body.targetLang, body.baseLang)
     result["title"] = data["title"]
     return result
@@ -779,7 +783,8 @@ def _chat_hybrid(body: ChatRequest) -> dict:
     result = {
         "body": text,
         "bodySentences": spans,
-        "tokens": annotate.annotate_sentences(text, spans, body.targetLang),
+        "tokens": annotate.annotate_sentences(text, spans, body.targetLang,
+                                              body.baseLang),
     }
     _fill_glosses(result, body.targetLang, body.baseLang)
     return {"text": text, "tokens": result["tokens"]}

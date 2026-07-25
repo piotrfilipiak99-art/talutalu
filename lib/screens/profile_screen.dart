@@ -43,6 +43,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         MaterialPageRoute(builder: (_) => const HelpFeedbackScreen()));
   }
 
+  void _showDataCredits() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: Text('Data credits',
+            style: GoogleFonts.dmSans(color: AppColors.text, fontWeight: FontWeight.w600)),
+        content: Text(
+          'Dictionary data: Wiktionary, via kaikki.org (Wiktextract). '
+          'Licensed under CC BY-SA.\n\n'
+          'Tatu Ylonen: Wiktextract: Wiktionary as Machine-Readable '
+          'Structured Data, Proceedings of the 13th Conference on Language '
+          'Resources and Evaluation (LREC), pp. 1317-1325.',
+          style: GoogleFonts.dmSans(color: AppColors.text2, fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showAppearanceSheet() {
     showModalBottomSheet(
       context: context,
@@ -373,6 +398,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.help_outline_rounded,
                 label: 'Help & feedback',
                 onTap: _openHelpFeedback,
+              ),
+              _buildTile(
+                icon: Icons.info_outline_rounded,
+                label: 'Data credits',
+                onTap: _showDataCredits,
               ),
             ]),
             const SizedBox(height: 20),
