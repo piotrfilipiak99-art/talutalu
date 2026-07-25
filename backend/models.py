@@ -108,3 +108,23 @@ class UserData(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(Text)
     updated_at: Mapped[int] = mapped_column(BigInteger)
+
+
+class GlossCache(Base):
+    """Permanent cross-request cache of LLM-produced LEMMA glosses (never
+    the per-surface inflected gloss, which isn't reusable across contexts),
+    keyed (target_lang, lemma, base_lang). Deliberately lives in Postgres,
+    not a local file — Render wipes local disk on every redeploy, and this
+    table needs to keep growing across the app's whole lifetime for the
+    gloss-cost reduction to actually compound over time. Not user data, but
+    not static reference data either (it's written at runtime), so it isn't
+    a fit for dictionary.py's read-only sqlite3 files.
+    """
+
+    __tablename__ = "gloss_cache"
+
+    target_lang: Mapped[str] = mapped_column(String(8), primary_key=True)
+    lemma: Mapped[str] = mapped_column(String(128), primary_key=True)
+    base_lang: Mapped[str] = mapped_column(String(8), primary_key=True)
+    lemma_translation: Mapped[str] = mapped_column(String(512))
+    created_at: Mapped[int] = mapped_column(BigInteger, default=now_ms)

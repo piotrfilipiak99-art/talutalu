@@ -187,6 +187,11 @@ def annotate_sentences(body: str, sentence_spans: list[dict], lang: str,
     None for ai.py's LLM gloss pass to fill in."""
     dict_supported = base_lang is not None and dictionary.supported(lang, base_lang)
     cache: dict[tuple, dictionary.DictEntry | None] = {}
+    # cross_lookup has no (target, base) allow-list to check - it just
+    # returns None when its data has nothing for the pair - so it's tried
+    # for any base_lang, keyed only by lemma (memoized separately since its
+    # return shape, str | list[str] | None, differs from lookup()'s).
+    cross_cache: dict[str, str | list[str] | None] = {}
 
     out = []
     for span in sentence_spans:
@@ -206,6 +211,16 @@ def annotate_sentences(body: str, sentence_spans: list[dict], lang: str,
                     lemma_translation = entry['senses'][0]
                     root = entry['root']
                     root_meaning = entry['rootMeaning']
+                    if t['pos'] in _TRANSLATION_SAFE_POS:
+                        translation = lemma_translation
+            if lemma_translation is None and base_lang is not None:
+                lemma_key = t['lemma'].lower()
+                if lemma_key not in cross_cache:
+                    cross_cache[lemma_key] = dictionary.cross_lookup(
+                        t['lemma'], lang, base_lang)
+                cross_entry = cross_cache[lemma_key]
+                if isinstance(cross_entry, str):
+                    lemma_translation = cross_entry
                     if t['pos'] in _TRANSLATION_SAFE_POS:
                         translation = lemma_translation
             out.append({

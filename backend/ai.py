@@ -15,9 +15,14 @@ import time
 from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
 from pydantic import BaseModel, Field
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 import annotate
+from annotate import _TRANSLATION_SAFE_POS
 from auth import get_current_user
+from database import get_db
+from models import GlossCache
 
 log = logging.getLogger("talutalu.ai")
 
@@ -464,7 +469,18 @@ _GLOSS_SCHEMA = {
 _GLOSS_CHUNK = 50
 
 
-def _fill_glosses(result: dict, target: str, base: str) -> None:
+def _apply_cache_hit(t: dict, lemma_translation: str) -> None:
+    """Same convention as annotate.py's dictionary/cross_lookup grounding:
+    lemmaTranslation always gets the cached value, but the inflected-form
+    'translation' only does for POS classes where that's usually still
+    accurate (a cached VERB lemma gloss can't stand in for its inflected
+    form - see _TRANSLATION_SAFE_POS)."""
+    t["lemmaTranslation"] = lemma_translation
+    if t["pos"] in _TRANSLATION_SAFE_POS:
+        t["translation"] = lemma_translation
+
+
+def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
     """Batched LLM glossing, tuned for token thrift:
     - each unique (surface, lemma) pair is glossed once and the result is
       copied to every occurrence (function words repeat constantly),
@@ -472,7 +488,12 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
       once instead of once per word,
     - the response uses one-letter keys ('t'/'l').
     Chunks of _GLOSS_CHUNK unique words keep every call inside its output
-    budget; a failed chunk degrades to gloss-less words, never an error."""
+    budget; a failed chunk degrades to gloss-less words, never an error.
+
+    Before spending any LLM tokens, checks the permanent GlossCache
+    (Postgres) for a (target, lemma, base) triple any earlier request already
+    resolved - this is what makes non-English base languages affordable:
+    every LLM answer is asked once, globally, forever."""
     word_tokens = [t for t in result["tokens"]
                    if re.search(r"\w", t["surface"])]
     if not word_tokens:
@@ -491,6 +512,30 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
     # LLM call - this is the entire cost-saving mechanism of Phase 3.
     unique = [groups[k][0] for k in order
              if groups[k][0]["lemmaTranslation"] is None]
+    if not unique:
+        return
+
+    lemmas = {t["lemma"].lower() for t in unique}
+    cached = {
+        row.lemma: row.lemma_translation
+        for row in db.query(GlossCache).filter(
+            GlossCache.target_lang == target,
+            GlossCache.base_lang == base,
+            GlossCache.lemma.in_(lemmas))
+    }
+    if cached:
+        still_unique = []
+        for t in unique:
+            hit = cached.get(t["lemma"].lower())
+            if hit is not None:
+                for occurrence in groups[(t["surface"].lower(),
+                                         t["lemma"].lower())]:
+                    _apply_cache_hit(occurrence, hit)
+            else:
+                still_unique.append(t)
+        unique = still_unique
+    if not unique:
+        return
 
     system = (
         f"You are a bilingual dictionary: you TRANSLATE '{target}' words "
@@ -562,9 +607,18 @@ def _fill_glosses(result: dict, target: str, base: str) -> None:
             for occurrence in groups[key]:
                 occurrence["translation"] = translation
                 occurrence["lemmaTranslation"] = gloss or None
+            if gloss:
+                db.add(GlossCache(target_lang=target, lemma=t["lemma"].lower(),
+                                  base_lang=base, lemma_translation=gloss))
+                try:
+                    db.commit()
+                except IntegrityError:
+                    # Another request already cached this exact triple
+                    # first (race) - their answer stands, ours is discarded.
+                    db.rollback()
 
 
-def _generate_hybrid(body: GenerateTextRequest) -> dict:
+def _generate_hybrid(body: GenerateTextRequest, db: Session) -> dict:
     n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
     system = (
         "You generate reading exercises for a language-learning app. "
@@ -585,7 +639,7 @@ def _generate_hybrid(body: GenerateTextRequest) -> dict:
     result["tokens"] = annotate.annotate_sentences(
         result["body"], result["bodySentences"], body.targetLang,
         body.baseLang)
-    _fill_glosses(result, body.targetLang, body.baseLang)
+    _fill_glosses(result, body.targetLang, body.baseLang, db)
     result["title"] = data["title"]
     return result
 
@@ -615,10 +669,11 @@ def _generate_legacy(body: GenerateTextRequest) -> dict:
 
 
 @router.post("/generate-text")
-def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
+def generate_text(body: GenerateTextRequest, user=Depends(get_current_user),
+                  db: Session = Depends(get_db)):
     if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
         try:
-            result = _generate_hybrid(body)
+            result = _generate_hybrid(body, db)
             result["annotation"] = "udpipe"
             return result
         except HTTPException:
@@ -627,6 +682,75 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user)):
             log.exception("hybrid annotation failed; falling back to legacy")
     result = _generate_legacy(body)
     result["annotation"] = "llm"
+    return result
+
+
+# ── Analyze the learner's own text (paste-your-own in Read) ─────────────────
+
+class AnalyzeTextRequest(BaseModel):
+    body: str = Field(max_length=2000)
+    targetLang: str = Field(max_length=16)
+    baseLang: str = Field(max_length=16)
+
+
+_ANALYZE_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "sentences": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "text": {"type": "string"},
+                    "translation": {"type": "string"},
+                },
+                "required": ["text", "translation"],
+            },
+        },
+    },
+    "required": ["sentences"],
+}
+
+
+def _analyze_hybrid(body: AnalyzeTextRequest, db: Session) -> dict:
+    system = (
+        f"You split a language learner's own '{body.targetLang}' text into "
+        f"individual sentences and translate each into '{body.baseLang}'. "
+        "Every 'text' must be an exact verbatim substring of the input — "
+        "same words, spelling and punctuation, in order. Never paraphrase, "
+        "correct, summarize or omit anything; split only on real sentence "
+        "boundaries."
+    )
+    data = _call_structured(
+        GENERATE_MODEL, system,
+        [{"role": "user", "content": body.body}],
+        "text_analysis", _ANALYZE_SCHEMA, max(4000, len(body.body) * 2))
+    result = _assemble(data["sentences"])
+    result["tokens"] = annotate.annotate_sentences(
+        result["body"], result["bodySentences"], body.targetLang,
+        body.baseLang)
+    _fill_glosses(result, body.targetLang, body.baseLang, db)
+    return result
+
+
+@router.post("/analyze-text")
+def analyze_text(body: AnalyzeTextRequest, user=Depends(get_current_user),
+                 db: Session = Depends(get_db)):
+    if not body.body.strip():
+        raise HTTPException(400, "Nothing to analyze")
+    if ANNOTATE_MODE != "udpipe" or not annotate.supported(body.targetLang):
+        raise HTTPException(
+            400, "Analysis isn't available for this language yet")
+    try:
+        result = _analyze_hybrid(body, db)
+    except HTTPException:
+        raise  # AI/auth errors are meaningful — don't mask them
+    except Exception:
+        log.exception("analyze-text failed")
+        raise HTTPException(502, "Analysis failed")
+    result["annotation"] = "udpipe"
     return result
 
 
@@ -737,10 +861,11 @@ _CHAT_SCHEMA = {
 
 
 @router.post("/chat")
-def chat(body: ChatRequest, user=Depends(get_current_user)):
+def chat(body: ChatRequest, user=Depends(get_current_user),
+        db: Session = Depends(get_db)):
     if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
         try:
-            result = _chat_hybrid(body)
+            result = _chat_hybrid(body, db)
             result["annotation"] = "udpipe"
             return result
         except HTTPException:
@@ -760,7 +885,7 @@ _CHAT_PROSE_SCHEMA = {
 }
 
 
-def _chat_hybrid(body: ChatRequest) -> dict:
+def _chat_hybrid(body: ChatRequest, db: Session) -> dict:
     system = (
         "You are a friendly, encouraging language tutor inside a language-"
         f"learning app. The learner is studying '{body.targetLang}' "
@@ -786,7 +911,7 @@ def _chat_hybrid(body: ChatRequest) -> dict:
         "tokens": annotate.annotate_sentences(text, spans, body.targetLang,
                                               body.baseLang),
     }
-    _fill_glosses(result, body.targetLang, body.baseLang)
+    _fill_glosses(result, body.targetLang, body.baseLang, db)
     return {"text": text, "tokens": result["tokens"]}
 
 

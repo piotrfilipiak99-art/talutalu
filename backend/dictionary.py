@@ -1,10 +1,18 @@
 """Dictionary-grounded glosses via kaikki.org/Wiktextract (Wiktionary data,
 CC BY-SA - see profile_screen.dart for the required attribution).
 
-Stage 1: target=pl, base=en only. The source data (English Wiktionary
-extract) only has glosses written in English, so a lookup can only ever
-help when base_lang == 'en'; every other base language keeps using the
-existing pure-LLM path in ai.py untouched.
+Stage 1 (`lookup`): target=pl, base=en only. The source data (English
+Wiktionary extract) only has glosses written in English, so this lookup can
+only ever help when base_lang == 'en'.
+
+Stage 2 (`cross_lookup`): language-agnostic. English Wiktionary entries
+carry a translations table per sense (e.g. the "guy, fellow" sense of "cat"
+lists French "mec"/"gus", Portuguese "cara"/"rapaz", Spanish "tio"/"tipo").
+Grouping every sense's translations together lets ONE build ground ANY
+(target_lang, base_lang) pair the data covers, not just pl->en - see
+backend/scripts/build_cross_translations.py. Whatever neither lookup nor
+cross_lookup can resolve falls through to the LLM in ai.py, cached
+permanently in Postgres (GlossCache) so the same word is never asked twice.
 
 Files are hosted as GitHub Release assets (same lazy-download-on-first-use
 pattern as annotate.py's UDPipe models) and read directly via sqlite3 - this
@@ -27,6 +35,11 @@ DICT_DIR = os.environ.get(
 _RELEASE_URL = (
     'https://github.com/piotrfilipiak99-art/talutalu/releases/download/'
     'dict-v1/{target}-{base}.sqlite3')
+
+_CROSS_ASSET = 'cross_translations.sqlite3'
+_CROSS_RELEASE_URL = (
+    'https://github.com/piotrfilipiak99-art/talutalu/releases/download/'
+    f'dict-v1/{_CROSS_ASSET}')
 
 # UD POS tag -> acceptable Wiktextract POS strings. Used to disambiguate
 # homonyms across parts of speech; if filtering yields nothing we retry
@@ -123,3 +136,64 @@ def lookup(lemma: str, pos: str, target_lang: str,
     senses = [r[0] for r in rows]
     root, root_meaning = rows[0][1], rows[0][2]
     return {'senses': senses, 'root': root, 'rootMeaning': root_meaning}
+
+
+# ── Cross-language translations (Stage 2) ───────────────────────────────────
+
+_cross_conn: sqlite3.Connection | None = None
+_cross_lock = threading.Lock()
+
+
+def _cross_db_path() -> str:
+    return os.path.join(DICT_DIR, _CROSS_ASSET)
+
+
+def _download_cross() -> str:
+    path = _cross_db_path()
+    if os.path.exists(path):
+        return path
+    os.makedirs(DICT_DIR, exist_ok=True)
+    tmp = path + '.part'
+    with httpx.stream('GET', _CROSS_RELEASE_URL, follow_redirects=True,
+                      timeout=120) as r:
+        r.raise_for_status()
+        with open(tmp, 'wb') as f:
+            for chunk in r.iter_bytes():
+                f.write(chunk)
+    os.replace(tmp, path)
+    return path
+
+
+def _get_cross_conn() -> sqlite3.Connection:
+    global _cross_conn
+    with _cross_lock:
+        if _cross_conn is not None:
+            return _cross_conn
+    path = _download_cross()
+    conn = sqlite3.connect(f'file:{path}?mode=ro', uri=True,
+                           check_same_thread=False)
+    with _cross_lock:
+        _cross_conn = conn
+    return _cross_conn
+
+
+def cross_lookup(lemma: str, target_lang: str,
+                 base_lang: str) -> str | list[str] | None:
+    """None if no translation group contains [lemma] in [target_lang]; a
+    single str if exactly one candidate word exists for [base_lang] across
+    every matching group (safe to use); a list of 2+ distinct candidates if
+    ambiguous - the caller must not auto-fill in that case, same convention
+    as lookup()'s multi-sense list."""
+    conn = _get_cross_conn()
+    lemma = lemma.lower().strip()
+    if not lemma:
+        return None
+    cur = conn.execute(
+        'SELECT DISTINCT m2.word FROM members m1 '
+        'JOIN members m2 ON m1.group_id = m2.group_id '
+        'WHERE m1.lang_code = ? AND m1.word = ? AND m2.lang_code = ?',
+        (target_lang, lemma, base_lang))
+    words = [r[0] for r in cur.fetchall()]
+    if not words:
+        return None
+    return words[0] if len(words) == 1 else words

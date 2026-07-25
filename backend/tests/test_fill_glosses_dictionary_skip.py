@@ -1,7 +1,20 @@
 """Regression coverage for the cost-saving change in ai.py's
 _fill_glosses(): words the dictionary already grounded (lemmaTranslation
 already set by annotate.py) must never be sent to the LLM."""
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
 import ai
+from database import Base
+
+
+@pytest.fixture
+def db():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        yield session
 
 
 def _token(surface, lemma, pos, sentence_index=0, lemma_translation=None):
@@ -12,7 +25,7 @@ def _token(surface, lemma, pos, sentence_index=0, lemma_translation=None):
     }
 
 
-def test_grounded_words_are_excluded_from_llm_chunk(monkeypatch):
+def test_grounded_words_are_excluded_from_llm_chunk(monkeypatch, db):
     body = "Kupilem kotlet i psa."
     result = {
         "body": body,
@@ -39,7 +52,7 @@ def test_grounded_words_are_excluded_from_llm_chunk(monkeypatch):
 
     monkeypatch.setattr(ai, "_call_structured", fake_call_structured)
 
-    ai._fill_glosses(result, "pl", "en")
+    ai._fill_glosses(result, "pl", "en", db)
 
     assert len(seen_chunks) == 1
     sent_text = seen_chunks[0]
@@ -56,7 +69,7 @@ def test_grounded_words_are_excluded_from_llm_chunk(monkeypatch):
     assert tokens_by_surface["psa"]["lemmaTranslation"] == "dog"
 
 
-def test_fully_grounded_text_skips_llm_entirely(monkeypatch):
+def test_fully_grounded_text_skips_llm_entirely(monkeypatch, db):
     body = "Kotlet."
     result = {
         "body": body,
@@ -73,4 +86,4 @@ def test_fully_grounded_text_skips_llm_entirely(monkeypatch):
 
     monkeypatch.setattr(ai, "_call_structured", fail_if_called)
 
-    ai._fill_glosses(result, "pl", "en")  # must not raise
+    ai._fill_glosses(result, "pl", "en", db)  # must not raise
