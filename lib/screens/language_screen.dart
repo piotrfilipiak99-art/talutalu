@@ -25,6 +25,7 @@ const availableLanguages = [
 ];
 
 const baseLanguages = [
+  {'code': 'pl', 'name': 'Polish', 'flag': '🇵🇱'},
   {'code': 'en', 'name': 'English', 'flag': '🇬🇧'},
   {'code': 'de', 'name': 'German', 'flag': '🇩🇪'},
   {'code': 'es', 'name': 'Spanish', 'flag': '🇪🇸'},
@@ -33,6 +34,16 @@ const baseLanguages = [
   {'code': 'pt', 'name': 'Portuguese', 'flag': '🇵🇹'},
   {'code': 'ru', 'name': 'Russian', 'flag': '🇷🇺'},
   {'code': 'uk', 'name': 'Ukrainian', 'flag': '🇺🇦'},
+  {'code': 'ja', 'name': 'Japanese', 'flag': '🇯🇵'},
+  {'code': 'ko', 'name': 'Korean', 'flag': '🇰🇷'},
+  {'code': 'zh', 'name': 'Chinese', 'flag': '🇨🇳'},
+  {'code': 'ar', 'name': 'Arabic', 'flag': '🇸🇦'},
+  {'code': 'nl', 'name': 'Dutch', 'flag': '🇳🇱'},
+  {'code': 'sv', 'name': 'Swedish', 'flag': '🇸🇪'},
+  {'code': 'tr', 'name': 'Turkish', 'flag': '🇹🇷'},
+  {'code': 'cs', 'name': 'Czech', 'flag': '🇨🇿'},
+  {'code': 'el', 'name': 'Greek', 'flag': '🇬🇷'},
+  {'code': 'hi', 'name': 'Hindi', 'flag': '🇮🇳'},
 ];
 
 class LanguageScreen extends StatelessWidget {

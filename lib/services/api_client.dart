@@ -112,6 +112,20 @@ class ApiClient {
         'vocabulary': vocabulary,
       }, timeout: const Duration(seconds: 120));
 
+  /// Analyzes the learner's own pasted text server-side (tokenizes and
+  /// glosses it, same shape as [generateText] minus the title) so it
+  /// becomes tap-to-translate like an AI-generated text.
+  Future<Map<String, dynamic>> analyzeText({
+    required String body,
+    required String targetLang,
+    required String baseLang,
+  }) =>
+      _post('/ai/analyze-text', {
+        'body': body,
+        'targetLang': targetLang,
+        'baseLang': baseLang,
+      }, timeout: const Duration(seconds: 120));
+
   /// Converse reply: {text, tokens} for the last user turn given history.
   Future<Map<String, dynamic>> chatReply({
     required String targetLang,

@@ -683,6 +683,59 @@ class _ReadScreenState extends State<ReadScreen>
     return [for (final c in cards.take(15)) c.word];
   }
 
+  /// Deck vocabulary words actually requested when the currently open text
+  /// was generated (see 'vocabularyUsed' above) — lowercased for matching.
+  Set<String> get _openedTextVocab {
+    final raw = _openedText?['vocabularyUsed'];
+    if (raw is! List) return const {};
+    return {for (final w in raw) if (w is String) w.toLowerCase()};
+  }
+
+  /// Whether [token] is one of the deck words the AI was asked to weave
+  /// into this text — checked against both the base (lemma) and inflected
+  /// (surface) form, since a stored deck word could match either.
+  bool _isDeckVocabToken(TextToken token) {
+    final vocab = _openedTextVocab;
+    if (vocab.isEmpty) return false;
+    return vocab.contains(token.lemma.toLowerCase()) ||
+        vocab.contains(splitTrailingPunct(token.surface).core.toLowerCase());
+  }
+
+  /// Name of a deck id as stored in a text's 'deckIds' — including the
+  /// virtual General/From Texts decks, which aren't in AppStorage.decks.
+  /// Null if the deck was since deleted.
+  String? _deckName(String id) {
+    if (id == Deck.generalId) return 'General';
+    if (id == Deck.fromTextsId) return 'From Texts';
+    for (final d in AppStorage.instance.decks) {
+      if (d.id == id) return d.name;
+    }
+    return null;
+  }
+
+  List<String> _deckNamesFor(Map<String, dynamic> text) {
+    final ids = (text['deckIds'] as List?)?.cast<String>() ?? const [];
+    return [for (final id in ids) if (_deckName(id) != null) _deckName(id)!];
+  }
+
+  /// Short relative date for the text list ("Today", "3 days ago", "Jul 25").
+  String? _relativeDate(Map<String, dynamic> text) {
+    final iso = text['createdAt'] as String?;
+    if (iso == null) return null;
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final that = DateTime(dt.year, dt.month, dt.day);
+    final dayDiff = today.difference(that).inDays;
+    if (dayDiff == 0) return 'Today';
+    if (dayDiff == 1) return 'Yesterday';
+    if (dayDiff < 7) return '$dayDiff days ago';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
+                    'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[dt.month - 1]} ${dt.day}';
+  }
+
   // ── Selection mode ──────────────────────────────────────────────────────────
 
   void _enterSelectionMode(int index) {
@@ -863,12 +916,15 @@ class _ReadScreenState extends State<ReadScreen>
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Text('New text',
-                        style: GoogleFonts.cormorantGaramond(
-                            color: AppColors.text,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w500)),
-                    const Spacer(),
+                    Expanded(
+                      child: Text('New text',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.cormorantGaramond(
+                              color: AppColors.text,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500)),
+                    ),
+                    const SizedBox(width: 12),
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.surface,
@@ -1214,18 +1270,51 @@ class _ReadScreenState extends State<ReadScreen>
                           if (pasteMode) {
                             final text = pasteCtrl.text.trim();
                             if (text.isEmpty) return;
+                            final course = AppStorage.instance.activeCourse;
+                            Map<String, dynamic>? analyzed;
+                            // Real analysis through the backend when
+                            // possible, so a pasted text becomes tap-to-
+                            // translate just like a generated one; falls
+                            // back to a plain (non-interactive) insert when
+                            // there's no session to analyze with.
+                            if (ApiClient.instance.hasSession &&
+                                course != null) {
+                              setSheet(() => generating = true);
+                              try {
+                                analyzed =
+                                    await ApiClient.instance.analyzeText(
+                                  body: text,
+                                  targetLang: course['targetCode'] ?? '',
+                                  baseLang: course['baseCode'] ?? '',
+                                );
+                              } on ApiException {
+                                if (!ctx.mounted) return;
+                                setSheet(() => generating = false);
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                    _flashcardSnack('Analysis failed'));
+                                return;
+                              }
+                            }
+                            if (!mounted) return;
                             setState(() {
                               _texts.insert(0, {
                                 'id': 't${DateTime.now().microsecondsSinceEpoch}',
                                 'courseId': _activeCourseId ?? '',
                                 'title': _mockTitles[
                                     _texts.length % _mockTitles.length],
-                                'body': text,
-                                'translation': '',
+                                'body': analyzed?['body'] ?? text,
+                                'translation': analyzed?['translation'] ?? '',
                                 'length': '',
                                 'level': '',
                                 'prompt': '',
                                 'deckIds': <String>[],
+                                'createdAt': DateTime.now().toIso8601String(),
+                                if (analyzed != null) ...{
+                                  'tokens': analyzed['tokens'],
+                                  'bodySentences': analyzed['bodySentences'],
+                                  'translationSentences':
+                                      analyzed['translationSentences'],
+                                },
                               });
                             });
                             AppStorage.instance.saveTexts(_texts);
@@ -1250,23 +1339,17 @@ class _ReadScreenState extends State<ReadScreen>
                                   hobbies: AppStorage.instance.userHobby,
                                   vocabulary: _vocabForDecks(sheetDeckIds),
                                 );
-                              } on ApiException catch (e) {
+                              } on ApiException {
                                 // A signed-in user asked for a real text —
                                 // silently substituting the built-in sample
-                                // reads like broken generation. Surface the
-                                // error and keep their setup instead.
+                                // reads like broken generation. Surface a
+                                // plain failure notice and keep their setup
+                                // instead (the raw backend detail isn't
+                                // useful to a learner, only to us).
                                 if (!ctx.mounted) return;
                                 setSheet(() => generating = false);
-                                ScaffoldMessenger.of(ctx)
-                                    .showSnackBar(SnackBar(
-                                  content: Text(
-                                      'Generation failed: ${e.message}',
-                                      style: GoogleFonts.dmSans(
-                                          color: AppColors.text,
-                                          fontSize: 13)),
-                                  backgroundColor: AppColors.card,
-                                  behavior: SnackBarBehavior.floating,
-                                ));
+                                ScaffoldMessenger.of(ctx).showSnackBar(
+                                    _flashcardSnack('Generation failed'));
                                 return;
                               }
                             } else {
@@ -1294,6 +1377,12 @@ class _ReadScreenState extends State<ReadScreen>
                                 'level': _levels[sheetLevel],
                                 'prompt': selectedIdea ?? _promptCtrl.text.trim(),
                                 'deckIds': sheetDeckIds.toList(),
+                                'createdAt': DateTime.now().toIso8601String(),
+                                // The exact words asked for at generation
+                                // time — kept separately from deckIds so the
+                                // "from your deck" marker stays correct even
+                                // if the decks' contents change later.
+                                'vocabularyUsed': _vocabForDecks(sheetDeckIds),
                                 'tokens': ai?['tokens'] ??
                                     annotated!.tokens
                                         .map((t) => t.toJson())
@@ -1329,25 +1418,21 @@ class _ReadScreenState extends State<ReadScreen>
                     ),
                     alignment: Alignment.center,
                     child: generating
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
-                          )
+                        ? _GeneratingLabel(
+                            label: pasteMode ? 'Analyzing…' : 'Generating…')
                         : Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
                                 pasteMode
-                                    ? Icons.add_rounded
+                                    ? Icons.travel_explore_rounded
                                     : Icons.auto_awesome_rounded,
                                 color: Colors.white,
                                 size: 16,
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                pasteMode ? 'Add text' : 'Generate',
+                                pasteMode ? 'Analyze' : 'Generate',
                                 style: GoogleFonts.dmSans(
                                     color: Colors.white,
                                     fontSize: 15,
@@ -1857,6 +1942,7 @@ class _ReadScreenState extends State<ReadScreen>
         wordType: wordType,
         userDecks: userDecks,
         courseId: courseId,
+        isDeckVocab: _isDeckVocabToken(token),
         onSpeakSurface: () =>
             _speak(splitTrailingPunct(token.surface).core, _activeCourse?['targetCode']),
         onSpeakLemma: () => _speak(token.lemma, _activeCourse?['targetCode']),
@@ -2261,6 +2347,25 @@ class _ReadScreenState extends State<ReadScreen>
     );
   }
 
+  /// Level/length/deck tag on a text list item — same padding, radius and
+  /// font for every tile so the row reads as one consistent set regardless
+  /// of which one it is or how long its label is.
+  Widget _metaChip(String label, {bool emphasized = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: emphasized ? AppColors.primaryGlow : AppColors.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: emphasized ? null : Border.all(color: AppColors.border),
+      ),
+      child: Text(label,
+          style: GoogleFonts.dmSans(
+              color: emphasized ? AppColors.primarySoft : AppColors.text2,
+              fontSize: 10,
+              fontWeight: FontWeight.w600)),
+    );
+  }
+
   Widget _buildTextListItem(int index, Map<String, dynamic> text) {
     final isSelected = _selectedIndices.contains(index);
 
@@ -2320,37 +2425,29 @@ class _ReadScreenState extends State<ReadScreen>
                   ),
                   const SizedBox(height: 6),
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryGlow,
-                          borderRadius: BorderRadius.circular(6),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 4,
+                          children: [
+                            _metaChip((text['level'] as String?) ?? 'B1',
+                                emphasized: true),
+                            _metaChip((text['length'] as String?) ?? 'Short'),
+                            for (final name in _deckNamesFor(text))
+                              _metaChip(name),
+                          ],
                         ),
-                        child: Text(
-                            (text['level'] as String?) ?? 'B1',
-                            style: GoogleFonts.dmSans(
-                                color: AppColors.primarySoft,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600)),
                       ),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Text(
-                            (text['length'] as String?) ?? 'Short',
+                      if (_relativeDate(text) != null) ...[
+                        const SizedBox(width: 6),
+                        Text(_relativeDate(text)!,
                             style: GoogleFonts.dmSans(
-                                color: AppColors.text2,
-                                fontSize: 10,
+                                color: AppColors.text3,
+                                fontSize: 11,
                                 fontWeight: FontWeight.w500)),
-                      ),
+                      ],
                     ],
                   ),
                 ],
@@ -2439,6 +2536,7 @@ class _ReadScreenState extends State<ReadScreen>
         ? (token.lemmaTranslation ?? token.translation)
         : token.translation;
     final gloss = splitTrailingPunct((glossSource ?? '').trim()).core;
+    final isDeckVocab = _isDeckVocabToken(token);
     void openSheet() {
       setState(() => _tappedWord = token.surface);
       _showWordSheet(token);
@@ -2463,14 +2561,26 @@ class _ReadScreenState extends State<ReadScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    headline,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.dmSans(
-                        color: AppColors.text,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (isDeckVocab) ...[
+                        Icon(Icons.collections_bookmark_rounded,
+                            size: 13, color: AppColors.primary),
+                        const SizedBox(width: 4),
+                      ],
+                      Flexible(
+                        child: Text(
+                          headline,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.dmSans(
+                              color: AppColors.text,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
@@ -2983,6 +3093,62 @@ class _ReadScreenState extends State<ReadScreen>
       );
 }
 
+// ── Generate/Analyze button in-progress state ───────────────────────────────
+
+/// Spinner + a gently pulsing label, so the generate/analyze button reads
+/// as "actively working" rather than a bare frozen spinner.
+class _GeneratingLabel extends StatefulWidget {
+  final String label;
+  const _GeneratingLabel({required this.label});
+
+  @override
+  State<_GeneratingLabel> createState() => _GeneratingLabelState();
+}
+
+class _GeneratingLabelState extends State<_GeneratingLabel>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(
+              color: Colors.white, strokeWidth: 2),
+        ),
+        const SizedBox(width: 10),
+        FadeTransition(
+          opacity: Tween(begin: 0.5, end: 1.0).animate(
+              CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut)),
+          child: Text(widget.label,
+              style: GoogleFonts.dmSans(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600)),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Word sheet ────────────────────────────────────────────────────────────────
 
 class _WordSheet extends StatefulWidget {
@@ -2990,6 +3156,7 @@ class _WordSheet extends StatefulWidget {
   final String wordType;
   final List<Deck> userDecks;
   final String? courseId;
+  final bool isDeckVocab;
   final void Function(Set<String> selectedDeckIds) onAddToFlashcards;
   final VoidCallback? onSpeakSurface;
   final VoidCallback? onSpeakLemma;
@@ -2999,6 +3166,7 @@ class _WordSheet extends StatefulWidget {
     required this.wordType,
     required this.userDecks,
     this.courseId,
+    this.isDeckVocab = false,
     required this.onAddToFlashcards,
     this.onSpeakSurface,
     this.onSpeakLemma,
@@ -3172,12 +3340,40 @@ class _WordSheetState extends State<_WordSheet> {
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Text(widget.wordType,
-                        style: GoogleFonts.dmSans(
-                            color: AppColors.primary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5)),
+                    Row(
+                      children: [
+                        Text(widget.wordType,
+                            style: GoogleFonts.dmSans(
+                                color: AppColors.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                letterSpacing: 0.5)),
+                        if (widget.isDeckVocab) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGlow,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.collections_bookmark_rounded,
+                                    size: 11, color: AppColors.primarySoft),
+                                const SizedBox(width: 4),
+                                Text('From your deck',
+                                    style: GoogleFonts.dmSans(
+                                        color: AppColors.primarySoft,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     // Attributes — case, gender, tense, etc. (empty for
                     // words/languages that don't have them).
                     if (token.morph.isNotEmpty) ...[
