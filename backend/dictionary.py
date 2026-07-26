@@ -19,12 +19,16 @@ pattern as annotate.py's UDPipe models) and read directly via sqlite3 - this
 is static reference data, not user data, so it deliberately does not go
 through database.py/SQLAlchemy.
 """
+import logging
 import os
 import sqlite3
 import threading
+import time
 from typing import TypedDict
 
 import httpx
+
+log = logging.getLogger("talutalu.dictionary")
 
 DICT_PAIRS = {('pl', 'en')}  # add (target, base) tuples here to expand
 
@@ -67,6 +71,14 @@ def _download(target_lang: str, base_lang: str) -> str:
     path = _db_path(target_lang, base_lang)
     if os.path.exists(path):
         return path
+    # This runs synchronously inside the request that first needs this pair
+    # (e.g. right after a fresh deploy wipes Render's ephemeral disk) and
+    # used to be completely silent - a slow/stalled download here looked
+    # identical to a hung AI call from the outside. Log start/end so it's
+    # distinguishable.
+    log.info("downloading dictionary %s-%s (first use since last deploy/"
+             "restart)", target_lang, base_lang)
+    start = time.monotonic()
     os.makedirs(DICT_DIR, exist_ok=True)
     url = _RELEASE_URL.format(target=target_lang, base=base_lang)
     tmp = path + '.part'
@@ -76,6 +88,9 @@ def _download(target_lang: str, base_lang: str) -> str:
             for chunk in r.iter_bytes():
                 f.write(chunk)
     os.replace(tmp, path)
+    log.info("downloaded dictionary %s-%s in %.1fs (%d bytes)",
+             target_lang, base_lang, time.monotonic() - start,
+             os.path.getsize(path))
     return path
 
 
@@ -161,6 +176,11 @@ def _download_cross() -> str:
     path = _cross_db_path()
     if os.path.exists(path):
         return path
+    # See _download()'s comment - same silent-blocking hazard, and this
+    # file is the bigger of the two (~120MB uncompressed).
+    log.info("downloading cross-translation index (first use since last "
+             "deploy/restart)")
+    start = time.monotonic()
     os.makedirs(DICT_DIR, exist_ok=True)
     tmp = path + '.part'
     with httpx.stream('GET', _CROSS_RELEASE_URL, follow_redirects=True,
@@ -170,6 +190,8 @@ def _download_cross() -> str:
             for chunk in r.iter_bytes():
                 f.write(chunk)
     os.replace(tmp, path)
+    log.info("downloaded cross-translation index in %.1fs (%d bytes)",
+             time.monotonic() - start, os.path.getsize(path))
     return path
 
 
