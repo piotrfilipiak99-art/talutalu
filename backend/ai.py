@@ -511,6 +511,97 @@ _PROSE_SCHEMA = {
     "required": ["title", "sentences"],
 }
 
+# Deliberately terse keys, same rationale as _GLOSS_SCHEMA below: this
+# runs once per unique alignment unit across the whole text.
+_ALIGNMENT_UNIT_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "s": {"type": "string"},
+        "t": {"type": ["string", "null"]},
+    },
+    "required": ["s", "t"],
+}
+
+_ALIGNMENT_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "sentences": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "alignment": {
+                        "type": "array",
+                        "items": _ALIGNMENT_UNIT_SCHEMA,
+                    },
+                },
+                "required": ["alignment"],
+            },
+        },
+    },
+    "required": ["sentences"],
+}
+
+
+def _generate_alignment(target: str, base: str,
+                        pairs: list[tuple[str, str]]) -> list[list[dict]]:
+    """One whole-text call, kept separate from reading_prose so that call
+    stays fast (it has its own history of latency problems - see the
+    "Long text taking minutes" saga). This still measurably beats the
+    old per-word, per-50-word-chunk 's' field (_fetch_gloss_chunk) at
+    the same task: every sentence's alignment is decided with every
+    other sentence's translation in view in one shot, instead of each
+    chunk seeing only whichever sentence its 50 words happened to land
+    in, split across attention with also deriving word *meanings*.
+
+    Returns one alignment-unit-list per (sentence, translation) pair in
+    [pairs], same order; an empty list for every pair on outright
+    failure (degrades to _fetch_gloss_chunk's own span, never an
+    error)."""
+    system = (
+        f"You align a '{target}' text with its already-produced "
+        f"'{base}' translation, sentence by sentence. For each sentence "
+        "break its source text into consecutive WORD units (skip "
+        "standalone punctuation marks entirely - they're never their "
+        "own unit) covering the whole sentence in order, in 'alignment' "
+        "- almost always single words, occasionally a short fixed "
+        "phrase for an idiom or particle cluster. Each unit's 's' must "
+        "be an exact verbatim substring of the source sentence (copy it "
+        "character for character, no surrounding punctuation). For each "
+        "unit also give 't': the exact verbatim substring of the "
+        "translation that expresses it - copy it character for "
+        "character, do not paraphrase - or null if this unit has no "
+        "clean standalone counterpart in the translation (merged into a "
+        "larger phrase, reordered beyond recognition, implied only by "
+        "grammar, or omitted entirely). The translation is already "
+        "fixed - report the alignment it actually reflects, never "
+        "rewrite or improve it."
+    )
+    listing = "\n".join(
+        f'{i + 1}. Sentence: "{text}"\n   Translation: "{trans}"'
+        for i, (text, trans) in enumerate(pairs))
+    empty = [[] for _ in pairs]
+    try:
+        data = _call_structured(
+            GENERATE_MODEL, system,
+            [{"role": "user", "content":
+              f"Align these {len(pairs)} numbered sentence/translation "
+              f"pairs, same order, one 'alignment' list per pair:\n"
+              f"{listing}"}],
+            "alignment", _ALIGNMENT_SCHEMA, 6000)
+    except HTTPException as e:
+        log.warning("alignment call failed (%s)", e.detail)
+        return empty
+    aligned = data["sentences"]
+    if len(aligned) != len(pairs):
+        log.warning("alignment count mismatch (%s vs %s)",
+                    len(aligned), len(pairs))
+    return [(aligned[i]["alignment"] if i < len(aligned) else [])
+           for i in range(len(pairs))]
+
 # Deliberately terse keys: with ~100 gloss objects per text, key names
 # alone were costing ~1k output tokens. 't' = inflected-form meaning,
 # 'l' = lemma meaning.
@@ -554,6 +645,73 @@ def _strip_source_echo(value: str, surface: str, lemma: str) -> str:
     return value
 
 
+def _validate_span(candidate: str, sentence_translation: str) -> str | None:
+    """Enforces "copy it verbatim, in reasonable length, or null" for any
+    model-provided translation-fragment answer, whether it comes from
+    the same-pass sentence alignment (_apply_alignment) or the separate
+    per-word gloss call (_fetch_gloss_chunk) - neither reliably complies
+    on its own (observed hallucinating text absent from the given
+    translation entirely, and separately padding a short answer out into
+    a huge but technically-verbatim chunk of the rest of the sentence).
+    Word-boundary aware, not a naive substring check ("ja" is a
+    substring of "jak", a different word). None if [candidate] is falsy
+    or fails either check."""
+    if not candidate:
+        return None
+    pattern = r'(?<!\w)' + re.escape(candidate) + r'(?!\w)'
+    if not re.search(pattern, sentence_translation, re.IGNORECASE):
+        return None
+    if len(candidate.split()) > 6:
+        return None
+    return candidate
+
+
+def _apply_alignment(result: dict, sentence_alignments: list[list[dict]]) -> None:
+    """Sets translationSpan from _generate_alignment's whole-text
+    alignment wherever a token's surface matches an alignment unit's
+    source text - decided with every sentence's translation in view at
+    once, rather than a per-50-word-chunk call also busy deriving word
+    *meanings* (measurably less reliable - see _fetch_gloss_chunk's 's',
+    kept as the fallback for whatever this doesn't cover). The
+    source-side match is same-language/same-script, so a plain
+    word-boundary substring check is trustworthy here in a way it isn't
+    for the target side.
+
+    Each alignment unit is consumed at most once per sentence (tracked
+    via `used`), so a repeated source word maps to successive repeated
+    units in order rather than always the first - same rationale as the
+    frontend's own occurrence-aware matching."""
+    trans_sents = result["translationSentences"]
+    translation = result["translation"]
+    by_sentence: dict[int, list[dict]] = {}
+    for t in result["tokens"]:
+        by_sentence.setdefault(t["sentenceIndex"], []).append(t)
+    for sent_idx, units in enumerate(sentence_alignments):
+        tokens = by_sentence.get(sent_idx)
+        if not tokens or not units:
+            continue
+        tsent = trans_sents[sent_idx]
+        sent_translation = translation[tsent["charStart"]:tsent["charEnd"]]
+        used: set[int] = set()
+        for t in tokens:
+            surface = t["surface"].strip()
+            if not surface:
+                continue
+            pattern = re.compile(
+                r'(?<!\w)' + re.escape(surface.lower()) + r'(?!\w)')
+            for i, unit in enumerate(units):
+                if i in used:
+                    continue
+                src = (unit.get("s") or "").strip()
+                if src and pattern.search(src.lower()):
+                    used.add(i)
+                    tgt = (unit.get("t") or "").strip() or None
+                    if tgt:
+                        tgt = _validate_span(tgt, sent_translation)
+                    t["translationSpan"] = tgt
+                    break
+
+
 def _apply_cache_hit(t: dict, lemma_translation: str) -> None:
     """Same convention as annotate.py's dictionary/cross_lookup grounding:
     lemmaTranslation always gets the cached value, but the inflected-form
@@ -575,15 +733,19 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
     Chunks of _GLOSS_CHUNK unique words keep every call inside its output
     budget; a failed chunk degrades to gloss-less words, never an error.
 
-    Every unique word goes through this, not just ones lacking a meaning:
-    translationSpan (the word's location inside the sentence translation,
-    for tap-to-highlight) can't be looked up from the dictionary or cached
-    like a lemma gloss can - it depends on this exact sentence's phrasing,
-    so it has to be asked fresh every time regardless of whether the
-    meaning itself was already known. Meanings already grounded by
-    dictionary.py or GlossCache are passed back to the model as a hint
-    (see _fetch_gloss_chunk) and never overwritten by its answer here -
-    only 's' is taken from the response for those words.
+    Every unique word not already fully resolved goes through this - not
+    just ones lacking a meaning: translationSpan (the word's location
+    inside the sentence translation, for tap-to-highlight) can't be
+    looked up from the dictionary or cached like a lemma gloss can, it
+    depends on this exact sentence's phrasing. _apply_alignment (run
+    before this, using the reading_prose call's own same-pass alignment)
+    already fills translationSpan for most words more reliably than this
+    function's own 's' answer can - a word only reaches the LLM call
+    below if it's still missing a meaning, a span, or both. Meanings
+    already grounded by dictionary.py or GlossCache are passed back to
+    the model as a hint (see _fetch_gloss_chunk) and never overwritten by
+    its answer here - only 's' is taken from the response for those
+    words.
 
     Before spending any LLM tokens on a *meaning*, checks the permanent
     GlossCache (Postgres) for a (target, lemma, base) triple any earlier
@@ -629,7 +791,15 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
                                          t["lemma"].lower())]:
                     _apply_cache_hit(occurrence, hit)
 
-    all_unique = [groups[k][0] for k in order]
+    # A word needs the LLM call below only if it's still missing a
+    # meaning, a span, or both - fully-resolved words (dictionary/cache
+    # meaning + an alignment-derived span) skip it entirely, which is
+    # now the common case for straightforward words.
+    all_unique = [groups[k][0] for k in order
+                 if groups[k][0]["lemmaTranslation"] is None
+                 or not groups[k][0].get("translationSpan")]
+    if not all_unique:
+        return
     # Snapshot which words already have a meaning *after* the dictionary/
     # cache pass above, so the result-applying loop below knows which
     # ones to leave alone regardless of what the model echoes back.
@@ -686,38 +856,22 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
                         chunk_start, len(glosses), len(chunk))
         for t, g in zip(chunk, glosses):
             key = (t["surface"].lower(), t["lemma"].lower())
-            trans_span = (g.get("s") or "").strip() or None
-            if trans_span is not None:
-                # The model is told to copy 's' verbatim from the given
-                # sentence translation or return null - but it doesn't
-                # always comply (observed hallucinating a plausible-
-                # looking span, e.g. "ja" for a dropped Russian pronoun,
-                # that never actually appears in the given text). Enforce
-                # the "verbatim or null" contract here rather than trust
-                # it, since a fabricated span is worse than none - the
-                # frontend would highlight nonsense with full confidence
-                # instead of falling back to the whole sentence. A plain
-                # substring check isn't enough either - "ja" is a
-                # substring of "jak" ("as/like"), a different word
-                # entirely, so this must respect word boundaries the same
-                # way the frontend's own matching does.
+            # Don't let this call's answer clobber a span _apply_alignment
+            # already found (more reliable - see its docstring); this
+            # word may only be here for its still-missing *meaning*. Each
+            # occurrence is checked individually, not just [t] (the
+            # group's representative) - alignment resolves per-sentence,
+            # so one occurrence of a repeated word can have a good span
+            # while another doesn't.
+            if not t.get("translationSpan"):
                 tsent = trans_sents[t["sentenceIndex"]]
                 sent_translation = translation[tsent["charStart"]:
                                                tsent["charEnd"]]
-                pattern = r'(?<!\w)' + re.escape(trans_span) + r'(?!\w)'
-                if not re.search(pattern, sent_translation, re.IGNORECASE):
-                    trans_span = None
-                # A verbatim-but-huge answer is just as useless as a
-                # hallucinated one: observed the model satisfy "copy it
-                # verbatim" by echoing back most of the rest of the
-                # sentence starting from the right word - technically
-                # true, still the wrong answer for a single word/short
-                # phrase. One source word should never need more than a
-                # handful of target words.
-                elif len(trans_span.split()) > 6:
-                    trans_span = None
-            for occurrence in groups[key]:
-                occurrence["translationSpan"] = trans_span
+                trans_span = _validate_span(
+                    (g.get("s") or "").strip(), sent_translation)
+                for occurrence in groups[key]:
+                    if not occurrence.get("translationSpan"):
+                        occurrence["translationSpan"] = trans_span
             if already_known[key]:
                 continue  # meaning is dictionary/cache-grounded - keep it
             word_translation = _strip_source_echo(
@@ -818,9 +972,26 @@ def _generate_hybrid(body: GenerateTextRequest, db: Session) -> dict:
                             [{"role": "user", "content": user_msg}],
                             "reading_prose", _PROSE_SCHEMA, 4000)
     result = _assemble(data["sentences"])  # sentences carry no tokens here
-    result["tokens"] = annotate.annotate_sentences(
-        result["body"], result["bodySentences"], body.targetLang,
-        body.baseLang)
+
+    # UDPipe tagging (local, CPU-bound) and the alignment call (network,
+    # I/O-bound) are independent - only reading_prose's already-assembled
+    # body/translation - so run them concurrently instead of paying for
+    # both in sequence.
+    pairs = [
+        (result["body"][bs["charStart"]:bs["charEnd"]],
+         result["translation"][ts["charStart"]:ts["charEnd"]])
+        for bs, ts in zip(result["bodySentences"], result["translationSentences"])
+    ]
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        tokens_future = pool.submit(
+            annotate.annotate_sentences, result["body"],
+            result["bodySentences"], body.targetLang, body.baseLang)
+        alignment_future = pool.submit(
+            _generate_alignment, body.targetLang, body.baseLang, pairs)
+        result["tokens"] = tokens_future.result()
+        sentence_alignments = alignment_future.result()
+
+    _apply_alignment(result, sentence_alignments)
     _fill_glosses(result, body.targetLang, body.baseLang, db)
     result["title"] = data["title"]
     return result
