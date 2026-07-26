@@ -1,6 +1,17 @@
 import json
 import logging
 
+# Nothing else in this codebase configures logging, and uvicorn's own
+# dictConfig only sets up handlers for its own "uvicorn*" loggers - without
+# this, every log.info/log.warning from our own code (e.g. ai.py's
+# generation-attempt tracing) is silently swallowed rather than reaching
+# the Render log stream, which made past AI-hang incidents look like
+# generation was doing nothing at all.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
 from email_validator import EmailNotValidError, validate_email
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware

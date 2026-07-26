@@ -133,6 +133,8 @@ def _call_structured(model: str, system: str, messages: list[dict],
     delays = [3, 8, 20]
     for attempt in range(4):
         try:
+            log.info("ai call model=%s schema=%s attempt=%s starting",
+                     model, schema_name, attempt + 1)
             res = _openai().chat.completions.create(
                 model=model,
                 max_completion_tokens=max_tokens,
@@ -174,11 +176,18 @@ def _call_structured(model: str, system: str, messages: list[dict],
                 continue
             if attempt < len(delays) and any(
                     m in str(e) for m in _TRANSIENT_MARKERS):
+                log.warning("ai call model=%s schema=%s attempt=%s failed "
+                           "(%s); retrying in %ss", model, schema_name,
+                           attempt + 1, e, delays[attempt])
                 time.sleep(delays[attempt])
                 continue
+            log.warning("ai call model=%s schema=%s attempt=%s failed "
+                       "(%s); giving up", model, schema_name, attempt + 1, e)
             raise HTTPException(status_code=502,
                                 detail=f"AI call failed: {e}")
     if res is None:
+        log.warning("ai call model=%s schema=%s exhausted retries (%s)",
+                   model, schema_name, last_error)
         raise HTTPException(status_code=502,
                             detail=f"AI call failed: {last_error}")
     content = res.choices[0].message.content
