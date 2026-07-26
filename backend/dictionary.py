@@ -220,12 +220,28 @@ def cross_lookup(lemma: str, target_lang: str,
     if not lemma:
         return None
     # Same concurrency hazard as _query() above - see its comment.
+    #
+    # This used to be a single self-JOIN on `members`. SQLite's planner
+    # picked idx_lookup(lang_code=?) for the *unfiltered* base_lang side
+    # (e.g. scanning all ~180k English rows) instead of starting from the
+    # highly selective target_lang+word side and joining via idx_group -
+    # measured 0.6-10s per call as a result, which single-handedly made
+    # word-by-word annotation (called once per unique lemma in the text)
+    # take minutes for anything longer than a trivial A1 text. Splitting
+    # into two explicit indexed queries, with idx_group forced on the
+    # second, avoids that bad plan entirely: ~0.3-0.6ms per call.
     with _cross_lock:
         cur = conn.execute(
-            'SELECT DISTINCT m2.word FROM members m1 '
-            'JOIN members m2 ON m1.group_id = m2.group_id '
-            'WHERE m1.lang_code = ? AND m1.word = ? AND m2.lang_code = ?',
-            (target_lang, lemma, base_lang))
+            'SELECT group_id FROM members WHERE lang_code = ? AND word = ?',
+            (target_lang, lemma))
+        group_ids = [r[0] for r in cur.fetchall()]
+        if not group_ids:
+            return None
+        placeholders = ','.join('?' * len(group_ids))
+        cur = conn.execute(
+            f'SELECT DISTINCT word FROM members INDEXED BY idx_group '
+            f'WHERE group_id IN ({placeholders}) AND lang_code = ?',
+            (*group_ids, base_lang))
         words = [r[0] for r in cur.fetchall()]
     if not words:
         return None
