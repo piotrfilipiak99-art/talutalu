@@ -100,20 +100,29 @@ class DictEntry(TypedDict):
 
 
 def _query(conn: sqlite3.Connection, lemma: str, wiktextract_pos: set[str] | None):
-    cur = conn.cursor()
-    if wiktextract_pos:
-        placeholders = ','.join('?' * len(wiktextract_pos))
-        cur.execute(
-            f'SELECT gloss, root, root_meaning FROM entries '
-            f'WHERE lemma = ? AND pos IN ({placeholders}) '
-            f'ORDER BY sense_rank',
-            (lemma, *wiktextract_pos))
-    else:
-        cur.execute(
-            'SELECT gloss, root, root_meaning FROM entries '
-            'WHERE lemma = ? ORDER BY sense_rank',
-            (lemma,))
-    return cur.fetchall()
+    # check_same_thread=False only lets a connection be reused across
+    # threads - it does not make concurrent execute() calls from different
+    # threads safe. FastAPI runs concurrent requests on different worker
+    # threads even in a single process, so without this lock two requests
+    # querying at once could corrupt the shared connection (observed in
+    # production as "sqlite3.InterfaceError: bad parameter or other API
+    # misuse"). Queries are local/fast (no LLM calls), so serializing them
+    # is cheap.
+    with _lock:
+        cur = conn.cursor()
+        if wiktextract_pos:
+            placeholders = ','.join('?' * len(wiktextract_pos))
+            cur.execute(
+                f'SELECT gloss, root, root_meaning FROM entries '
+                f'WHERE lemma = ? AND pos IN ({placeholders}) '
+                f'ORDER BY sense_rank',
+                (lemma, *wiktextract_pos))
+        else:
+            cur.execute(
+                'SELECT gloss, root, root_meaning FROM entries '
+                'WHERE lemma = ? ORDER BY sense_rank',
+                (lemma,))
+        return cur.fetchall()
 
 
 def lookup(lemma: str, pos: str, target_lang: str,
@@ -188,12 +197,14 @@ def cross_lookup(lemma: str, target_lang: str,
     lemma = lemma.lower().strip()
     if not lemma:
         return None
-    cur = conn.execute(
-        'SELECT DISTINCT m2.word FROM members m1 '
-        'JOIN members m2 ON m1.group_id = m2.group_id '
-        'WHERE m1.lang_code = ? AND m1.word = ? AND m2.lang_code = ?',
-        (target_lang, lemma, base_lang))
-    words = [r[0] for r in cur.fetchall()]
+    # Same concurrency hazard as _query() above - see its comment.
+    with _cross_lock:
+        cur = conn.execute(
+            'SELECT DISTINCT m2.word FROM members m1 '
+            'JOIN members m2 ON m1.group_id = m2.group_id '
+            'WHERE m1.lang_code = ? AND m1.word = ? AND m2.lang_code = ?',
+            (target_lang, lemma, base_lang))
+        words = [r[0] for r in cur.fetchall()]
     if not words:
         return None
     return words[0] if len(words) == 1 else words
