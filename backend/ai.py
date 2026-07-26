@@ -282,13 +282,15 @@ _LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "10-16"}
 
 # Soft word ceilings per requested length - stated in the prompt only;
 # slight overruns are accepted rather than trimmed. Overridable per env.
-# Long was 220 - lowered to cut prose-generation output volume, the
-# confirmed bottleneck behind Long+vocabulary requests occasionally
-# exceeding Render's ~100s reverse-proxy timeout.
+# Long was temporarily 160 while the real bottleneck (cross_lookup's bad
+# SQLite query plan - see dictionary.py) was misdiagnosed as output volume;
+# restored to 220 now that that's fixed. Render's reverse-proxy timeout
+# (~100s) is still a hard ceiling worth remembering if Long+vocabulary
+# requests start running long again.
 MAX_TEXT_WORDS = {
     "Short": int(os.environ.get("AI_MAX_WORDS_SHORT", "80")),
     "Medium": int(os.environ.get("AI_MAX_WORDS_MEDIUM", "140")),
-    "Long": int(os.environ.get("AI_MAX_WORDS_LONG", "160")),
+    "Long": int(os.environ.get("AI_MAX_WORDS_LONG", "220")),
 }
 
 
