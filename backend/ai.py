@@ -257,15 +257,18 @@ _GENERATE_SCHEMA = {
 }
 
 # Long is 10-16 (not 14-20): at C1/C2 sentence lengths, 14-20 sentences
-# contradicts the 220-word soft cap and the model overruns it.
+# contradicts the Long word cap below and the model overruns it.
 _LENGTH_SENTENCES = {"Short": "4-6", "Medium": "8-12", "Long": "10-16"}
 
 # Soft word ceilings per requested length - stated in the prompt only;
 # slight overruns are accepted rather than trimmed. Overridable per env.
+# Long was 220 - lowered to cut prose-generation output volume, the
+# confirmed bottleneck behind Long+vocabulary requests occasionally
+# exceeding Render's ~100s reverse-proxy timeout.
 MAX_TEXT_WORDS = {
     "Short": int(os.environ.get("AI_MAX_WORDS_SHORT", "80")),
     "Medium": int(os.environ.get("AI_MAX_WORDS_MEDIUM", "140")),
-    "Long": int(os.environ.get("AI_MAX_WORDS_LONG", "220")),
+    "Long": int(os.environ.get("AI_MAX_WORDS_LONG", "160")),
 }
 
 
