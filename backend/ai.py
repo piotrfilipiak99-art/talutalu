@@ -76,7 +76,14 @@ def _openai() -> OpenAI:
         # requests once created, this lock only guards creating it once.
         with _client_lock:
             if _client is None:
-                _client = OpenAI(api_key=key, base_url=AI_BASE_URL)
+                # The SDK's own default timeout is ~600s - a hung upstream
+                # call (no error, no response) would leave a generation job
+                # stuck at "pending" for up to 10 minutes with nothing for
+                # the client to react to. A tighter timeout makes a hung
+                # call fail fast enough for _call_structured's existing
+                # retry/backoff loop to actually take over.
+                _client = OpenAI(api_key=key, base_url=AI_BASE_URL,
+                                 timeout=90.0)
     return _client
 
 
