@@ -154,6 +154,10 @@ def _call_structured(model: str, system: str, messages: list[dict],
             if not res.choices[0].message.content:
                 last_error = RuntimeError("empty AI response")
                 if attempt < len(delays):
+                    log.warning("ai call model=%s schema=%s attempt=%s "
+                               "returned empty content; retrying in %ss",
+                               model, schema_name, attempt + 1,
+                               delays[attempt])
                     res = None
                     time.sleep(delays[attempt])
                     continue
