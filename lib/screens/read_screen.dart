@@ -208,7 +208,16 @@ class _ReadScreenState extends State<ReadScreen>
   List<Map<String, dynamic>> get _courseTexts {
     final id = _activeCourseId;
     if (id == null) return [];
-    return _texts.where((t) => t['courseId'] == id).toList();
+    final list = _texts.where((t) => t['courseId'] == id).toList();
+    // Newest first, regardless of insertion/storage/sync order - relying
+    // on list position alone broke after a reload or multi-device sync.
+    list.sort((a, b) {
+      final aDate = DateTime.tryParse(a['createdAt'] as String? ?? '');
+      final bDate = DateTime.tryParse(b['createdAt'] as String? ?? '');
+      if (aDate == null || bDate == null) return 0;
+      return bDate.compareTo(aDate);
+    });
+    return list;
   }
 
   @override
