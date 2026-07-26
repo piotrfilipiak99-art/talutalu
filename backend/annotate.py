@@ -10,14 +10,18 @@ Models are ~25 MB on disk, ~100-200 MB in RAM each; an LRU keeps at most
 UDPIPE_MAX_LOADED (default 2) in memory so this fits Render's 512 MB
 Hobby instance next to FastAPI.
 """
+import logging
 import os
 import threading
+import time
 from collections import OrderedDict
 
 import httpx
 from ufal.udpipe import Model, Pipeline
 
 import dictionary
+
+log = logging.getLogger("talutalu.annotate")
 
 # Our language codes -> UD 2.5 treebank names (one canonical pick each).
 TREEBANKS = {
@@ -54,6 +58,12 @@ def _download(lang: str) -> str:
     path = _model_path(lang)
     if os.path.exists(path):
         return path
+    # Same silent-blocking-download hazard as dictionary.py's _download -
+    # this runs synchronously inside the first request that needs [lang]
+    # since the last deploy/restart (Render's disk is ephemeral).
+    log.info("downloading udpipe model %s (first use since last deploy/"
+             "restart)", TREEBANKS[lang])
+    start = time.monotonic()
     os.makedirs(MODELS_DIR, exist_ok=True)
     url = _MIRROR.format(tb=TREEBANKS[lang])
     tmp = path + '.part'
@@ -63,6 +73,8 @@ def _download(lang: str) -> str:
             for chunk in r.iter_bytes():
                 f.write(chunk)
     os.replace(tmp, path)
+    log.info("downloaded udpipe model %s in %.1fs (%d bytes)",
+             TREEBANKS[lang], time.monotonic() - start, os.path.getsize(path))
     return path
 
 
