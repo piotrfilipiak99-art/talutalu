@@ -1773,101 +1773,19 @@ class _ReadScreenState extends State<ReadScreen>
   void _inspectToken(TextToken token) {
     _inspectTokenStart = token.charStart;
     final range = _translationHighlightFor(token);
-    _transHlStart = range?.start;
-    _transHlEnd = range?.end;
-    // Substring matching already failed (see _translationHighlightFor) -
-    // worth one small network call to do better, since this is usually a
-    // dictionary-grounded/cached word whose gloss was never checked
-    // against this specific sentence's actual phrasing.
-    if (range != null && range.isFallback) _resolveTranslationSpan(token);
-  }
-
-  /// Fetches a proper translation-span fallback for [token] and narrows
-  /// the highlight once it arrives — best-effort: silently keeps the
-  /// whole-sentence highlight already showing if the request fails, is
-  /// too slow, or the learner has since moved on to inspecting a
-  /// different word. Persists a hit onto the stored token so this exact
-  /// occurrence never needs to ask again.
-  Future<void> _resolveTranslationSpan(TextToken token) async {
-    final text = _openedText;
-    final course = _activeCourse;
-    if (text == null || course == null || !ApiClient.instance.hasSession) {
-      return;
-    }
-    TextSentence? bodySent;
-    for (final s in _bodySentencesOf(text)) {
-      if (s.index == token.sentenceIndex) {
-        bodySent = s;
-        break;
-      }
-    }
-    TextSentence? transSent;
-    for (final s in _translationSentencesOf(text)) {
-      if ((s.alignsToIndex ?? s.index) == token.sentenceIndex) {
-        transSent = s;
-        break;
-      }
-    }
-    if (bodySent == null || transSent == null) return;
-    final body = (text['body'] as String?) ?? '';
-    final translation = (text['translation'] as String?) ?? '';
-    if (bodySent.charEnd > body.length || transSent.charEnd > translation.length) {
-      return;
-    }
-    final span = await ApiClient.instance.fetchTranslationSpan(
-      targetLang: course['targetCode'] ?? '',
-      baseLang: course['baseCode'] ?? '',
-      sentence: body.substring(bodySent.charStart, bodySent.charEnd),
-      sentenceTranslation:
-          translation.substring(transSent.charStart, transSent.charEnd),
-      surface: token.surface,
-      lemma: token.lemma,
-      gloss: token.translation ?? token.lemmaTranslation ?? '',
-    );
-    if (!mounted || span == null || span.trim().isEmpty) return;
-    // The learner may have tapped elsewhere while this was in flight -
-    // don't clobber whatever they're looking at now.
-    if (_inspectTokenStart != token.charStart) return;
-    _storeTranslationSpan(text, token, span);
-    // TextToken is immutable - [token] still has the translationSpan it
-    // was constructed with (null), so re-read it from the JSON just
-    // written above, or _translationHighlightFor would just repeat the
-    // same failed match and this fetch would have no visible effect.
-    final updated = _tokensOf(text).firstWhere(
-        (t) => t.charStart == token.charStart && t.charEnd == token.charEnd,
-        orElse: () => token);
-    final range = _translationHighlightFor(updated);
-    if (range != null && !range.isFallback) {
-      setState(() {
-        _transHlStart = range.start;
-        _transHlEnd = range.end;
-      });
-    }
-  }
-
-  /// Writes [span] onto this exact token occurrence in the stored (raw
-  /// JSON) text data so [_resolveTranslationSpan] never has to ask again
-  /// for it - unlike the server's GlossCache, this is per-occurrence, not
-  /// per-lemma, since the same word can align differently in different
-  /// sentences.
-  void _storeTranslationSpan(
-      Map<String, dynamic> text, TextToken token, String span) {
-    final rawTokens = text['tokens'] as List?;
-    if (rawTokens == null) return;
-    for (final raw in rawTokens) {
-      final m = raw as Map;
-      if (m['charStart'] == token.charStart && m['charEnd'] == token.charEnd) {
-        m['translationSpan'] = span;
-        break;
-      }
-    }
-    AppStorage.instance.saveTexts(_texts);
+    _transHlStart = range?.$1;
+    _transHlEnd = range?.$2;
+    // The alphabet panel (global, below the tab content - see
+    // home_screen.dart) highlights this word's letters while it's inspected.
+    AppStorage.instance.inspectedWord.value =
+        splitTrailingPunct(token.surface).core;
   }
 
   void _clearInspection() {
     _inspectTokenStart = null;
     _transHlStart = null;
     _transHlEnd = null;
+    AppStorage.instance.inspectedWord.value = null;
   }
 
   static final _letterOrDigit = RegExp(r'[\p{L}\p{N}]', unicode: true);
@@ -1893,22 +1811,18 @@ class _ReadScreenState extends State<ReadScreen>
     }
   }
 
-  /// Char range to highlight in the translation for [token], plus whether
-  /// that range is a real match or the last-resort whole-sentence
-  /// fallback (`isFallback`) — callers use that to decide whether it's
-  /// worth spending a network round trip on [_resolveTranslationSpan] to
-  /// do better. Prefers [TextToken.translationSpan] — a verbatim excerpt
-  /// the model copied straight out of this sentence's own translation at
-  /// generation time, so it's grounded in text that's actually guaranteed
-  /// to occur there — falling back to matching the isolated-word gloss
-  /// (translationSpan is null for dictionary-grounded/cache-hit words,
-  /// which never got an LLM call to produce one), then to the whole
-  /// aligned sentence if neither is found. Repeated words ("i ... i" ->
-  /// "and ... and") map to the matching occurrence, not always the first
-  /// one: the token's occurrence number among same-valued tokens of its
-  /// sentence picks the same-numbered occurrence in the translation.
-  ({int start, int end, bool isFallback})? _translationHighlightFor(
-      TextToken token) {
+  /// Char range to highlight in the translation for [token]. Prefers
+  /// [TextToken.translationSpan] — a verbatim excerpt the model copied
+  /// straight out of this sentence's own translation at generation time
+  /// (computed for every word now, not just freshly-glossed ones - see
+  /// ai.py's _fill_glosses), so it's grounded in text that's actually
+  /// guaranteed to occur there — falling back to matching the
+  /// isolated-word gloss, then to the whole aligned sentence if neither
+  /// is found. Repeated words ("i ... i" -> "and ... and") map to the
+  /// matching occurrence, not always the first one: the token's
+  /// occurrence number among same-valued tokens of its sentence picks the
+  /// same-numbered occurrence in the translation.
+  (int, int)? _translationHighlightFor(TextToken token) {
     final text = _openedText;
     if (text == null) return null;
     final translation = (text['translation'] as String?) ?? '';
@@ -1929,13 +1843,7 @@ class _ReadScreenState extends State<ReadScreen>
     if (span.isNotEmpty) {
       final idx = _locateInSegment(segment, span, token,
           (t) => (t.translationSpan ?? '').trim().toLowerCase());
-      if (idx != null) {
-        return (
-          start: segStart + idx,
-          end: segStart + idx + span.length,
-          isFallback: false
-        );
-      }
+      if (idx != null) return (segStart + idx, segStart + idx + span.length);
     }
 
     final gloss = splitTrailingPunct((token.translation ?? '').trim())
@@ -1946,15 +1854,9 @@ class _ReadScreenState extends State<ReadScreen>
           (t) => splitTrailingPunct((t.translation ?? '').trim())
               .core
               .toLowerCase());
-      if (idx != null) {
-        return (
-          start: segStart + idx,
-          end: segStart + idx + gloss.length,
-          isFallback: false
-        );
-      }
+      if (idx != null) return (segStart + idx, segStart + idx + gloss.length);
     }
-    return (start: segStart, end: segEnd, isFallback: true);
+    return (segStart, segEnd);
   }
 
   /// Finds [needle]'s occurrence-matched position within [segment] (both

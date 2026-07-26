@@ -556,14 +556,25 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
       copied to every occurrence (function words repeat constantly),
     - the listing groups words under their sentence, quoting each sentence
       once instead of once per word,
-    - the response uses one-letter keys ('t'/'l').
+    - the response uses one-letter keys ('t'/'l'/'s').
     Chunks of _GLOSS_CHUNK unique words keep every call inside its output
     budget; a failed chunk degrades to gloss-less words, never an error.
 
-    Before spending any LLM tokens, checks the permanent GlossCache
-    (Postgres) for a (target, lemma, base) triple any earlier request already
-    resolved - this is what makes non-English base languages affordable:
-    every LLM answer is asked once, globally, forever."""
+    Every unique word goes through this, not just ones lacking a meaning:
+    translationSpan (the word's location inside the sentence translation,
+    for tap-to-highlight) can't be looked up from the dictionary or cached
+    like a lemma gloss can - it depends on this exact sentence's phrasing,
+    so it has to be asked fresh every time regardless of whether the
+    meaning itself was already known. Meanings already grounded by
+    dictionary.py or GlossCache are passed back to the model as a hint
+    (see _fetch_gloss_chunk) and never overwritten by its answer here -
+    only 's' is taken from the response for those words.
+
+    Before spending any LLM tokens on a *meaning*, checks the permanent
+    GlossCache (Postgres) for a (target, lemma, base) triple any earlier
+    request already resolved - this is what makes non-English base
+    languages affordable: every LLM answer is asked once, globally,
+    forever."""
     word_tokens = [t for t in result["tokens"]
                    if re.search(r"\w", t["surface"])]
     if not word_tokens:
@@ -580,34 +591,35 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
             groups[key] = []
             order.append(key)
         groups[key].append(t)
-    # Words already grounded by dictionary.py (see annotate.py) need no
-    # LLM call - this is the entire cost-saving mechanism of Phase 3.
-    unique = [groups[k][0] for k in order
-             if groups[k][0]["lemmaTranslation"] is None]
-    if not unique:
-        return
 
-    lemmas = {t["lemma"].lower() for t in unique}
-    cached = {
-        row.lemma: row.lemma_translation
-        for row in db.query(GlossCache).filter(
-            GlossCache.target_lang == target,
-            GlossCache.base_lang == base,
-            GlossCache.lemma.in_(lemmas))
-    }
-    if cached:
-        still_unique = []
-        for t in unique:
+    # Words already grounded by dictionary.py (see annotate.py) skip the
+    # *meaning* lookup below - that's still the cost-saving mechanism of
+    # Phase 3 - but every word, grounded or not, goes through the LLM
+    # call further down to get its translationSpan.
+    needing_meaning = [groups[k][0] for k in order
+                       if groups[k][0]["lemmaTranslation"] is None]
+    if needing_meaning:
+        lemmas = {t["lemma"].lower() for t in needing_meaning}
+        cached = {
+            row.lemma: row.lemma_translation
+            for row in db.query(GlossCache).filter(
+                GlossCache.target_lang == target,
+                GlossCache.base_lang == base,
+                GlossCache.lemma.in_(lemmas))
+        }
+        for t in needing_meaning:
             hit = cached.get(t["lemma"].lower())
             if hit is not None:
                 for occurrence in groups[(t["surface"].lower(),
                                          t["lemma"].lower())]:
                     _apply_cache_hit(occurrence, hit)
-            else:
-                still_unique.append(t)
-        unique = still_unique
-    if not unique:
-        return
+
+    all_unique = [groups[k][0] for k in order]
+    # Snapshot which words already have a meaning *after* the dictionary/
+    # cache pass above, so the result-applying loop below knows which
+    # ones to leave alone regardless of what the model echoes back.
+    already_known = {k: groups[k][0]["lemmaTranslation"] is not None
+                     for k in order}
 
     system = (
         f"You are a bilingual dictionary: you TRANSLATE '{target}' words "
@@ -620,14 +632,17 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
         "'Sentence:') that corresponds to this word - copy it character "
         "for character, do not paraphrase - or null if this word has no "
         "clean standalone counterpart there (merged into a larger phrase, "
-        "reordered beyond recognition, or omitted entirely). Example for "
-        "target 'pl', base 'en': word 'Poszedlem' (lemma 'pojsc') in "
-        "Sentence 'Poszedlem do domu.' / Translation 'I went home.' -> "
-        "t 'I went', l 'to go', s 'went'. Same order as the input, one "
-        "triple per numbered word, no extras."
+        "reordered beyond recognition, or omitted entirely). Some words "
+        "carry a '[meaning: ...]' hint - that meaning is already known "
+        "and authoritative, use it as-is for 't'/'l' and spend your "
+        "effort locating 's'; words without a hint need 't'/'l' derived "
+        "fresh. Example for target 'pl', base 'en': word 'Poszedlem' "
+        "(lemma 'pojsc') in Sentence 'Poszedlem do domu.' / Translation "
+        "'I went home.' -> t 'I went', l 'to go', s 'went'. Same order "
+        "as the input, one triple per numbered word, no extras."
     )
-    chunks = [unique[i:i + _GLOSS_CHUNK]
-             for i in range(0, len(unique), _GLOSS_CHUNK)]
+    chunks = [all_unique[i:i + _GLOSS_CHUNK]
+             for i in range(0, len(all_unique), _GLOSS_CHUNK)]
 
     # Chunks are independent LLM calls - fetching them concurrently instead
     # of one-by-one is what keeps a Long text (more unique words -> more
@@ -655,6 +670,12 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
             log.warning("gloss chunk %s count mismatch (%s vs %s)",
                         chunk_start, len(glosses), len(chunk))
         for t, g in zip(chunk, glosses):
+            key = (t["surface"].lower(), t["lemma"].lower())
+            trans_span = (g.get("s") or "").strip() or None
+            for occurrence in groups[key]:
+                occurrence["translationSpan"] = trans_span
+            if already_known[key]:
+                continue  # meaning is dictionary/cache-grounded - keep it
             word_translation = (g["t"] or "").strip() or None
             gloss = (g["l"] or "").strip()
             # A gloss echoing the lemma or surface is useless and must not
@@ -662,12 +683,9 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
             if gloss.lower() in (t["lemma"].strip().lower(),
                                  t["surface"].strip().lower()):
                 gloss = ""
-            trans_span = (g.get("s") or "").strip() or None
-            key = (t["surface"].lower(), t["lemma"].lower())
             for occurrence in groups[key]:
                 occurrence["translation"] = word_translation
                 occurrence["lemmaTranslation"] = gloss or None
-                occurrence["translationSpan"] = trans_span
             if gloss:
                 db.add(GlossCache(target_lang=target, lemma=t["lemma"].lower(),
                                   base_lang=base, lemma_translation=gloss))
@@ -705,7 +723,9 @@ def _fetch_gloss_chunk(chunk: list, chunk_start: int, sents: list,
         for i, t in by_sent[si]:
             lemma_note = ("" if t["lemma"].lower() == t["surface"].lower()
                           else f" (lemma: {t['lemma']})")
-            parts.append(f"{i}. {t['surface']}{lemma_note}")
+            known = t["lemmaTranslation"] or t["translation"]
+            hint = f" [meaning: {known}]" if known else ""
+            parts.append(f"{i}. {t['surface']}{lemma_note}{hint}")
     listing = "\n".join(parts)
     glosses = None
     # A syntactically valid response can still be uselessly short (the
@@ -799,65 +819,6 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user),
     result = _generate_legacy(body)
     result["annotation"] = "llm"
     return result
-
-
-# ── On-demand translation-span fallback (Read tab word highlighting) ────────
-
-class TranslationSpanRequest(BaseModel):
-    targetLang: str = Field(max_length=16)
-    baseLang: str = Field(max_length=16)
-    sentence: str = Field(max_length=1000)
-    sentenceTranslation: str = Field(max_length=1000)
-    surface: str = Field(max_length=100)
-    lemma: str = Field(max_length=100)
-    gloss: str = Field(default="", max_length=300)
-
-
-_SPAN_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "span": {"type": ["string", "null"]},
-    },
-    "required": ["span"],
-}
-
-
-@router.post("/translation-span")
-def translation_span(body: TranslationSpanRequest,
-                     user=Depends(get_current_user)):
-    """On-demand fallback for the Read tab's tap-a-word-highlights-its-
-    translation feature: called only when the frontend's substring search
-    already failed to locate a match (see read_screen.dart's
-    _resolveTranslationSpan) - a fresh LLM gloss call already produces a
-    span (see _fetch_gloss_chunk), and most dictionary/cached glosses do
-    match literally, so most words never reach this endpoint. One small,
-    single-word call, not a batch - deliberately not cached anywhere: the
-    answer is specific to this exact sentence's phrasing, not reusable
-    like a lemma gloss is."""
-    system = (
-        f"Given a '{body.targetLang}' sentence, its '{body.baseLang}' "
-        "translation, and one word from the sentence (with its "
-        "context-free meaning as a hint), return the exact verbatim "
-        "substring of the translation that corresponds to that word - "
-        "copy it character for character, do not paraphrase - or null "
-        "if it has no clean standalone counterpart there (merged into a "
-        "larger phrase, reordered beyond recognition, or omitted "
-        "entirely)."
-    )
-    word = body.surface
-    if body.lemma.lower() != body.surface.lower():
-        word += f" (lemma: {body.lemma})"
-    user_msg = (
-        f'Sentence: "{body.sentence}"\n'
-        f'Translation: "{body.sentenceTranslation}"\n'
-        f"Word: {word}"
-        + (f"\nMeaning hint: {body.gloss}" if body.gloss else "")
-    )
-    data = _call_structured(GENERATE_MODEL, system,
-                            [{"role": "user", "content": user_msg}],
-                            "translation_span", _SPAN_SCHEMA, 200)
-    return {"span": data["span"]}
 
 
 # ── Analyze the learner's own text (paste-your-own in Read) ─────────────────
