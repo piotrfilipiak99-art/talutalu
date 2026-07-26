@@ -10,7 +10,9 @@ import json
 import logging
 import os
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
@@ -49,6 +51,7 @@ REPAIR_MODEL = os.environ.get(
     "AI_REPAIR_MODEL", "gpt-5-nano" if IS_OPENAI else "gemini-2.5-flash-lite")
 
 _client: OpenAI | None = None
+_client_lock = threading.Lock()
 
 
 def _openai() -> OpenAI:
@@ -60,7 +63,13 @@ def _openai() -> OpenAI:
             detail="AI is not configured on the server (missing AI_API_KEY)",
         )
     if _client is None:
-        _client = OpenAI(api_key=key, base_url=AI_BASE_URL)
+        # Gloss chunks are now fetched concurrently (see _fill_glosses),
+        # so this lazy init can genuinely race across threads on a cold
+        # client - the OpenAI SDK client itself is safe for concurrent
+        # requests once created, this lock only guards creating it once.
+        with _client_lock:
+            if _client is None:
+                _client = OpenAI(api_key=key, base_url=AI_BASE_URL)
     return _client
 
 
@@ -547,49 +556,27 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
         "word 'Poszedlem' (lemma 'pojsc') -> t 'I went', l 'to go'. "
         "Same order as the input, one pair per numbered word, no extras."
     )
-    for chunk_start in range(0, len(unique), _GLOSS_CHUNK):
-        chunk = unique[chunk_start:chunk_start + _GLOSS_CHUNK]
-        # Group the listing by sentence so each sentence is quoted once.
-        by_sent: dict[int, list] = {}
-        for i, t in enumerate(chunk, 1):
-            by_sent.setdefault(t["sentenceIndex"], []).append((i, t))
-        parts = []
-        for si in sorted(by_sent):
-            span = sents[si]
-            parts.append(
-                f'Sentence: "{result["body"][span["charStart"]:span["charEnd"]]}"')
-            for i, t in by_sent[si]:
-                lemma_note = ("" if t["lemma"].lower() ==
-                              t["surface"].lower()
-                              else f" (lemma: {t['lemma']})")
-                parts.append(f"{i}. {t['surface']}{lemma_note}")
-        listing = "\n".join(parts)
-        glosses = None
-        # A syntactically valid response can still be uselessly short (the
-        # model bailing after a few items) - retry that like an error.
-        for chunk_attempt in range(2):
-            try:
-                data = _call_structured(
-                    GENERATE_MODEL, system,
-                    [{"role": "user", "content":
-                      f"Translate ALL {len(chunk)} numbered '{target}' "
-                      f"words below into '{base}' - return exactly "
-                      f"{len(chunk)} pairs, covering every sentence "
-                      f"group:\n{listing}"}],
-                    # Budget is a ceiling, not spend - generous headroom
-                    # so the model never truncates a chunk mid-list.
-                    "word_glosses", _GLOSS_SCHEMA,
-                    max(2500, len(chunk) * 80))
-            except HTTPException as e:
-                log.warning("gloss chunk %s failed (%s)",
-                            chunk_start, e.detail)
-                break
-            glosses = data["g"]
-            if len(glosses) >= len(chunk) * 0.9:
-                break
-            log.warning("gloss chunk %s badly short (%s vs %s), attempt %s",
-                        chunk_start, len(glosses), len(chunk),
-                        chunk_attempt + 1)
+    chunks = [unique[i:i + _GLOSS_CHUNK]
+             for i in range(0, len(unique), _GLOSS_CHUNK)]
+
+    # Chunks are independent LLM calls - fetching them concurrently instead
+    # of one-by-one is what keeps a Long text (more unique words -> more
+    # chunks) from taking minutes: each chunk still gets its own internal
+    # retry, but chunks no longer wait on each other. Applying results
+    # (mutating `groups`, writing GlossCache through the single `db`
+    # session) stays single-threaded below - SQLAlchemy sessions aren't
+    # thread-safe, so that part must not run inside the worker threads.
+    if len(chunks) == 1:
+        chunk_results = [_fetch_gloss_chunk(
+            chunks[0], 0, sents, result["body"], target, base, system)]
+    else:
+        with ThreadPoolExecutor(max_workers=min(len(chunks), 6)) as pool:
+            chunk_results = list(pool.map(
+                lambda args: _fetch_gloss_chunk(*args),
+                [(chunk, i * _GLOSS_CHUNK, sents, result["body"], target,
+                 base, system) for i, chunk in enumerate(chunks)]))
+
+    for chunk_start, chunk, glosses in chunk_results:
         if glosses is None:
             continue
         if len(glosses) != len(chunk):
@@ -616,6 +603,54 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
                     # Another request already cached this exact triple
                     # first (race) - their answer stands, ours is discarded.
                     db.rollback()
+
+
+def _fetch_gloss_chunk(chunk: list, chunk_start: int, sents: list,
+                       body: str, target: str, base: str,
+                       system: str) -> tuple[int, list, list | None]:
+    """The LLM-calling half of a gloss chunk - pure w.r.t. shared state (no
+    `db`, no mutation of caller-owned dicts), safe to run in a worker
+    thread. Returns (chunk_start, chunk, glosses) - glosses is None if the
+    chunk failed outright (degrades to gloss-less words upstream, never an
+    error)."""
+    # Group the listing by sentence so each sentence is quoted once.
+    by_sent: dict[int, list] = {}
+    for i, t in enumerate(chunk, 1):
+        by_sent.setdefault(t["sentenceIndex"], []).append((i, t))
+    parts = []
+    for si in sorted(by_sent):
+        span = sents[si]
+        parts.append(f'Sentence: "{body[span["charStart"]:span["charEnd"]]}"')
+        for i, t in by_sent[si]:
+            lemma_note = ("" if t["lemma"].lower() == t["surface"].lower()
+                          else f" (lemma: {t['lemma']})")
+            parts.append(f"{i}. {t['surface']}{lemma_note}")
+    listing = "\n".join(parts)
+    glosses = None
+    # A syntactically valid response can still be uselessly short (the
+    # model bailing after a few items) - retry that like an error.
+    for chunk_attempt in range(2):
+        try:
+            data = _call_structured(
+                GENERATE_MODEL, system,
+                [{"role": "user", "content":
+                  f"Translate ALL {len(chunk)} numbered '{target}' "
+                  f"words below into '{base}' - return exactly "
+                  f"{len(chunk)} pairs, covering every sentence "
+                  f"group:\n{listing}"}],
+                # Budget is a ceiling, not spend - generous headroom
+                # so the model never truncates a chunk mid-list.
+                "word_glosses", _GLOSS_SCHEMA,
+                max(2500, len(chunk) * 80))
+        except HTTPException as e:
+            log.warning("gloss chunk %s failed (%s)", chunk_start, e.detail)
+            break
+        glosses = data["g"]
+        if len(glosses) >= len(chunk) * 0.9:
+            break
+        log.warning("gloss chunk %s badly short (%s vs %s), attempt %s",
+                    chunk_start, len(glosses), len(chunk), chunk_attempt + 1)
+    return chunk_start, chunk, glosses
 
 
 def _generate_hybrid(body: GenerateTextRequest, db: Session) -> dict:
