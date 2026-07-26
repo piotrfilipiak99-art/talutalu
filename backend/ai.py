@@ -539,6 +539,21 @@ _GLOSS_SCHEMA = {
 _GLOSS_CHUNK = 50
 
 
+def _strip_source_echo(value: str, surface: str, lemma: str) -> str:
+    """The model is told never to repeat the source word in 't'/'l' - but
+    it doesn't always comply, observed prefixing its answer with the
+    source word anyway ("Kolesa - kola" instead of just "kola"). Strip a
+    leading "<source word> <dash>" if the part before the dash is
+    (almost) exactly the surface or lemma; leave everything else
+    untouched, since a dash can legitimately be part of a real answer."""
+    if not value:
+        return value
+    m = re.match(r'^\s*(.+?)\s*[—–-]\s*(.+)$', value)
+    if m and m.group(1).strip().lower() in (surface.lower(), lemma.lower()):
+        return m.group(2).strip()
+    return value
+
+
 def _apply_cache_hit(t: dict, lemma_translation: str) -> None:
     """Same convention as annotate.py's dictionary/cross_lookup grounding:
     lemmaTranslation always gets the cached value, but the inflected-form
@@ -705,8 +720,10 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
                 occurrence["translationSpan"] = trans_span
             if already_known[key]:
                 continue  # meaning is dictionary/cache-grounded - keep it
-            word_translation = (g["t"] or "").strip() or None
-            gloss = (g["l"] or "").strip()
+            word_translation = _strip_source_echo(
+                (g["t"] or "").strip(), t["surface"], t["lemma"]) or None
+            gloss = _strip_source_echo(
+                (g["l"] or "").strip(), t["surface"], t["lemma"])
             # A gloss echoing the lemma or surface is useless and must not
             # reach flashcards.
             if gloss.lower() in (t["lemma"].strip().lower(),
