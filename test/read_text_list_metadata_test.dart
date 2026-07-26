@@ -56,7 +56,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Back on the list: a date shows, no deck badge for this text.
-    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Just now'), findsOneWidget);
     expect(find.text('My Deck'), findsNothing);
 
     // Generate a second text WITH the deck selected.
@@ -69,9 +69,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Two texts now share the same mock title, so match by count instead
-    // of a unique finder: one "Today" date per list item, and exactly one
-    // deck badge (from the second text only).
-    expect(find.text('Today'), findsNWidgets(2));
+    // of a unique finder: one "Just now" date per list item, and exactly
+    // one deck badge (from the second text only).
+    expect(find.text('Just now'), findsNWidgets(2));
     expect(find.text('My Deck'), findsOneWidget);
   });
 }

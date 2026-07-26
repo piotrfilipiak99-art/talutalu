@@ -718,22 +718,38 @@ class _ReadScreenState extends State<ReadScreen>
     return [for (final id in ids) if (_deckName(id) != null) _deckName(id)!];
   }
 
-  /// Short relative date for the text list ("Today", "3 days ago", "Jul 25").
+  /// Short relative date for the text list ("Just now", "5 min ago",
+  /// "3 hours ago", "Yesterday", "4 days ago", "2 weeks ago", "6 months
+  /// ago", "3 years ago").
   String? _relativeDate(Map<String, dynamic> text) {
     final iso = text['createdAt'] as String?;
     if (iso == null) return null;
     final dt = DateTime.tryParse(iso);
     if (dt == null) return null;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final that = DateTime(dt.year, dt.month, dt.day);
-    final dayDiff = today.difference(that).inDays;
-    if (dayDiff == 0) return 'Today';
-    if (dayDiff == 1) return 'Yesterday';
-    if (dayDiff < 7) return '$dayDiff days ago';
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug',
-                    'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${months[dt.month - 1]} ${dt.day}';
+    final diff = DateTime.now().difference(dt);
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) {
+      final m = diff.inMinutes;
+      return '$m min${m == 1 ? '' : 's'} ago';
+    }
+    if (diff.inHours < 24) {
+      final h = diff.inHours;
+      return '$h hour${h == 1 ? '' : 's'} ago';
+    }
+    if (diff.inDays < 7) {
+      final d = diff.inDays;
+      return d == 1 ? 'Yesterday' : '$d days ago';
+    }
+    if (diff.inDays < 30) {
+      final w = (diff.inDays / 7).floor();
+      return '$w week${w == 1 ? '' : 's'} ago';
+    }
+    if (diff.inDays < 365) {
+      final mo = (diff.inDays / 30).floor();
+      return '$mo month${mo == 1 ? '' : 's'} ago';
+    }
+    final y = (diff.inDays / 365).floor();
+    return '$y year${y == 1 ? '' : 's'} ago';
   }
 
   // ── Selection mode ──────────────────────────────────────────────────────────
