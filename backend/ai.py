@@ -672,6 +672,26 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
         for t, g in zip(chunk, glosses):
             key = (t["surface"].lower(), t["lemma"].lower())
             trans_span = (g.get("s") or "").strip() or None
+            if trans_span is not None:
+                # The model is told to copy 's' verbatim from the given
+                # sentence translation or return null - but it doesn't
+                # always comply (observed hallucinating a plausible-
+                # looking span, e.g. "ja" for a dropped Russian pronoun,
+                # that never actually appears in the given text). Enforce
+                # the "verbatim or null" contract here rather than trust
+                # it, since a fabricated span is worse than none - the
+                # frontend would highlight nonsense with full confidence
+                # instead of falling back to the whole sentence. A plain
+                # substring check isn't enough either - "ja" is a
+                # substring of "jak" ("as/like"), a different word
+                # entirely, so this must respect word boundaries the same
+                # way the frontend's own matching does.
+                tsent = trans_sents[t["sentenceIndex"]]
+                sent_translation = translation[tsent["charStart"]:
+                                               tsent["charEnd"]]
+                pattern = r'(?<!\w)' + re.escape(trans_span) + r'(?!\w)'
+                if not re.search(pattern, sent_translation, re.IGNORECASE):
+                    trans_span = None
             for occurrence in groups[key]:
                 occurrence["translationSpan"] = trans_span
             if already_known[key]:
