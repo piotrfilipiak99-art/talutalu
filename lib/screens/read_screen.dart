@@ -1759,8 +1759,18 @@ class _ReadScreenState extends State<ReadScreen>
         _ => pos.toLowerCase(),
       };
 
+  /// Every real word must stay tappable regardless of which gloss field
+  /// happens to be filled - [translation] (the exact inflected form) is
+  /// deliberately left null for POS classes where auto-filling it from a
+  /// lemma gloss would be inaccurate (see _TRANSLATION_SAFE_POS), but
+  /// [lemmaTranslation] is usually still there. Gating the tap on
+  /// [translation] alone made whole classes of words (verbs, mainly)
+  /// silently untappable.
+  bool _hasGloss(TextToken token) =>
+      token.translation != null || token.lemmaTranslation != null;
+
   void _onWordTap(TextToken token) {
-    if (token.translation == null) return;
+    if (!_hasGloss(token)) return;
     setState(() {
       if (_inspectTokenStart == token.charStart) {
         _clearInspection();
@@ -1927,7 +1937,7 @@ class _ReadScreenState extends State<ReadScreen>
   /// more decks — same rules as the word sheet's add flow.
   void _quickAddToFlashcards(TextToken token) {
     final courseId = _activeCourseId;
-    if (courseId == null || token.translation == null) return;
+    if (courseId == null || !_hasGloss(token)) return;
     final storage = AppStorage.instance;
     final existing = storage.flashcards;
     final word = token.lemma;
@@ -1987,7 +1997,7 @@ class _ReadScreenState extends State<ReadScreen>
     if (text == null) return const [];
     return [
       for (final t in _tokensOf(text))
-        if (t.pos != 'PUNCT' && t.translation != null) t,
+        if (t.pos != 'PUNCT' && _hasGloss(t)) t,
     ];
   }
 
@@ -2632,7 +2642,7 @@ class _ReadScreenState extends State<ReadScreen>
         : splitTrailingPunct(token.surface).core;
     final glossSource = _inspectBaseForm
         ? (token.lemmaTranslation ?? token.translation)
-        : token.translation;
+        : (token.translation ?? token.lemmaTranslation);
     final gloss = splitTrailingPunct((glossSource ?? '').trim()).core;
     final isDeckVocab = _isDeckVocabToken(token);
     void openSheet() {
@@ -3049,7 +3059,7 @@ class _ReadScreenState extends State<ReadScreen>
                     final word = words[i];
                     final split = splitTrailingPunct(word);
                     final token = tokens.isEmpty ? null : _tokenAt(tokens, wordStarts[i]);
-                    final hasTranslation = token?.translation != null;
+                    final hasTranslation = token != null && _hasGloss(token);
                     final isTapped = token != null &&
                         (_tappedWord == token.surface ||
                             _inspectTokenStart == token.charStart);
@@ -3076,7 +3086,7 @@ class _ReadScreenState extends State<ReadScreen>
                       onTap: _selectMode
                           ? () => _onWordSelectTap(i, false)
                           : hasTranslation
-                              ? () => _onWordTap(token!)
+                              ? () => _onWordTap(token)
                               : null,
                       onLongPress: _selectMode
                           ? null
