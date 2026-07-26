@@ -692,6 +692,15 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
                 pattern = r'(?<!\w)' + re.escape(trans_span) + r'(?!\w)'
                 if not re.search(pattern, sent_translation, re.IGNORECASE):
                     trans_span = None
+                # A verbatim-but-huge answer is just as useless as a
+                # hallucinated one: observed the model satisfy "copy it
+                # verbatim" by echoing back most of the rest of the
+                # sentence starting from the right word - technically
+                # true, still the wrong answer for a single word/short
+                # phrase. One source word should never need more than a
+                # handful of target words.
+                elif len(trans_span.split()) > 6:
+                    trans_span = None
             for occurrence in groups[key]:
                 occurrence["translationSpan"] = trans_span
             if already_known[key]:
