@@ -1829,7 +1829,14 @@ class _ReadScreenState extends State<ReadScreen>
     // don't clobber whatever they're looking at now.
     if (_inspectTokenStart != token.charStart) return;
     _storeTranslationSpan(text, token, span);
-    final range = _translationHighlightFor(token);
+    // TextToken is immutable - [token] still has the translationSpan it
+    // was constructed with (null), so re-read it from the JSON just
+    // written above, or _translationHighlightFor would just repeat the
+    // same failed match and this fetch would have no visible effect.
+    final updated = _tokensOf(text).firstWhere(
+        (t) => t.charStart == token.charStart && t.charEnd == token.charEnd,
+        orElse: () => token);
+    final range = _translationHighlightFor(updated);
     if (range != null && !range.isFallback) {
       setState(() {
         _transHlStart = range.start;
