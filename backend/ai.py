@@ -801,6 +801,65 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user),
     return result
 
 
+# ── On-demand translation-span fallback (Read tab word highlighting) ────────
+
+class TranslationSpanRequest(BaseModel):
+    targetLang: str = Field(max_length=16)
+    baseLang: str = Field(max_length=16)
+    sentence: str = Field(max_length=1000)
+    sentenceTranslation: str = Field(max_length=1000)
+    surface: str = Field(max_length=100)
+    lemma: str = Field(max_length=100)
+    gloss: str = Field(default="", max_length=300)
+
+
+_SPAN_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "span": {"type": ["string", "null"]},
+    },
+    "required": ["span"],
+}
+
+
+@router.post("/translation-span")
+def translation_span(body: TranslationSpanRequest,
+                     user=Depends(get_current_user)):
+    """On-demand fallback for the Read tab's tap-a-word-highlights-its-
+    translation feature: called only when the frontend's substring search
+    already failed to locate a match (see read_screen.dart's
+    _resolveTranslationSpan) - a fresh LLM gloss call already produces a
+    span (see _fetch_gloss_chunk), and most dictionary/cached glosses do
+    match literally, so most words never reach this endpoint. One small,
+    single-word call, not a batch - deliberately not cached anywhere: the
+    answer is specific to this exact sentence's phrasing, not reusable
+    like a lemma gloss is."""
+    system = (
+        f"Given a '{body.targetLang}' sentence, its '{body.baseLang}' "
+        "translation, and one word from the sentence (with its "
+        "context-free meaning as a hint), return the exact verbatim "
+        "substring of the translation that corresponds to that word - "
+        "copy it character for character, do not paraphrase - or null "
+        "if it has no clean standalone counterpart there (merged into a "
+        "larger phrase, reordered beyond recognition, or omitted "
+        "entirely)."
+    )
+    word = body.surface
+    if body.lemma.lower() != body.surface.lower():
+        word += f" (lemma: {body.lemma})"
+    user_msg = (
+        f'Sentence: "{body.sentence}"\n'
+        f'Translation: "{body.sentenceTranslation}"\n'
+        f"Word: {word}"
+        + (f"\nMeaning hint: {body.gloss}" if body.gloss else "")
+    )
+    data = _call_structured(GENERATE_MODEL, system,
+                            [{"role": "user", "content": user_msg}],
+                            "translation_span", _SPAN_SCHEMA, 200)
+    return {"span": data["span"]}
+
+
 # ── Analyze the learner's own text (paste-your-own in Read) ─────────────────
 
 class AnalyzeTextRequest(BaseModel):

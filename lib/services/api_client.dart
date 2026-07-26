@@ -112,6 +112,37 @@ class ApiClient {
         'vocabulary': vocabulary,
       }, timeout: const Duration(seconds: 120));
 
+  /// On-demand fallback for the Read tab's word<->translation highlighting:
+  /// only called when a plain substring search already failed to locate
+  /// [surface]/[gloss] inside [sentenceTranslation] (see read_screen.dart's
+  /// _resolveTranslationSpan) - most words never need this. Returns null on
+  /// any failure (network, timeout, or the model finding no clean match) so
+  /// callers can just keep the sentence-level highlight they already have.
+  Future<String?> fetchTranslationSpan({
+    required String targetLang,
+    required String baseLang,
+    required String sentence,
+    required String sentenceTranslation,
+    required String surface,
+    required String lemma,
+    String gloss = '',
+  }) async {
+    try {
+      final res = await _post('/ai/translation-span', {
+        'targetLang': targetLang,
+        'baseLang': baseLang,
+        'sentence': sentence,
+        'sentenceTranslation': sentenceTranslation,
+        'surface': surface,
+        'lemma': lemma,
+        'gloss': gloss,
+      }, timeout: const Duration(seconds: 20));
+      return res['span'] as String?;
+    } on ApiException {
+      return null;
+    }
+  }
+
   /// Analyzes the learner's own pasted text server-side (tokenizes and
   /// glosses it, same shape as [generateText] minus the title) so it
   /// becomes tap-to-translate like an AI-generated text.
