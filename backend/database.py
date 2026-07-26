@@ -11,7 +11,16 @@ if DATABASE_URL.startswith("postgres://"):
 elif DATABASE_URL.startswith("postgresql://"):
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+# A hung/unreachable Postgres must fail fast, not hang forever: this engine
+# is created and Base.metadata.create_all() runs at import time in main.py,
+# before the FastAPI app object even exists - an unbounded connect here
+# blocks every request (even /health) indefinitely instead of surfacing a
+# crash Render can show in its logs and restart from.
+connect_args = (
+    {"check_same_thread": False}
+    if DATABASE_URL.startswith("sqlite")
+    else {"connect_timeout": 10}
+)
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 

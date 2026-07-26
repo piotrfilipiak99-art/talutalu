@@ -1,4 +1,5 @@
 import json
+import logging
 
 from email_validator import EmailNotValidError, validate_email
 from fastapi import Depends, FastAPI, HTTPException
@@ -19,10 +20,25 @@ from models import (
     UserData,
 )
 
-Base.metadata.create_all(engine)
+log = logging.getLogger("talutalu.main")
 
 app = FastAPI(title="Talutalu API")
 app.include_router(ai_router)
+
+
+@app.on_event("startup")
+def _init_db():
+    # Deliberately NOT at module level: this used to run before the app
+    # object even existed, so a hung/unreachable database blocked every
+    # request - including /health, which needs no database at all - with
+    # no visible error anywhere. Now a DB failure logs clearly and leaves
+    # DB-independent routes (like /health) working.
+    try:
+        Base.metadata.create_all(engine)
+    except Exception:
+        log.exception(
+            "Database initialization failed - DB-backed endpoints will "
+            "error until this is fixed, but the app itself stays up")
 
 # The Flutter web demo runs on other origins (GitHub Pages, Render, localhost).
 app.add_middleware(
