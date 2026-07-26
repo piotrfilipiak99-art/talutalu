@@ -18,6 +18,11 @@
 /// when it carries an identifiable meaning of its own, a gloss of it —
 /// both nullable, since plenty of words (function words, most proper
 /// nouns) don't have a stem worth surfacing separately from the lemma.
+/// [translationSpan] is a verbatim excerpt of the sentence's own
+/// `translation` string that this token corresponds to (copied by the
+/// model at generation time, not inferred afterward) — null when no LLM
+/// gloss call produced one (dictionary-grounded or cache-hit words), in
+/// which case callers fall back to matching [translation] instead.
 class TextToken {
   final String surface;
   final String lemma;
@@ -28,6 +33,7 @@ class TextToken {
   final String? reading;
   final String? root;
   final String? rootMeaning;
+  final String? translationSpan;
   final int sentenceIndex;
   final int charStart;
   final int charEnd;
@@ -42,6 +48,7 @@ class TextToken {
     this.reading,
     this.root,
     this.rootMeaning,
+    this.translationSpan,
     required this.sentenceIndex,
     required this.charStart,
     required this.charEnd,
@@ -57,6 +64,7 @@ class TextToken {
         'reading': reading,
         'root': root,
         'rootMeaning': rootMeaning,
+        'translationSpan': translationSpan,
         'sentenceIndex': sentenceIndex,
         'charStart': charStart,
         'charEnd': charEnd,
@@ -74,6 +82,7 @@ class TextToken {
         reading: j['reading'] as String?,
         root: j['root'] as String?,
         rootMeaning: j['rootMeaning'] as String?,
+        translationSpan: j['translationSpan'] as String?,
         sentenceIndex: j['sentenceIndex'] as int,
         charStart: j['charStart'] as int,
         charEnd: j['charEnd'] as int,

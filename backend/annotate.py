@@ -245,6 +245,12 @@ def annotate_sentences(body: str, sentence_spans: list[dict], lang: str,
                 'reading': None,
                 'root': root,
                 'rootMeaning': root_meaning,
+                # Filled in later by ai.py's _fill_glosses for words that
+                # need an LLM gloss call; dictionary-grounded words (like
+                # this one) have no sentence-specific translation excerpt
+                # to offer, so the frontend falls back to substring-
+                # matching `translation` in that case.
+                'translationSpan': None,
                 'sentenceIndex': span['index'],
                 'charStart': span['charStart'] + t['start'],
                 'charEnd': span['charStart'] + t['end'],

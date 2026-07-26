@@ -1806,12 +1806,17 @@ class _ReadScreenState extends State<ReadScreen>
     }
   }
 
-  /// Char range to highlight in the translation for [token]: its gloss
-  /// located inside the aligned translation sentence, otherwise the whole
-  /// aligned sentence. Repeated words ("i ... i" -> "and ... and") map to
-  /// the matching occurrence, not always the first one: the token's
-  /// occurrence number among same-glossed tokens of its sentence picks the
-  /// same-numbered occurrence of the gloss in the translation.
+  /// Char range to highlight in the translation for [token]. Prefers
+  /// [TextToken.translationSpan] — a verbatim excerpt the model copied
+  /// straight out of this sentence's own translation at generation time,
+  /// so it's grounded in text that's actually guaranteed to occur there —
+  /// falling back to matching the isolated-word gloss (translationSpan is
+  /// null for dictionary-grounded/cache-hit words, which never got an LLM
+  /// call to produce one), then to the whole aligned sentence if neither
+  /// is found. Repeated words ("i ... i" -> "and ... and") map to the
+  /// matching occurrence, not always the first one: the token's occurrence
+  /// number among same-valued tokens of its sentence picks the
+  /// same-numbered occurrence in the translation.
   (int, int)? _translationHighlightFor(TextToken token) {
     final text = _openedText;
     if (text == null) return null;
@@ -1827,26 +1832,45 @@ class _ReadScreenState extends State<ReadScreen>
     if (sent == null) return null;
     final segStart = sent.charStart.clamp(0, translation.length);
     final segEnd = sent.charEnd.clamp(segStart, translation.length);
+    final segment = translation.substring(segStart, segEnd).toLowerCase();
+
+    final span = (token.translationSpan ?? '').trim().toLowerCase();
+    if (span.isNotEmpty) {
+      final idx = _locateInSegment(segment, span, token,
+          (t) => (t.translationSpan ?? '').trim().toLowerCase());
+      if (idx != null) return (segStart + idx, segStart + idx + span.length);
+    }
+
     final gloss = splitTrailingPunct((token.translation ?? '').trim())
         .core
         .toLowerCase();
     if (gloss.isNotEmpty) {
-      var occurrence = 0;
-      for (final t in _tokensOf(text)) {
-        if (t.sentenceIndex != token.sentenceIndex) continue;
-        if (t.charStart >= token.charStart) break;
-        final other = splitTrailingPunct((t.translation ?? '').trim())
-            .core
-            .toLowerCase();
-        if (other == gloss) occurrence++;
-      }
-      final segment = translation.substring(segStart, segEnd).toLowerCase();
-      var idx = _nthWordMatch(segment, gloss, occurrence);
-      // More repeats in the body than in the translation — reuse the first.
-      if (idx < 0 && occurrence > 0) idx = _nthWordMatch(segment, gloss, 0);
-      if (idx >= 0) return (segStart + idx, segStart + idx + gloss.length);
+      final idx = _locateInSegment(segment, gloss, token,
+          (t) => splitTrailingPunct((t.translation ?? '').trim())
+              .core
+              .toLowerCase());
+      if (idx != null) return (segStart + idx, segStart + idx + gloss.length);
     }
     return (segStart, segEnd);
+  }
+
+  /// Finds [needle]'s occurrence-matched position within [segment] (both
+  /// already lowercased): counts how many earlier tokens of [token]'s
+  /// sentence share the same [extract]ed value as [needle], then looks
+  /// for that same occurrence number in [segment] — falling back to the
+  /// first occurrence if the translation repeats the word fewer times
+  /// than the source sentence does. Null if [needle] isn't found at all.
+  int? _locateInSegment(String segment, String needle, TextToken token,
+      String Function(TextToken) extract) {
+    var occurrence = 0;
+    for (final t in _tokensOf(_openedText!)) {
+      if (t.sentenceIndex != token.sentenceIndex) continue;
+      if (t.charStart >= token.charStart) break;
+      if (extract(t) == needle) occurrence++;
+    }
+    var idx = _nthWordMatch(segment, needle, occurrence);
+    if (idx < 0 && occurrence > 0) idx = _nthWordMatch(segment, needle, 0);
+    return idx < 0 ? null : idx;
   }
 
   /// One-tap add from the inspect bar: creates the flashcard right away
