@@ -39,8 +39,11 @@ ANNOTATE_MODE = os.environ.get("ANNOTATE_MODE", "udpipe")
 #   AI_API_KEY   — the key (falls back to OPENAI_API_KEY)
 #   AI_BASE_URL  — endpoint base; unset = api.openai.com
 #   AI_*_MODEL   — model names per task
-# reasoning_effort is an OpenAI-only knob and is sent only when talking
-# to api.openai.com.
+# reasoning_effort works on both providers but with different vocabularies -
+# OpenAI's gpt-5 family wants "minimal", Gemini 2.5's wants "none" (its
+# equivalent of fully disabling "thinking"). Left unset, Gemini defaults to
+# a non-zero thinking budget, which was adding real latency to structured
+# translation/glossing calls that don't need multi-step reasoning at all.
 AI_BASE_URL = os.environ.get("AI_BASE_URL") or None
 IS_OPENAI = AI_BASE_URL is None
 GENERATE_MODEL = os.environ.get(
@@ -111,9 +114,7 @@ _TRANSIENT_MARKERS = ("429", "500", "503", "UNAVAILABLE", "overloaded",
 
 def _call_structured(model: str, system: str, messages: list[dict],
                      schema_name: str, schema: dict, max_tokens: int) -> dict:
-    kwargs = {}
-    if IS_OPENAI:
-        kwargs["reasoning_effort"] = "minimal"
+    kwargs = {"reasoning_effort": "minimal" if IS_OPENAI else "none"}
     res = None
     last_error = None
     # Transient upstream hiccups get retried with growing waits — Gemini's
@@ -151,6 +152,16 @@ def _call_structured(model: str, system: str, messages: list[dict],
             raise
         except Exception as e:
             last_error = e
+            # If the provider rejects reasoning_effort outright (unexpected
+            # value, unsupported on this exact model) that's not a transient
+            # error, but retrying instantly without it recovers instead of
+            # hard-failing every call - self-healing against a bad guess.
+            if "reasoning_effort" in kwargs and not any(
+                    m in str(e) for m in _TRANSIENT_MARKERS):
+                log.warning("reasoning_effort=%s rejected (%s); retrying "
+                           "without it", kwargs["reasoning_effort"], e)
+                kwargs.pop("reasoning_effort")
+                continue
             if attempt < len(delays) and any(
                     m in str(e) for m in _TRANSIENT_MARKERS):
                 time.sleep(delays[attempt])
