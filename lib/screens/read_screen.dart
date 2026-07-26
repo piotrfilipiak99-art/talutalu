@@ -1817,11 +1817,15 @@ class _ReadScreenState extends State<ReadScreen>
   /// (computed for every word now, not just freshly-glossed ones - see
   /// ai.py's _fill_glosses), so it's grounded in text that's actually
   /// guaranteed to occur there — falling back to matching the
-  /// isolated-word gloss, then to the whole aligned sentence if neither
-  /// is found. Repeated words ("i ... i" -> "and ... and") map to the
-  /// matching occurrence, not always the first one: the token's
-  /// occurrence number among same-valued tokens of its sentence picks the
-  /// same-numbered occurrence in the translation.
+  /// isolated-word gloss, then to no highlight at all if neither is
+  /// found (this word has no clean standalone counterpart - e.g. a
+  /// dropped pronoun, or an adjective whose target-language gender
+  /// agreement never matches the source's - highlighting the whole
+  /// sentence for that reads as a wrong answer stated with full
+  /// confidence; nothing is more honest). Repeated words ("i ... i" ->
+  /// "and ... and") map to the matching occurrence, not always the first
+  /// one: the token's occurrence number among same-valued tokens of its
+  /// sentence picks the same-numbered occurrence in the translation.
   (int, int)? _translationHighlightFor(TextToken token) {
     final text = _openedText;
     if (text == null) return null;
@@ -1856,7 +1860,7 @@ class _ReadScreenState extends State<ReadScreen>
               .toLowerCase());
       if (idx != null) return (segStart + idx, segStart + idx + gloss.length);
     }
-    return (segStart, segEnd);
+    return null;
   }
 
   /// Finds [needle]'s occurrence-matched position within [segment] (both
