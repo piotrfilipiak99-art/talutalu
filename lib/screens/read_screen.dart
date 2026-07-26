@@ -1859,6 +1859,46 @@ class _ReadScreenState extends State<ReadScreen>
               .core
               .toLowerCase());
       if (idx != null) return (segStart + idx, segStart + idx + gloss.length);
+
+      // Exact matching just failed - plausibly because the gloss is a
+      // dictionary/base form ("wiele") while the sentence actually uses
+      // a different grammatically-inflected form of the same word
+      // ("wielu"). Heavily-inflected languages (Polish among them) make
+      // this common enough to be worth a looser, shared-prefix match
+      // before giving up entirely.
+      final stemMatch = _locateStemInSegment(segment, gloss);
+      if (stemMatch != null) {
+        return (segStart + stemMatch.$1, segStart + stemMatch.$2);
+      }
+    }
+    return null;
+  }
+
+  /// Loosened last-resort match for heavily-inflected languages: finds a
+  /// word in [segment] sharing a long enough prefix with [needle] to
+  /// plausibly be a different grammatical form of the same word (Polish
+  /// "wiele" vs "wielu"). Only tried after exact matching has already
+  /// failed - a shared-prefix match is a weaker signal, so this requires
+  /// most of the shorter word to match (at least 4 characters and 60% of
+  /// its length) to avoid false positives on short/common words.
+  /// Returns (start, end) of the matched word, or null.
+  (int, int)? _locateStemInSegment(String segment, String needle) {
+    if (needle.length < 4) return null;
+    final minPrefix = (needle.length * 0.6).ceil();
+    final wordPattern = RegExp(r"[\p{L}\p{N}]+", unicode: true);
+    for (final match in wordPattern.allMatches(segment)) {
+      final word = match.group(0)!;
+      if (word.length < 4) continue;
+      var prefixLen = 0;
+      final shortest =
+          word.length < needle.length ? word.length : needle.length;
+      while (prefixLen < shortest && word[prefixLen] == needle[prefixLen]) {
+        prefixLen++;
+      }
+      final wordMinPrefix = (word.length * 0.6).ceil();
+      if (prefixLen >= minPrefix && prefixLen >= wordMinPrefix) {
+        return (match.start, match.end);
+      }
     }
     return null;
   }
