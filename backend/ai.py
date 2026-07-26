@@ -787,6 +787,11 @@ def _fill_glosses(result: dict, target: str, base: str, db: Session) -> None:
         for t in needing_meaning:
             hit = cached.get(t["lemma"].lower())
             if hit is not None:
+                # Some rows predate _strip_source_echo (or slipped past it)
+                # and still carry a "<word> — <meaning>" echo baked in - the
+                # cache is permanent, so without cleaning on read a single
+                # bad answer stays wrong forever instead of just once.
+                hit = _strip_source_echo(hit, t["surface"], t["lemma"])
                 for occurrence in groups[(t["surface"].lower(),
                                          t["lemma"].lower())]:
                     _apply_cache_hit(occurrence, hit)
