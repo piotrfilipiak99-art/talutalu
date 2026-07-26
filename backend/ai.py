@@ -6,7 +6,6 @@ strings, because LLMs cannot be trusted to count characters. root/
 rootMeaning are deliberately left null — per project policy they must come
 from a real dictionary source (RAG), not free generation.
 """
-import copy
 import json
 import logging
 import os
@@ -496,15 +495,21 @@ _GLOSS_SCHEMA = {
 
 _GLOSS_CHUNK = 50
 
-# Pending background-gloss results, keyed by a generation id handed to the
-# client in the initial response. WEB_CONCURRENCY=1 on Render (confirmed in
-# deploy logs) makes this in-process dict safe shared state - no cross-
-# worker consistency problem. TTL is a backstop for generations whose
-# client never polls (app closed, network dropped); the normal case is
-# delete-on-read in get_glosses().
-_GLOSS_RESULTS: dict[str, tuple[float, list]] = {}
-_GLOSS_RESULTS_LOCK = threading.Lock()
-_GLOSS_RESULTS_TTL = 300
+# Pending generation jobs, keyed by a job id handed to the client in the
+# kickoff response. generate-text no longer does any work inline - it just
+# schedules _run_generation_job and returns the id, so the request can
+# never run long enough to hit Render's reverse-proxy timeout no matter how
+# slow the model is. WEB_CONCURRENCY=1 on Render (confirmed in deploy logs)
+# makes this in-process dict safe shared state - no cross-worker
+# consistency problem. TTL is a backstop for jobs whose client never polls
+# (app closed, network dropped).
+#
+# status: "pending" (prose not ready yet) -> "textReady" (prose+dictionary-
+# grounded tokens ready, some tokens may still lack a gloss) -> "done"
+# (every resolvable word has been glossed) or "error".
+_JOBS: dict[str, dict] = {}
+_JOBS_LOCK = threading.Lock()
+_JOBS_TTL = 600
 
 
 def _apply_cache_hit(t: dict, lemma_translation: str) -> None:
@@ -684,9 +689,10 @@ def _fetch_gloss_chunk(chunk: list, chunk_start: int, sents: list,
 
 def _generate_hybrid(body: GenerateTextRequest) -> dict:
     """Prose + dictionary-grounded tokens only - no LLM glossing here. Any
-    word the dictionary/cross_lookup didn't resolve is filled in later by a
-    background task (see _schedule_glosses) so the response isn't blocked
-    on the slowest part of a Long+vocabulary generation."""
+    word the dictionary/cross_lookup didn't resolve is filled in later by
+    _run_generation_job, once the prose stage has already been published,
+    so the slowest part of a Long+vocabulary generation never delays the
+    text itself becoming visible."""
     n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
     system = (
         "You generate reading exercises for a language-learning app. "
@@ -709,48 +715,6 @@ def _generate_hybrid(body: GenerateTextRequest) -> dict:
         body.baseLang)
     result["title"] = data["title"]
     return result
-
-
-def _schedule_glosses(result: dict, target: str, base: str,
-                      background_tasks: BackgroundTasks) -> None:
-    """If dictionary grounding left any word ungrounded, hand the rest to a
-    background task instead of blocking the response - the client polls
-    GET /ai/generate-text/{genId}/glosses for the finished tokens. Mutates
-    a deep copy: the original `result` is already on its way to the client
-    by the time the background task runs, and must never be touched."""
-    pending = any(t["lemmaTranslation"] is None for t in result["tokens"]
-                 if re.search(r"\w", t["surface"]))
-    if not pending:
-        result["genId"] = None
-        return
-    gen_id = uuid.uuid4().hex
-    result["genId"] = gen_id
-    background_tasks.add_task(_fill_glosses_background, gen_id,
-                              copy.deepcopy(result), target, base)
-
-
-def _fill_glosses_background(gen_id: str, result: dict, target: str,
-                             base: str) -> None:
-    """Runs after the initial response has already been sent - the
-    request's own db session is gone by then, so this opens a fresh one.
-    Reuses the existing synchronous _fill_glosses (cache check + concurrent
-    LLM chunk fetch + GlossCache writes) against the private copy handed in
-    by _schedule_glosses."""
-    with Session(engine) as db:
-        try:
-            _fill_glosses(result, target, base, db)
-        except Exception:
-            log.exception("background gloss fill failed for genId=%s", gen_id)
-    with _GLOSS_RESULTS_LOCK:
-        _GLOSS_RESULTS[gen_id] = (time.time(), result["tokens"])
-
-
-def _prune_gloss_results() -> None:
-    """Caller must hold _GLOSS_RESULTS_LOCK."""
-    cutoff = time.time() - _GLOSS_RESULTS_TTL
-    expired = [k for k, (ts, _) in _GLOSS_RESULTS.items() if ts < cutoff]
-    for k in expired:
-        del _GLOSS_RESULTS[k]
 
 
 def _generate_legacy(body: GenerateTextRequest) -> dict:
@@ -777,34 +741,87 @@ def _generate_legacy(body: GenerateTextRequest) -> dict:
     return result
 
 
+def _run_generation_job(job_id: str, body: GenerateTextRequest) -> None:
+    """Runs entirely after the kickoff response has already been sent - no
+    HTTP connection is ever held open for this, so no request can run long
+    enough to hit Render's reverse-proxy timeout regardless of how slow the
+    model is. Publishes to _JOBS at two milestones: "textReady" (prose +
+    dictionary-grounded tokens - readable immediately, some words may still
+    be ungrounded) and "done" (every resolvable word has been glossed)."""
+    try:
+        if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
+            try:
+                result = _generate_hybrid(body)
+                result["annotation"] = "udpipe"
+            except HTTPException:
+                raise
+            except Exception:
+                log.exception("hybrid annotation failed; falling back to legacy")
+                result = _generate_legacy(body)
+                result["annotation"] = "llm"
+        else:
+            result = _generate_legacy(body)
+            result["annotation"] = "llm"
+    except HTTPException as e:
+        with _JOBS_LOCK:
+            _JOBS[job_id] = {"status": "error", "detail": e.detail,
+                             "ts": time.time()}
+        return
+    except Exception as e:
+        log.exception("generation job %s failed", job_id)
+        with _JOBS_LOCK:
+            _JOBS[job_id] = {"status": "error", "detail": str(e),
+                             "ts": time.time()}
+        return
+
+    with _JOBS_LOCK:
+        _JOBS[job_id] = {"status": "textReady", "result": result,
+                         "ts": time.time()}
+
+    if result["annotation"] == "udpipe":
+        pending = any(t["lemmaTranslation"] is None for t in result["tokens"]
+                     if re.search(r"\w", t["surface"]))
+        if pending:
+            with Session(engine) as db:
+                try:
+                    _fill_glosses(result, body.targetLang, body.baseLang, db)
+                except Exception:
+                    log.exception("gloss fill failed for job %s", job_id)
+
+    with _JOBS_LOCK:
+        _JOBS[job_id] = {"status": "done", "result": result,
+                         "ts": time.time()}
+
+
+def _prune_jobs() -> None:
+    """Caller must hold _JOBS_LOCK."""
+    cutoff = time.time() - _JOBS_TTL
+    expired = [k for k, job in _JOBS.items() if job["ts"] < cutoff]
+    for k in expired:
+        del _JOBS[k]
+
+
 @router.post("/generate-text")
 def generate_text(body: GenerateTextRequest, background_tasks: BackgroundTasks,
                   user=Depends(get_current_user)):
-    if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
-        try:
-            result = _generate_hybrid(body)
-            result["annotation"] = "udpipe"
-            _schedule_glosses(result, body.targetLang, body.baseLang,
-                              background_tasks)
-            return result
-        except HTTPException:
-            raise  # AI/auth errors are meaningful — don't mask them
-        except Exception:
-            log.exception("hybrid annotation failed; falling back to legacy")
-    result = _generate_legacy(body)
-    result["annotation"] = "llm"
-    result["genId"] = None
-    return result
+    job_id = uuid.uuid4().hex
+    with _JOBS_LOCK:
+        _JOBS[job_id] = {"status": "pending", "result": None,
+                         "ts": time.time()}
+    background_tasks.add_task(_run_generation_job, job_id, body)
+    return {"jobId": job_id}
 
 
-@router.get("/generate-text/{gen_id}/glosses")
-def get_glosses(gen_id: str, user=Depends(get_current_user)):
-    with _GLOSS_RESULTS_LOCK:
-        _prune_gloss_results()
-        entry = _GLOSS_RESULTS.pop(gen_id, None)  # delete-on-read
-    if entry is None:
-        return {"done": False, "tokens": None}
-    return {"done": True, "tokens": entry[1]}
+@router.get("/generate-text/{job_id}")
+def get_generation_job(job_id: str, user=Depends(get_current_user)):
+    with _JOBS_LOCK:
+        _prune_jobs()
+        job = _JOBS.get(job_id)
+    if job is None:
+        raise HTTPException(404, "Unknown or expired generation job")
+    if job["status"] == "error":
+        return {"status": "error", "detail": job.get("detail"), "result": None}
+    return {"status": job["status"], "result": job.get("result")}
 
 
 # ── Analyze the learner's own text (paste-your-own in Read) ─────────────────
