@@ -1,8 +1,10 @@
-"""_call_structured always asks for the lightest reasoning_effort - "none"
-on Gemini, "minimal" on OpenAI - since translation/glossing calls don't
-need multi-step reasoning and the default thinking budget was adding real
-latency. If a provider rejects the value outright, the call must recover
-by retrying without it rather than hard-failing every request forever."""
+"""_call_structured asks OpenAI for the lightest reasoning_effort
+("minimal"), since translation/glossing calls don't need multi-step
+reasoning. Gemini is left alone (no reasoning_effort sent) - disabling its
+thinking budget was tried and measured to make the critical Long+vocabulary
+case slower, not faster, so it isn't worth the quality risk. If a provider
+ever rejects a sent value outright, the call must recover by retrying
+without it rather than hard-failing every request forever."""
 import json
 from types import SimpleNamespace
 
@@ -33,15 +35,24 @@ class _FakeClient:
         self.chat = SimpleNamespace(completions=_FakeCompletions(behavior))
 
 
-def test_reasoning_effort_is_sent_and_uses_none_for_gemini(monkeypatch):
+def test_reasoning_effort_is_sent_for_openai_not_gemini(monkeypatch):
     fake = _FakeClient([lambda: _fake_response({"ok": True})])
     monkeypatch.setattr(ai, "_openai", lambda: fake)
+    monkeypatch.setattr(ai, "IS_OPENAI", True)
+
+    ai._call_structured("gpt-5-nano", "sys", [], "schema",
+                        {"type": "object"}, 100)
+
+    assert fake.chat.completions.calls[0]["reasoning_effort"] == "minimal"
+
+    fake2 = _FakeClient([lambda: _fake_response({"ok": True})])
+    monkeypatch.setattr(ai, "_openai", lambda: fake2)
     monkeypatch.setattr(ai, "IS_OPENAI", False)
 
     ai._call_structured("gemini-2.5-flash-lite", "sys", [], "schema",
                         {"type": "object"}, 100)
 
-    assert fake.chat.completions.calls[0]["reasoning_effort"] == "none"
+    assert "reasoning_effort" not in fake2.chat.completions.calls[0]
 
 
 def test_rejected_reasoning_effort_retries_without_it(monkeypatch):
@@ -51,9 +62,9 @@ def test_rejected_reasoning_effort_retries_without_it(monkeypatch):
 
     fake = _FakeClient([reject, lambda: _fake_response({"ok": True})])
     monkeypatch.setattr(ai, "_openai", lambda: fake)
-    monkeypatch.setattr(ai, "IS_OPENAI", False)
+    monkeypatch.setattr(ai, "IS_OPENAI", True)
 
-    result = ai._call_structured("gemini-2.5-flash-lite", "sys", [],
+    result = ai._call_structured("gpt-5-nano", "sys", [],
                                  "schema", {"type": "object"}, 100)
 
     assert result == {"ok": True}

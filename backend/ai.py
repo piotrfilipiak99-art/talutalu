@@ -39,11 +39,14 @@ ANNOTATE_MODE = os.environ.get("ANNOTATE_MODE", "udpipe")
 #   AI_API_KEY   — the key (falls back to OPENAI_API_KEY)
 #   AI_BASE_URL  — endpoint base; unset = api.openai.com
 #   AI_*_MODEL   — model names per task
-# reasoning_effort works on both providers but with different vocabularies -
-# OpenAI's gpt-5 family wants "minimal", Gemini 2.5's wants "none" (its
-# equivalent of fully disabling "thinking"). Left unset, Gemini defaults to
-# a non-zero thinking budget, which was adding real latency to structured
-# translation/glossing calls that don't need multi-step reasoning at all.
+# reasoning_effort="minimal" is sent for OpenAI's gpt-5 family, which doesn't
+# need multi-step reasoning for structured translation/glossing calls. Gemini
+# 2.5 also accepts this param (as "none") through its OpenAI-compatible
+# endpoint, but disabling its thinking budget was tried and measured: it
+# helped short/simple generations but made Long+vocabulary ones slower, not
+# faster - that case is bottlenecked by raw output-token volume, which
+# thinking mode doesn't touch. Left unset for Gemini, letting it use its own
+# default budget.
 AI_BASE_URL = os.environ.get("AI_BASE_URL") or None
 IS_OPENAI = AI_BASE_URL is None
 GENERATE_MODEL = os.environ.get(
@@ -114,7 +117,7 @@ _TRANSIENT_MARKERS = ("429", "500", "503", "UNAVAILABLE", "overloaded",
 
 def _call_structured(model: str, system: str, messages: list[dict],
                      schema_name: str, schema: dict, max_tokens: int) -> dict:
-    kwargs = {"reasoning_effort": "minimal" if IS_OPENAI else "none"}
+    kwargs = {"reasoning_effort": "minimal"} if IS_OPENAI else {}
     res = None
     last_error = None
     # Transient upstream hiccups get retried with growing waits — Gemini's
