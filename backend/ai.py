@@ -6,15 +6,17 @@ strings, because LLMs cannot be trusted to count characters. root/
 rootMeaning are deliberately left null — per project policy they must come
 from a real dictionary source (RAG), not free generation.
 """
+import copy
 import json
 import logging
 import os
 import re
 import threading
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from openai import OpenAI
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
@@ -23,7 +25,7 @@ from sqlalchemy.orm import Session
 import annotate
 from annotate import _TRANSLATION_SAFE_POS
 from auth import get_current_user
-from database import get_db
+from database import engine, get_db
 from models import GlossCache
 
 log = logging.getLogger("talutalu.ai")
@@ -494,6 +496,16 @@ _GLOSS_SCHEMA = {
 
 _GLOSS_CHUNK = 50
 
+# Pending background-gloss results, keyed by a generation id handed to the
+# client in the initial response. WEB_CONCURRENCY=1 on Render (confirmed in
+# deploy logs) makes this in-process dict safe shared state - no cross-
+# worker consistency problem. TTL is a backstop for generations whose
+# client never polls (app closed, network dropped); the normal case is
+# delete-on-read in get_glosses().
+_GLOSS_RESULTS: dict[str, tuple[float, list]] = {}
+_GLOSS_RESULTS_LOCK = threading.Lock()
+_GLOSS_RESULTS_TTL = 300
+
 
 def _apply_cache_hit(t: dict, lemma_translation: str) -> None:
     """Same convention as annotate.py's dictionary/cross_lookup grounding:
@@ -670,7 +682,11 @@ def _fetch_gloss_chunk(chunk: list, chunk_start: int, sents: list,
     return chunk_start, chunk, glosses
 
 
-def _generate_hybrid(body: GenerateTextRequest, db: Session) -> dict:
+def _generate_hybrid(body: GenerateTextRequest) -> dict:
+    """Prose + dictionary-grounded tokens only - no LLM glossing here. Any
+    word the dictionary/cross_lookup didn't resolve is filled in later by a
+    background task (see _schedule_glosses) so the response isn't blocked
+    on the slowest part of a Long+vocabulary generation."""
     n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
     system = (
         "You generate reading exercises for a language-learning app. "
@@ -691,9 +707,50 @@ def _generate_hybrid(body: GenerateTextRequest, db: Session) -> dict:
     result["tokens"] = annotate.annotate_sentences(
         result["body"], result["bodySentences"], body.targetLang,
         body.baseLang)
-    _fill_glosses(result, body.targetLang, body.baseLang, db)
     result["title"] = data["title"]
     return result
+
+
+def _schedule_glosses(result: dict, target: str, base: str,
+                      background_tasks: BackgroundTasks) -> None:
+    """If dictionary grounding left any word ungrounded, hand the rest to a
+    background task instead of blocking the response - the client polls
+    GET /ai/generate-text/{genId}/glosses for the finished tokens. Mutates
+    a deep copy: the original `result` is already on its way to the client
+    by the time the background task runs, and must never be touched."""
+    pending = any(t["lemmaTranslation"] is None for t in result["tokens"]
+                 if re.search(r"\w", t["surface"]))
+    if not pending:
+        result["genId"] = None
+        return
+    gen_id = uuid.uuid4().hex
+    result["genId"] = gen_id
+    background_tasks.add_task(_fill_glosses_background, gen_id,
+                              copy.deepcopy(result), target, base)
+
+
+def _fill_glosses_background(gen_id: str, result: dict, target: str,
+                             base: str) -> None:
+    """Runs after the initial response has already been sent - the
+    request's own db session is gone by then, so this opens a fresh one.
+    Reuses the existing synchronous _fill_glosses (cache check + concurrent
+    LLM chunk fetch + GlossCache writes) against the private copy handed in
+    by _schedule_glosses."""
+    with Session(engine) as db:
+        try:
+            _fill_glosses(result, target, base, db)
+        except Exception:
+            log.exception("background gloss fill failed for genId=%s", gen_id)
+    with _GLOSS_RESULTS_LOCK:
+        _GLOSS_RESULTS[gen_id] = (time.time(), result["tokens"])
+
+
+def _prune_gloss_results() -> None:
+    """Caller must hold _GLOSS_RESULTS_LOCK."""
+    cutoff = time.time() - _GLOSS_RESULTS_TTL
+    expired = [k for k, (ts, _) in _GLOSS_RESULTS.items() if ts < cutoff]
+    for k in expired:
+        del _GLOSS_RESULTS[k]
 
 
 def _generate_legacy(body: GenerateTextRequest) -> dict:
@@ -721,12 +778,14 @@ def _generate_legacy(body: GenerateTextRequest) -> dict:
 
 
 @router.post("/generate-text")
-def generate_text(body: GenerateTextRequest, user=Depends(get_current_user),
-                  db: Session = Depends(get_db)):
+def generate_text(body: GenerateTextRequest, background_tasks: BackgroundTasks,
+                  user=Depends(get_current_user)):
     if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
         try:
-            result = _generate_hybrid(body, db)
+            result = _generate_hybrid(body)
             result["annotation"] = "udpipe"
+            _schedule_glosses(result, body.targetLang, body.baseLang,
+                              background_tasks)
             return result
         except HTTPException:
             raise  # AI/auth errors are meaningful — don't mask them
@@ -734,7 +793,18 @@ def generate_text(body: GenerateTextRequest, user=Depends(get_current_user),
             log.exception("hybrid annotation failed; falling back to legacy")
     result = _generate_legacy(body)
     result["annotation"] = "llm"
+    result["genId"] = None
     return result
+
+
+@router.get("/generate-text/{gen_id}/glosses")
+def get_glosses(gen_id: str, user=Depends(get_current_user)):
+    with _GLOSS_RESULTS_LOCK:
+        _prune_gloss_results()
+        entry = _GLOSS_RESULTS.pop(gen_id, None)  # delete-on-read
+    if entry is None:
+        return {"done": False, "tokens": None}
+    return {"done": True, "tokens": entry[1]}
 
 
 # ── Analyze the learner's own text (paste-your-own in Read) ─────────────────
