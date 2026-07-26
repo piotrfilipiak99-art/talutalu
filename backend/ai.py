@@ -12,10 +12,9 @@ import os
 import re
 import threading
 import time
-import uuid
 from concurrent.futures import ThreadPoolExecutor
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from openai import OpenAI
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
@@ -24,7 +23,7 @@ from sqlalchemy.orm import Session
 import annotate
 from annotate import _TRANSLATION_SAFE_POS
 from auth import get_current_user
-from database import engine, get_db
+from database import get_db
 from models import GlossCache
 
 log = logging.getLogger("talutalu.ai")
@@ -502,22 +501,6 @@ _GLOSS_SCHEMA = {
 
 _GLOSS_CHUNK = 50
 
-# Pending generation jobs, keyed by a job id handed to the client in the
-# kickoff response. generate-text no longer does any work inline - it just
-# schedules _run_generation_job and returns the id, so the request can
-# never run long enough to hit Render's reverse-proxy timeout no matter how
-# slow the model is. WEB_CONCURRENCY=1 on Render (confirmed in deploy logs)
-# makes this in-process dict safe shared state - no cross-worker
-# consistency problem. TTL is a backstop for jobs whose client never polls
-# (app closed, network dropped).
-#
-# status: "pending" (prose not ready yet) -> "textReady" (prose+dictionary-
-# grounded tokens ready, some tokens may still lack a gloss) -> "done"
-# (every resolvable word has been glossed) or "error".
-_JOBS: dict[str, dict] = {}
-_JOBS_LOCK = threading.Lock()
-_JOBS_TTL = 600
-
 
 def _apply_cache_hit(t: dict, lemma_translation: str) -> None:
     """Same convention as annotate.py's dictionary/cross_lookup grounding:
@@ -694,12 +677,7 @@ def _fetch_gloss_chunk(chunk: list, chunk_start: int, sents: list,
     return chunk_start, chunk, glosses
 
 
-def _generate_hybrid(body: GenerateTextRequest) -> dict:
-    """Prose + dictionary-grounded tokens only - no LLM glossing here. Any
-    word the dictionary/cross_lookup didn't resolve is filled in later by
-    _run_generation_job, once the prose stage has already been published,
-    so the slowest part of a Long+vocabulary generation never delays the
-    text itself becoming visible."""
+def _generate_hybrid(body: GenerateTextRequest, db: Session) -> dict:
     n_sentences = _LENGTH_SENTENCES.get(body.length, "6-10")
     system = (
         "You generate reading exercises for a language-learning app. "
@@ -720,6 +698,7 @@ def _generate_hybrid(body: GenerateTextRequest) -> dict:
     result["tokens"] = annotate.annotate_sentences(
         result["body"], result["bodySentences"], body.targetLang,
         body.baseLang)
+    _fill_glosses(result, body.targetLang, body.baseLang, db)
     result["title"] = data["title"]
     return result
 
@@ -748,87 +727,21 @@ def _generate_legacy(body: GenerateTextRequest) -> dict:
     return result
 
 
-def _run_generation_job(job_id: str, body: GenerateTextRequest) -> None:
-    """Runs entirely after the kickoff response has already been sent - no
-    HTTP connection is ever held open for this, so no request can run long
-    enough to hit Render's reverse-proxy timeout regardless of how slow the
-    model is. Publishes to _JOBS at two milestones: "textReady" (prose +
-    dictionary-grounded tokens - readable immediately, some words may still
-    be ungrounded) and "done" (every resolvable word has been glossed)."""
-    try:
-        if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
-            try:
-                result = _generate_hybrid(body)
-                result["annotation"] = "udpipe"
-            except HTTPException:
-                raise
-            except Exception:
-                log.exception("hybrid annotation failed; falling back to legacy")
-                result = _generate_legacy(body)
-                result["annotation"] = "llm"
-        else:
-            result = _generate_legacy(body)
-            result["annotation"] = "llm"
-    except HTTPException as e:
-        with _JOBS_LOCK:
-            _JOBS[job_id] = {"status": "error", "detail": e.detail,
-                             "ts": time.time()}
-        return
-    except Exception as e:
-        log.exception("generation job %s failed", job_id)
-        with _JOBS_LOCK:
-            _JOBS[job_id] = {"status": "error", "detail": str(e),
-                             "ts": time.time()}
-        return
-
-    with _JOBS_LOCK:
-        _JOBS[job_id] = {"status": "textReady", "result": result,
-                         "ts": time.time()}
-
-    if result["annotation"] == "udpipe":
-        pending = any(t["lemmaTranslation"] is None for t in result["tokens"]
-                     if re.search(r"\w", t["surface"]))
-        if pending:
-            with Session(engine) as db:
-                try:
-                    _fill_glosses(result, body.targetLang, body.baseLang, db)
-                except Exception:
-                    log.exception("gloss fill failed for job %s", job_id)
-
-    with _JOBS_LOCK:
-        _JOBS[job_id] = {"status": "done", "result": result,
-                         "ts": time.time()}
-
-
-def _prune_jobs() -> None:
-    """Caller must hold _JOBS_LOCK."""
-    cutoff = time.time() - _JOBS_TTL
-    expired = [k for k, job in _JOBS.items() if job["ts"] < cutoff]
-    for k in expired:
-        del _JOBS[k]
-
-
 @router.post("/generate-text")
-def generate_text(body: GenerateTextRequest, background_tasks: BackgroundTasks,
-                  user=Depends(get_current_user)):
-    job_id = uuid.uuid4().hex
-    with _JOBS_LOCK:
-        _JOBS[job_id] = {"status": "pending", "result": None,
-                         "ts": time.time()}
-    background_tasks.add_task(_run_generation_job, job_id, body)
-    return {"jobId": job_id}
-
-
-@router.get("/generate-text/{job_id}")
-def get_generation_job(job_id: str, user=Depends(get_current_user)):
-    with _JOBS_LOCK:
-        _prune_jobs()
-        job = _JOBS.get(job_id)
-    if job is None:
-        raise HTTPException(404, "Unknown or expired generation job")
-    if job["status"] == "error":
-        return {"status": "error", "detail": job.get("detail"), "result": None}
-    return {"status": job["status"], "result": job.get("result")}
+def generate_text(body: GenerateTextRequest, user=Depends(get_current_user),
+                  db: Session = Depends(get_db)):
+    if ANNOTATE_MODE == "udpipe" and annotate.supported(body.targetLang):
+        try:
+            result = _generate_hybrid(body, db)
+            result["annotation"] = "udpipe"
+            return result
+        except HTTPException:
+            raise  # AI/auth errors are meaningful — don't mask them
+        except Exception:
+            log.exception("hybrid annotation failed; falling back to legacy")
+    result = _generate_legacy(body)
+    result["annotation"] = "llm"
+    return result
 
 
 # ── Analyze the learner's own text (paste-your-own in Read) ─────────────────
